@@ -31,9 +31,52 @@ const SalonCard: React.FC<SalonCardProps> = ({ salon, onClick }) => {
             <CardMedia
                 component="img"
                 height="200"
-                image={salon.images?.[0] || '/placeholder-salon.jpg'}
-                alt={salon.name}
+                image={salon.images && salon.images.length > 0 ? salon.images[0] : undefined}
+                alt={salon.displayName || salon.businessName}
+                onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent && !parent.querySelector('.placeholder-gradient')) {
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'placeholder-gradient';
+                        placeholder.style.cssText = `
+                            width: 100%;
+                            height: 200px;
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: white;
+                            font-size: 3rem;
+                            font-weight: 700;
+                        `;
+                        placeholder.textContent = (salon.displayName || salon.businessName || 'S')[0].toUpperCase();
+                        parent.insertBefore(placeholder, target);
+                    }
+                }}
+                sx={{
+                    objectFit: 'cover',
+                    display: salon.images && salon.images.length > 0 ? 'block' : 'none'
+                }}
             />
+
+            {/* Placeholder for no images */}
+            {(!salon.images || salon.images.length === 0) && (
+                <Box sx={{
+                    width: '100%',
+                    height: 200,
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: '3rem',
+                    fontWeight: 700
+                }}>
+                    {(salon.displayName || salon.businessName || 'S')[0].toUpperCase()}
+                </Box>
+            )}
 
             {/* Status Badge - Top Right Corner */}
             <Chip

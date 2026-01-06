@@ -152,7 +152,7 @@ const BarberAppointments: React.FC = () => {
                             startIcon={<CalendarIcon />}
                             sx={{
                                 bgcolor: 'white',
-                                color: '#0f172a',
+                                color: 'white',
                                 borderRadius: '12px',
                                 px: 3,
                                 py: 1,
@@ -167,7 +167,7 @@ const BarberAppointments: React.FC = () => {
                 </Container>
             </Box>
 
-            <Container maxWidth="xl" sx={{ mt: -4 }}>
+            <Container maxWidth="xl" sx={{ mt: -4, position: 'relative', zIndex: 2 }}>
                 <MotionCard
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}

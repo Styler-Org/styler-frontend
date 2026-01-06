@@ -82,7 +82,7 @@ const SalonList: React.FC = () => {
         }),
     });
 
-    const salons = data?.data?.data || [];
+    const salons: Salon[] = (data?.data && Array.isArray(data.data)) ? data.data : [];
 
     // Add distance to salons for "nearest" sorting (client-side for geolocation)
     const processedSalons = useMemo(() => {

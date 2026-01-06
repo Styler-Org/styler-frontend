@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Box,
     Container,
@@ -28,12 +28,23 @@ import {
 import { motion } from 'framer-motion';
 import { useBarberStore } from '../../stores/barberStore';
 import CountUp from 'react-countup';
+import AddWalkInModal from '../../components/barber/AddWalkInModal';
+import BlockTimeModal from '../../components/barber/BlockTimeModal';
+import ViewTipsDialog from '../../components/barber/ViewTipsDialog';
+import RequestLeaveModal from '../../components/barber/RequestLeaveModal';
+import CheckInOutButton from '../../components/barber/CheckInOutButton';
 
 const MotionCard = motion(Card);
 
 const BarberDashboard: React.FC = () => {
     const { stats, loading } = useBarberStore();
     const theme = useTheme();
+
+    // Modal states
+    const [walkInModalOpen, setWalkInModalOpen] = useState(false);
+    const [blockTimeModalOpen, setBlockTimeModalOpen] = useState(false);
+    const [tipsDialogOpen, setTipsDialogOpen] = useState(false);
+    const [leaveModalOpen, setLeaveModalOpen] = useState(false);
 
     // Mock stats if null
     const currentStats = stats || {
@@ -114,7 +125,8 @@ const BarberDashboard: React.FC = () => {
                                 You have {currentStats.todaysAppointments} appointments scheduled for today. Let's make today improved and productive.
                             </Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                            <CheckInOutButton />
                             <Button
                                 variant="outlined"
                                 sx={{
@@ -138,7 +150,7 @@ const BarberDashboard: React.FC = () => {
                     </Box>
 
                     {/* Stats Grid */}
-                    <Grid container spacing={3}>
+                    <Grid container spacing={3} sx={{ position: 'relative', zIndex: 1 }}>
                         {statsDisplay.map((stat, index) => (
                             <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
                                 <MotionCard
@@ -185,7 +197,7 @@ const BarberDashboard: React.FC = () => {
                 </Container>
             </Box>
 
-            <Container maxWidth="xl" sx={{ mt: -4 }}>
+            <Container maxWidth="xl" sx={{ mt: -4, position: 'relative', zIndex: 2 }}>
                 <Grid container spacing={4}>
                     {/* Today's Schedule */}
                     <Grid size={{ xs: 12, md: 8 }}>
@@ -302,15 +314,16 @@ const BarberDashboard: React.FC = () => {
                                     <Typography variant="h6" fontWeight={700} sx={{ mb: 3 }}>Quick Actions</Typography>
                                     <Grid container spacing={2}>
                                         {[
-                                            { label: 'Add Walk-in', icon: <PeopleIcon />, color: '#3b82f6' },
-                                            { label: 'Block Time', icon: <TimeIcon />, color: '#f97316' },
-                                            { label: 'View Tips', icon: <TrendingIcon />, color: '#10b981' },
-                                            { label: 'Request Leave', icon: <CalendarIcon />, color: '#ef4444' }
+                                            { label: 'Add Walk-in', icon: <PeopleIcon />, color: '#3b82f6', onClick: () => setWalkInModalOpen(true) },
+                                            { label: 'Block Time', icon: <TimeIcon />, color: '#f97316', onClick: () => setBlockTimeModalOpen(true) },
+                                            { label: 'View Tips', icon: <TrendingIcon />, color: '#10b981', onClick: () => setTipsDialogOpen(true) },
+                                            { label: 'Request Leave', icon: <CalendarIcon />, color: '#ef4444', onClick: () => setLeaveModalOpen(true) }
                                         ].map((action, i) => (
                                             <Grid size={{ xs: 6 }} key={i}>
                                                 <Button
                                                     fullWidth
                                                     variant="outlined"
+                                                    onClick={action.onClick}
                                                     sx={{
                                                         flexDirection: 'column',
                                                         gap: 1,
@@ -364,6 +377,34 @@ const BarberDashboard: React.FC = () => {
                     </Grid>
                 </Grid>
             </Container>
+
+            {/* Modals */}
+            <AddWalkInModal
+                open={walkInModalOpen}
+                onClose={() => setWalkInModalOpen(false)}
+                onSuccess={() => {
+                    // Refresh appointments or show success message
+                    console.log('Walk-in added successfully');
+                }}
+            />
+            <BlockTimeModal
+                open={blockTimeModalOpen}
+                onClose={() => setBlockTimeModalOpen(false)}
+                onSuccess={() => {
+                    console.log('Time blocked successfully');
+                }}
+            />
+            <ViewTipsDialog
+                open={tipsDialogOpen}
+                onClose={() => setTipsDialogOpen(false)}
+            />
+            <RequestLeaveModal
+                open={leaveModalOpen}
+                onClose={() => setLeaveModalOpen(false)}
+                onSuccess={() => {
+                    console.log('Leave request submitted successfully');
+                }}
+            />
         </Box>
     );
 };

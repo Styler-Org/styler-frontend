@@ -98,7 +98,7 @@ const BarberSchedule: React.FC = () => {
                             startIcon={<SaveIcon />}
                             sx={{
                                 bgcolor: '#4ade80',
-                                color: '#064e3b',
+                                color: 'white',
                                 borderRadius: '12px',
                                 px: 3,
                                 py: 1,
@@ -113,7 +113,7 @@ const BarberSchedule: React.FC = () => {
                 </Container>
             </Box>
 
-            <Container maxWidth="xl" sx={{ mt: -4 }}>
+            <Container maxWidth="xl" sx={{ mt: -4, position: 'relative', zIndex: 2 }}>
                 <Grid container spacing={4}>
                     {/* Weekly Overview */}
                     <Grid size={{ xs: 12, md: 4 }}>
