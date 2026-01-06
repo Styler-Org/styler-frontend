@@ -136,7 +136,7 @@ function AppContent() {
 
 
                 <Route
-                    path="/customer/appointments"
+                    path="/appointments"
                     element={
                         <ProtectedRoute role={UserRole.CUSTOMER}>
                             <Layout><MyAppointments /></Layout>

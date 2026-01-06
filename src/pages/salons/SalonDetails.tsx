@@ -110,10 +110,12 @@ const SalonDetails: React.FC = () => {
             (hours) => hours.day.toLowerCase() === currentDay.toLowerCase()
         );
 
-        if (!todayHours || !todayHours.isOpen) return false;
+        if (!todayHours || !todayHours.isOpen || !todayHours.slots || todayHours.slots.length === 0) return false;
 
-        const [openHour, openMin] = todayHours.openTime.split(':').map(Number);
-        const [closeHour, closeMin] = todayHours.closeTime.split(':').map(Number);
+        // Check if current time falls within any of the time slots
+        const firstSlot = todayHours.slots[0];
+        const [openHour, openMin] = firstSlot.start.split(':').map(Number);
+        const [closeHour, closeMin] = firstSlot.end.split(':').map(Number);
 
         const openingTime = openHour * 60 + openMin;
         const closingTime = closeHour * 60 + closeMin;
@@ -654,9 +656,14 @@ const SalonDetails: React.FC = () => {
                                                 <Typography variant="body1" sx={{ fontWeight: 700, color: '#1a1a1a' }}>
                                                     {hours.day}
                                                 </Typography>
-                                                {hours.isOpen ? (
+                                                {hours.isOpen && hours.slots && hours.slots.length > 0 ? (
                                                     <Typography variant="body1" sx={{ color: '#10b981', fontWeight: 600 }}>
-                                                        {hours.openTime} - {hours.closeTime}
+                                                        {hours.slots.map((slot: any, idx: number) => (
+                                                            <span key={idx}>
+                                                                {slot.start} - {slot.end}
+                                                                {idx < hours.slots.length - 1 && <br />}
+                                                            </span>
+                                                        ))}
                                                     </Typography>
                                                 ) : (
                                                     <Typography variant="body1" sx={{ color: '#ef4444', fontWeight: 600 }}>

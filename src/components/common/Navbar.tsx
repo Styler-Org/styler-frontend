@@ -110,6 +110,7 @@ const Navbar: React.FC = () => {
             case 'customer':
             default:
                 return [
+                    { label: 'Appointments', path: '/appointments', icon: <CalendarIcon /> },
                     { label: 'Lookbook', path: '/lookbook', icon: <Favorite /> },
                     { label: 'Services', path: '/services', icon: <ContentCutIcon /> },
                     { label: 'Find Salons', path: '/salons', icon: <LocationOnIcon /> },
@@ -349,6 +350,14 @@ const Navbar: React.FC = () => {
                                                 </Box>
 
                                                 <Box sx={{ p: 1.5, bgcolor: 'white' }}>
+                                                    <MenuItem
+                                                        onClick={() => { navigate('/appointments'); handleClose(); }}
+                                                        sx={{ py: 1.5, px: 2, borderRadius: '12px', mb: 0.5 }}
+                                                    >
+                                                        <CalendarIcon sx={{ mr: 2, color: '#64748b', fontSize: 20 }} />
+                                                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#334155' }}>My Appointments</Typography>
+                                                    </MenuItem>
+
                                                     <MenuItem
                                                         onClick={() => { navigate('/profile'); handleClose(); }}
                                                         sx={{ py: 1.5, px: 2, borderRadius: '12px', mb: 0.5 }}

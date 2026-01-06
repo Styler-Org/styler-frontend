@@ -13,9 +13,17 @@ export interface CheckAvailabilityRequest {
 export interface CreateAppointmentRequest {
     salonId: string;
     barberId?: string;
-    services: string[]; // array of service IDs
-    scheduledDate: string; // YYYY-MM-DD
-    scheduledTime: string; // HH:MM
+    serviceIds: string[]; // Changed from 'services' to match backend
+    scheduledAt: string; // Changed to single ISO datetime string
+    locationType: 'salon' | 'home'; // Added required field
+    address?: {
+        street: string;
+        city: string;
+        state: string;
+        pincode: string;
+        latitude?: number;
+        longitude?: number;
+    };
     notes?: string;
 }
 

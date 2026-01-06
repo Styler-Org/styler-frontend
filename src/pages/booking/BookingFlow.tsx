@@ -141,9 +141,9 @@ const BookingFlow: React.FC = () => {
             await appointmentService.createAppointment({
                 salonId: salonId!,
                 barberId: selectedBarber._id,
-                services: [selectedService._id], // Array of service IDs
-                scheduledDate: appointmentDateTime.format('YYYY-MM-DD'),
-                scheduledTime: appointmentDateTime.format('HH:mm'),
+                serviceIds: [selectedService._id], // Changed from 'services' to 'serviceIds'
+                scheduledAt: appointmentDateTime.toISOString(), // Combined into ISO datetime string
+                locationType: 'salon', // Added required field
                 notes,
             });
 
