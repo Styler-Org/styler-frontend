@@ -279,9 +279,19 @@ const MySalons: React.FC = () => {
                                         <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
                                             <Chip
                                                 icon={<TimeIcon sx={{ fontSize: '1rem !important' }} />}
-                                                label={isSalonOpen(salon) ? 'Open Now' : 'Closed'}
+                                                label={
+                                                    !salon.isActive
+                                                        ? 'Permanently Closed'
+                                                        : isSalonOpen(salon)
+                                                            ? 'Open Now'
+                                                            : 'Closed'
+                                                }
                                                 sx={{
-                                                    bgcolor: isSalonOpen(salon) ? 'rgba(16, 185, 129, 0.9)' : 'rgba(239, 68, 68, 0.9)',
+                                                    bgcolor: !salon.isActive
+                                                        ? 'rgba(127, 29, 29, 0.9)'
+                                                        : isSalonOpen(salon)
+                                                            ? 'rgba(16, 185, 129, 0.9)'
+                                                            : 'rgba(239, 68, 68, 0.9)',
                                                     color: 'white',
                                                     fontWeight: 600,
                                                     backdropFilter: 'blur(4px)',
