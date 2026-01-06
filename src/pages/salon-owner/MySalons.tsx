@@ -87,11 +87,11 @@ const MySalons: React.FC = () => {
             hours.day.toLowerCase() === currentDay.toLowerCase()
         );
 
-        if (!todayHours || !todayHours.isOpen) return false;
+        if (!todayHours || !todayHours.isOpen || !todayHours.slots || todayHours.slots.length === 0) return false;
 
         // Parse opening and closing times (format: "HH:MM")
-        const [openHour, openMin] = todayHours.openTime.split(':').map(Number);
-        const [closeHour, closeMin] = todayHours.closeTime.split(':').map(Number);
+        const [openHour, openMin] = todayHours.slots[0].start.split(':').map(Number);
+        const [closeHour, closeMin] = todayHours.slots[0].end.split(':').map(Number);
 
         const openingTime = openHour * 60 + openMin;
         const closingTime = closeHour * 60 + closeMin;
