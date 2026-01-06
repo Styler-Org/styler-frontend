@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Container,
@@ -11,9 +11,9 @@ import {
     Avatar,
     Button,
     Stack,
-    Badge,
     Divider,
-    Tooltip
+    Tooltip,
+    CircularProgress
 } from '@mui/material';
 import {
     Notifications as NotificationsIcon,
@@ -21,91 +21,19 @@ import {
     People as PeopleIcon,
     Star as StarIcon,
     Info as InfoIcon,
-    CheckCircle as CheckCircleIcon,
     Circle as CircleIcon,
     DoneAll as DoneAllIcon,
-    DeleteOutline as DeleteIcon,
-    FilterList as FilterIcon
+    DeleteOutline as DeleteIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface Notification {
-    id: string;
-    type: 'appointment' | 'staff' | 'review' | 'system';
-    title: string;
-    message: string;
-    timestamp: Date;
-    isRead: boolean;
-}
+import { notificationService, Notification } from '../../services/notificationService';
 
 const SalonOwnerNotifications: React.FC = () => {
     const [activeTab, setActiveTab] = useState(0);
-    const [notifications, setNotifications] = useState<Notification[]>([
-        {
-            id: '1',
-            type: 'appointment',
-            title: 'New Appointment Booked',
-            message: 'John Doe has booked a haircut appointment for tomorrow at 2:00 PM',
-            timestamp: new Date(Date.now() - 5 * 60 * 1000), // 5 mins ago
-            isRead: false
-        },
-        {
-            id: '2',
-            type: 'staff',
-            title: 'Staff Member Added',
-            message: 'Sarah Johnson joined Downtown Branch as a senior stylist',
-            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-            isRead: false
-        },
-        {
-            id: '3',
-            type: 'review',
-            title: '5-Star Review Received',
-            message: 'Your North Hills Salon received a 5-star review from Michael Smith',
-            timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
-            isRead: true
-        },
-        {
-            id: '4',
-            type: 'appointment',
-            title: 'Appointment Cancelled',
-            message: 'Jane Williams cancelled her appointment scheduled for today at 4:00 PM',
-            timestamp: new Date(Date.now() - 25 * 60 * 60 * 1000), // Yesterday
-            isRead: true
-        },
-        {
-            id: '5',
-            type: 'system',
-            title: 'Payment Received',
-            message: 'Payment of ₹2,500 received for appointment #A12345',
-            timestamp: new Date(Date.now() - 26 * 60 * 60 * 1000), // Yesterday
-            isRead: true
-        },
-        {
-            id: '6',
-            type: 'staff',
-            title: 'Staff Availability Updated',
-            message: 'Robert Brown updated his availability for next week',
-            timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-            isRead: true
-        },
-        {
-            id: '7',
-            type: 'review',
-            title: 'New Review Posted',
-            message: 'Your Downtown Branch received a review from Emily Davis',
-            timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-            isRead: true
-        },
-        {
-            id: '8',
-            type: 'system',
-            title: 'Monthly Report Available',
-            message: 'Your performance report for December 2025 is now available',
-            timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-            isRead: true
-        }
-    ]);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     const tabs = [
         { label: 'All', value: 'all' },
@@ -115,6 +43,46 @@ const SalonOwnerNotifications: React.FC = () => {
         { label: 'Reviews', value: 'review' },
         { label: 'System', value: 'system' }
     ];
+
+    // Fetch notifications
+    const fetchNotifications = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const currentTabValue = tabs[activeTab].value;
+
+            const params: any = {};
+            if (currentTabValue === 'unread') {
+                params.isRead = false;
+            } else if (currentTabValue !== 'all') {
+                params.type = currentTabValue;
+            }
+
+            const response = await notificationService.getNotifications(params);
+            setNotifications(response.notifications);
+        } catch (err: any) {
+            setError(err.response?.data?.error?.message || 'Failed to load notifications');
+            console.error('Error fetching notifications:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Fetch unread count
+    const fetchUnreadCount = async () => {
+        try {
+            const count = await notificationService.getUnreadCount();
+            setUnreadCount(count);
+        } catch (err) {
+            console.error('Error fetching unread count:', err);
+        }
+    };
+
+    // Load data on mount and when tab changes
+    useEffect(() => {
+        fetchNotifications();
+        fetchUnreadCount();
+    }, [activeTab]);
 
     const getNotificationIcon = (type: Notification['type']) => {
         switch (type) {
@@ -146,7 +114,8 @@ const SalonOwnerNotifications: React.FC = () => {
         }
     };
 
-    const getRelativeTime = (date: Date) => {
+    const getRelativeTime = (dateString: string) => {
+        const date = new Date(dateString);
         const now = new Date();
         const diffMs = now.getTime() - date.getTime();
         const diffMins = Math.floor(diffMs / 60000);
@@ -161,36 +130,38 @@ const SalonOwnerNotifications: React.FC = () => {
         return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     };
 
-    // Group notifications by date for better organizing
-    const filterNotifications = () => {
-        let filtered = notifications;
-        const currentTabValue = tabs[activeTab].value;
-
-        if (currentTabValue === 'unread') {
-            filtered = notifications.filter(n => !n.isRead);
-        } else if (currentTabValue !== 'all') {
-            filtered = notifications.filter(n => n.type === currentTabValue);
+    const handleMarkAsRead = async (id: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        try {
+            await notificationService.markAsRead(id);
+            setNotifications(prev =>
+                prev.map(n => (n._id === id ? { ...n, isRead: true } : n))
+            );
+            fetchUnreadCount();
+        } catch (err) {
+            console.error('Error marking notification as read:', err);
         }
-        return filtered;
     };
 
-    const filteredList = filterNotifications();
-    const unreadCount = notifications.filter(n => !n.isRead).length;
-
-    const handleMarkAsRead = (id: string, e?: React.MouseEvent) => {
+    const handleDelete = async (id: string, e?: React.MouseEvent) => {
         e?.stopPropagation();
-        setNotifications(prev =>
-            prev.map(n => (n.id === id ? { ...n, isRead: true } : n))
-        );
+        try {
+            await notificationService.deleteNotification(id);
+            setNotifications(prev => prev.filter(n => n._id !== id));
+            fetchUnreadCount();
+        } catch (err) {
+            console.error('Error deleting notification:', err);
+        }
     };
 
-    const handleDelete = (id: string, e?: React.MouseEvent) => {
-        e?.stopPropagation();
-        setNotifications(prev => prev.filter(n => n.id !== id));
-    };
-
-    const handleMarkAllAsRead = () => {
-        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    const handleMarkAllAsRead = async () => {
+        try {
+            await notificationService.markAllAsRead();
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+            setUnreadCount(0);
+        } catch (err) {
+            console.error('Error marking all as read:', err);
+        }
     };
 
     return (
@@ -319,156 +290,169 @@ const SalonOwnerNotifications: React.FC = () => {
 
                     {/* Notifications List */}
                     <Box sx={{ minHeight: 400, bgcolor: '#fff' }}>
-                        <AnimatePresence mode="popLayout">
-                            {filteredList.length === 0 ? (
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                >
-                                    <Box sx={{ py: 10, textAlign: 'center' }}>
-                                        <Avatar sx={{ width: 80, height: 80, bgcolor: '#f1f5f9', color: '#94a3b8', mx: 'auto', mb: 2 }}>
-                                            <NotificationsIcon sx={{ fontSize: 40 }} />
-                                        </Avatar>
-                                        <Typography variant="h6" color="text.secondary" fontWeight={600}>
-                                            No notifications found
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            We'll simplify let you know when something important happens.
-                                        </Typography>
-                                    </Box>
-                                </motion.div>
-                            ) : (
-                                <Stack divider={<Divider component="li" />}>
-                                    {filteredList.map((notification) => (
-                                        <motion.div
-                                            key={notification.id}
-                                            layout
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
-                                        >
-                                            <Box
-                                                sx={{
-                                                    p: 2.5,
-                                                    display: 'flex',
-                                                    gap: 2,
-                                                    alignItems: 'flex-start',
-                                                    transition: 'all 0.2s',
-                                                    bgcolor: notification.isRead ? 'transparent' : 'rgba(99, 102, 241, 0.02)',
-                                                    '&:hover': {
-                                                        bgcolor: '#f8fafc',
-                                                        '& .action-buttons': { opacity: 1 }
-                                                    },
-                                                    position: 'relative'
-                                                }}
+                        {loading ? (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 10 }}>
+                                <CircularProgress />
+                            </Box>
+                        ) : error ? (
+                            <Box sx={{ py: 10, textAlign: 'center' }}>
+                                <Typography variant="h6" color="error" fontWeight={600}>
+                                    {error}
+                                </Typography>
+                                <Button onClick={fetchNotifications} sx={{ mt: 2 }}>Retry</Button>
+                            </Box>
+                        ) : (
+                            <AnimatePresence mode="popLayout">
+                                {notifications.length === 0 ? (
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                    >
+                                        <Box sx={{ py: 10, textAlign: 'center' }}>
+                                            <Avatar sx={{ width: 80, height: 80, bgcolor: '#f1f5f9', color: '#94a3b8', mx: 'auto', mb: 2 }}>
+                                                <NotificationsIcon sx={{ fontSize: 40 }} />
+                                            </Avatar>
+                                            <Typography variant="h6" color="text.secondary" fontWeight={600}>
+                                                No notifications found
+                                            </Typography>
+                                            <Typography variant="body2" color="text.secondary">
+                                                We'll let you know when something important happens.
+                                            </Typography>
+                                        </Box>
+                                    </motion.div>
+                                ) : (
+                                    <Stack divider={<Divider component="li" />}>
+                                        {notifications.map((notification) => (
+                                            <motion.div
+                                                key={notification._id}
+                                                layout
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
                                             >
-                                                {/* Left Status Indicator */}
-                                                {!notification.isRead && (
-                                                    <Box sx={{
-                                                        position: 'absolute',
-                                                        left: 0,
-                                                        top: '50%',
-                                                        transform: 'translateY(-50%)',
-                                                        width: 3,
-                                                        height: '60%',
-                                                        bgcolor: 'primary.main',
-                                                        borderRadius: '0 4px 4px 0'
-                                                    }} />
-                                                )}
-
-                                                {/* Icon */}
-                                                <Avatar
-                                                    sx={{
-                                                        bgcolor: notification.isRead ? '#f1f5f9' : `${getNotificationColor(notification.type)}15`,
-                                                        color: notification.isRead ? '#94a3b8' : getNotificationColor(notification.type),
-                                                        width: 44,
-                                                        height: 44,
-                                                        mt: 0.5
-                                                    }}
-                                                >
-                                                    {getNotificationIcon(notification.type)}
-                                                </Avatar>
-
-                                                {/* Content */}
-                                                <Box sx={{ flex: 1, minWidth: 0 }}>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
-                                                        <Typography
-                                                            variant="subtitle1"
-                                                            sx={{
-                                                                fontWeight: notification.isRead ? 600 : 700,
-                                                                color: notification.isRead ? 'text.primary' : '#1e293b',
-                                                                lineHeight: 1.3
-                                                            }}
-                                                        >
-                                                            {notification.title}
-                                                        </Typography>
-                                                        <Typography variant="caption" sx={{ color: 'text.secondary', whiteSpace: 'nowrap', ml: 2 }}>
-                                                            {getRelativeTime(notification.timestamp)}
-                                                        </Typography>
-                                                    </Box>
-
-                                                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, lineHeight: 1.5 }}>
-                                                        {notification.message}
-                                                    </Typography>
-
-                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                        {/* Type Badge */}
-                                                        <Chip
-                                                            label={notification.type}
-                                                            size="small"
-                                                            sx={{
-                                                                height: 20,
-                                                                fontSize: '0.65rem',
-                                                                textTransform: 'uppercase',
-                                                                letterSpacing: '0.5px',
-                                                                fontWeight: 700,
-                                                                borderRadius: '4px',
-                                                                bgcolor: notification.isRead ? '#f1f5f9' : `${getNotificationColor(notification.type)}10`,
-                                                                color: notification.isRead ? '#64748b' : getNotificationColor(notification.type)
-                                                            }}
-                                                        />
-                                                    </Box>
-                                                </Box>
-
-                                                {/* Actions */}
                                                 <Box
-                                                    className="action-buttons"
                                                     sx={{
+                                                        p: 2.5,
                                                         display: 'flex',
-                                                        flexDirection: 'column',
-                                                        gap: 0.5,
-                                                        opacity: { xs: 1, sm: 0 },
-                                                        transition: 'opacity 0.2s',
+                                                        gap: 2,
+                                                        alignItems: 'flex-start',
+                                                        transition: 'all 0.2s',
+                                                        bgcolor: notification.isRead ? 'transparent' : 'rgba(99, 102, 241, 0.02)',
+                                                        '&:hover': {
+                                                            bgcolor: '#f8fafc',
+                                                            '& .action-buttons': { opacity: 1 }
+                                                        },
+                                                        position: 'relative'
                                                     }}
                                                 >
+                                                    {/* Left Status Indicator */}
                                                     {!notification.isRead && (
-                                                        <Tooltip title="Mark as read">
+                                                        <Box sx={{
+                                                            position: 'absolute',
+                                                            left: 0,
+                                                            top: '50%',
+                                                            transform: 'translateY(-50%)',
+                                                            width: 3,
+                                                            height: '60%',
+                                                            bgcolor: 'primary.main',
+                                                            borderRadius: '0 4px 4px 0'
+                                                        }} />
+                                                    )}
+
+                                                    {/* Icon */}
+                                                    <Avatar
+                                                        sx={{
+                                                            bgcolor: notification.isRead ? '#f1f5f9' : `${getNotificationColor(notification.type)}15`,
+                                                            color: notification.isRead ? '#94a3b8' : getNotificationColor(notification.type),
+                                                            width: 44,
+                                                            height: 44,
+                                                            mt: 0.5
+                                                        }}
+                                                    >
+                                                        {getNotificationIcon(notification.type)}
+                                                    </Avatar>
+
+                                                    {/* Content */}
+                                                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
+                                                            <Typography
+                                                                variant="subtitle1"
+                                                                sx={{
+                                                                    fontWeight: notification.isRead ? 600 : 700,
+                                                                    color: notification.isRead ? 'text.primary' : '#1e293b',
+                                                                    lineHeight: 1.3
+                                                                }}
+                                                            >
+                                                                {notification.title}
+                                                            </Typography>
+                                                            <Typography variant="caption" sx={{ color: 'text.secondary', whiteSpace: 'nowrap', ml: 2 }}>
+                                                                {getRelativeTime(notification.createdAt)}
+                                                            </Typography>
+                                                        </Box>
+
+                                                        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, lineHeight: 1.5 }}>
+                                                            {notification.message}
+                                                        </Typography>
+
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                            {/* Type Badge */}
+                                                            <Chip
+                                                                label={notification.type}
+                                                                size="small"
+                                                                sx={{
+                                                                    height: 20,
+                                                                    fontSize: '0.65rem',
+                                                                    textTransform: 'uppercase',
+                                                                    letterSpacing: '0.5px',
+                                                                    fontWeight: 700,
+                                                                    borderRadius: '4px',
+                                                                    bgcolor: notification.isRead ? '#f1f5f9' : `${getNotificationColor(notification.type)}10`,
+                                                                    color: notification.isRead ? '#64748b' : getNotificationColor(notification.type)
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                    </Box>
+
+                                                    {/* Actions */}
+                                                    <Box
+                                                        className="action-buttons"
+                                                        sx={{
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            gap: 0.5,
+                                                            opacity: { xs: 1, sm: 0 },
+                                                            transition: 'opacity 0.2s',
+                                                        }}
+                                                    >
+                                                        {!notification.isRead && (
+                                                            <Tooltip title="Mark as read">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={(e) => handleMarkAsRead(notification._id, e)}
+                                                                    sx={{ color: 'primary.main', '&:hover': { bgcolor: 'primary.lighter' } }}
+                                                                >
+                                                                    <CircleIcon sx={{ fontSize: 12 }} />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        )}
+                                                        <Tooltip title="Delete">
                                                             <IconButton
                                                                 size="small"
-                                                                onClick={(e) => handleMarkAsRead(notification.id, e)}
-                                                                sx={{ color: 'primary.main', '&:hover': { bgcolor: 'primary.lighter' } }}
+                                                                onClick={(e) => handleDelete(notification._id, e)}
+                                                                sx={{ color: 'text.secondary', '&:hover': { color: 'error.main', bgcolor: 'error.lighter' } }}
                                                             >
-                                                                <CircleIcon sx={{ fontSize: 12 }} />
+                                                                <DeleteIcon fontSize="small" />
                                                             </IconButton>
                                                         </Tooltip>
-                                                    )}
-                                                    <Tooltip title="Delete">
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={(e) => handleDelete(notification.id, e)}
-                                                            sx={{ color: 'text.secondary', '&:hover': { color: 'error.main', bgcolor: 'error.lighter' } }}
-                                                        >
-                                                            <DeleteIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
+                                                    </Box>
                                                 </Box>
-                                            </Box>
-                                        </motion.div>
-                                    ))}
-                                </Stack>
-                            )}
-                        </AnimatePresence>
+                                            </motion.div>
+                                        ))}
+                                    </Stack>
+                                )}
+                            </AnimatePresence>
+                        )}
                     </Box>
                 </Paper>
             </Container>
