@@ -246,29 +246,35 @@ const MySalons: React.FC = () => {
                                     }}
                                 >
                                     <Box sx={{ position: 'relative', height: 220, bgcolor: '#f1f5f9' }}>
-                                        {salon.images && salon.images.length > 0 ? (
+                                        {salon.images && salon.images.length > 0 && salon.images[0] ? (
                                             <CardMedia
                                                 component="img"
                                                 height="100%"
                                                 image={salon.images[0]}
-                                                alt={salon.name}
+                                                alt={salon.displayName || salon.businessName}
                                                 sx={{ objectFit: 'cover' }}
                                                 onError={(e: any) => {
+                                                    // If image fails to load, hide it and show fallback
                                                     e.target.style.display = 'none';
+                                                    const fallback = e.target.nextSibling;
+                                                    if (fallback) fallback.style.display = 'flex';
                                                 }}
                                             />
-                                        ) : (
-                                            <Box sx={{
-                                                height: '100%',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                color: '#94a3b8'
-                                            }}>
-                                                <StoreIcon sx={{ fontSize: 48, opacity: 0.5 }} />
-                                            </Box>
-                                        )}
-
+                                        ) : null}
+                                        <Box sx={{
+                                            height: '100%',
+                                            display: (salon.images && salon.images.length > 0 && salon.images[0]) ? 'none' : 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            flexDirection: 'column',
+                                            color: '#94a3b8',
+                                            gap: 1
+                                        }}>
+                                            <StoreIcon sx={{ fontSize: 48, opacity: 0.5 }} />
+                                            <Typography variant="caption" color="text.secondary">
+                                                No image
+                                            </Typography>
+                                        </Box>
                                         {/* Status Chip */}
                                         <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
                                             <Chip
@@ -311,7 +317,7 @@ const MySalons: React.FC = () => {
 
                                     <CardContent sx={{ p: 3, flexGrow: 1 }}>
                                         <Typography variant="h6" gutterBottom noWrap sx={{ fontWeight: 700, fontSize: '1.25rem' }}>
-                                            {salon.name}
+                                            {salon.displayName || salon.businessName}
                                         </Typography>
 
                                         <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary', mb: 2 }}>
@@ -436,7 +442,7 @@ const MySalons: React.FC = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-        </Box>
+        </Box >
     );
 };
 

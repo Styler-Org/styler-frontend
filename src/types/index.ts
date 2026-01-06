@@ -138,6 +138,15 @@ export interface Salon {
     ownerId: string;
     isActive: boolean;
     isOpen?: boolean; // Current open/closed status based on operating hours
+    notificationPreferences?: {
+        emailNotifications: boolean;
+        smsNotifications: boolean;
+    };
+    bookingPolicies?: {
+        cancellationPolicy?: string;
+        advanceBookingDays?: number;
+        minAdvanceBookingHours?: number;
+    };
     createdAt: string;
     updatedAt: string;
 }

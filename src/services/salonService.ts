@@ -42,7 +42,52 @@ export interface CreateSalonRequest {
     }>;
 }
 
-export interface UpdateSalonRequest extends Partial<CreateSalonRequest> { }
+export interface UpdateSalonRequest {
+    businessName?: string;
+    displayName?: string;
+    description?: string;
+    phone?: string;
+    email?: string;
+    images?: string[];
+    address?: {
+        street: string;
+        city: string;
+        state: string;
+        pincode: string;
+        location: {
+            type: 'Point';
+            coordinates: [number, number];
+        };
+    };
+    amenities?: string[];
+    operatingHours?: Array<{
+        day: string;
+        isOpen: boolean;
+        slots: {
+            start: string;
+            end: string;
+        }[];
+    }>;
+    services?: Array<{
+        name: string;
+        description: string;
+        category: string;
+        price: number;
+        duration: number;
+        gender: 'male' | 'female' | 'unisex';
+        isActive: boolean;
+    }>;
+    isActive?: boolean;
+    notificationPreferences?: {
+        emailNotifications: boolean;
+        smsNotifications: boolean;
+    };
+    bookingPolicies?: {
+        cancellationPolicy?: string;
+        advanceBookingDays?: number;
+        minAdvanceBookingHours?: number;
+    };
+}
 
 // ==================== Salon Service ====================
 

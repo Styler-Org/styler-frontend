@@ -44,6 +44,8 @@ import { salonService } from '../../services/salonService';
 import { barberService } from '../../services/barberService';
 import { Salon, Service, Barber } from '../../types';
 import { motion } from 'framer-motion';
+import SalonSettingsModal from '../../components/salon/SalonSettingsModal';
+import ManageServicesModal from '../../components/salon/ManageServicesModal';
 
 const MotionBox = motion(Box);
 const MotionCard = motion(Card);
@@ -87,6 +89,8 @@ const SalonOwnerSalonDetails: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [tabValue, setTabValue] = useState(0);
+    const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+    const [manageServicesModalOpen, setManageServicesModalOpen] = useState(false);
 
     // Mock stats for the overview
     const [stats, setStats] = useState({
@@ -238,17 +242,34 @@ const SalonOwnerSalonDetails: React.FC = () => {
                                         bgcolor: '#f1f5f9',
                                         boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.05)'
                                     }}>
-                                        {salon.images && salon.images.length > 0 ? (
+                                        {salon.images && salon.images.length > 0 && salon.images[0] ? (
                                             <img
                                                 src={salon.images[0]}
-                                                alt={salon.name}
+                                                alt={salon.name || salon.displayName}
                                                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                                                onError={(e: any) => {
+                                                    e.target.style.display = 'none';
+                                                }}
                                             />
-                                        ) : (
-                                            <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
-                                                <StoreIcon sx={{ fontSize: 60, opacity: 0.5 }} />
-                                            </Box>
-                                        )}
+                                        ) : null}
+                                        <Box sx={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            height: '100%',
+                                            display: (salon.images && salon.images.length > 0 && salon.images[0]) ? 'none' : 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            flexDirection: 'column',
+                                            color: '#94a3b8',
+                                            gap: 1
+                                        }}>
+                                            <StoreIcon sx={{ fontSize: 60, opacity: 0.5 }} />
+                                            <Typography variant="caption" color="text.secondary">
+                                                No image
+                                            </Typography>
+                                        </Box>
                                     </Box>
                                 </Grid>
 
@@ -322,6 +343,7 @@ const SalonOwnerSalonDetails: React.FC = () => {
                                                 <Button
                                                     variant="outlined"
                                                     startIcon={<SettingsIcon />}
+                                                    onClick={() => setSettingsModalOpen(true)}
                                                     sx={{
                                                         borderRadius: '50px',
                                                         px: 3,
@@ -468,7 +490,7 @@ const SalonOwnerSalonDetails: React.FC = () => {
                                     variant="contained"
                                     size="small"
                                     sx={{ borderRadius: '50px', textTransform: 'none' }}
-                                    onClick={() => navigate(`/salons/${id}/services`)}
+                                    onClick={() => setManageServicesModalOpen(true)}
                                 >
                                     Manage Services
                                 </Button>
@@ -611,6 +633,45 @@ const SalonOwnerSalonDetails: React.FC = () => {
 
                 </Container>
             </Box>
+
+            {/* Salon Settings Modal */}
+            {salon && (
+                <SalonSettingsModal
+                    open={settingsModalOpen}
+                    onClose={() => setSettingsModalOpen(false)}
+                    salon={salon}
+                    onUpdate={() => {
+                        // Refresh salon data after settings update
+                        if (id) {
+                            salonService.getSalonById(id).then(response => {
+                                if (response.success && response.data) {
+                                    setSalon(response.data);
+                                }
+                            });
+                        }
+                    }}
+                />
+            )}
+
+            {/* Manage Services Modal */}
+            {id && (
+                <ManageServicesModal
+                    open={manageServicesModalOpen}
+                    onClose={() => setManageServicesModalOpen(false)}
+                    salonId={id}
+                    services={services}
+                    onUpdate={() => {
+                        // Refresh services data after update
+                        if (id) {
+                            salonService.getSalonServices(id).then(response => {
+                                if (response.success && response.data) {
+                                    setServices(response.data);
+                                }
+                            });
+                        }
+                    }}
+                />
+            )}
         </Box>
     );
 };
