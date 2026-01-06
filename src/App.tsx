@@ -54,6 +54,7 @@ import BarberProfile from './pages/barber/BarberProfile';
 
 // Salon Owner Pages
 import SalonOwnerDashboard from './pages/salon-owner/SalonOwnerDashboard';
+import SalonOwnerNotifications from './pages/salon-owner/SalonOwnerNotifications';
 import StaffManagement from './pages/salon-owner/StaffManagement';
 import Analytics from './pages/salon-owner/Analytics';
 import MySalons from './pages/salon-owner/MySalons';
@@ -199,6 +200,14 @@ function AppContent() {
                     element={
                         <ProtectedRoute role={UserRole.SALON_OWNER}>
                             <DashboardLayout><SalonOwnerDashboard /></DashboardLayout>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/salon-owner/notifications"
+                    element={
+                        <ProtectedRoute role={UserRole.SALON_OWNER}>
+                            <DashboardLayout><SalonOwnerNotifications /></DashboardLayout>
                         </ProtectedRoute>
                     }
                 />

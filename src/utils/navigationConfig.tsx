@@ -9,7 +9,8 @@ import {
     CalendarMonth as CalendarIcon,
     Store as StoreIcon,
     People as PeopleIcon,
-    Assessment as AnalyticsIcon
+    Assessment as AnalyticsIcon,
+    Notifications as NotificationsIcon
 } from '@mui/icons-material';
 
 export interface NavLink {
@@ -30,6 +31,7 @@ export const getNavLinksForRole = (role?: string): NavLink[] => {
         case 'salon_owner':
             return [
                 { label: 'Dashboard', path: '/salon-owner/dashboard', icon: <DashboardIcon /> },
+                { label: 'Notifications', path: '/salon-owner/notifications', icon: <NotificationsIcon /> },
                 { label: 'My Salons', path: '/salons-owner/my-salons', icon: <StoreIcon /> },
                 { label: 'Staff Management', path: '/salon-owner/staff-management', icon: <PeopleIcon /> },
                 { label: 'Analytics', path: '/salon-owner/analytics', icon: <AnalyticsIcon /> },
