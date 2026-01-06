@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { Container, Typography, Box, Grid, TextField, Button, Paper, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import { Container, Typography, Box, Grid, TextField, Button, Paper, Accordion, AccordionSummary, AccordionDetails, CircularProgress } from '@mui/material';
 import { ExpandMore, Email, Phone, LocationOn, Send } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { contactService } from '../services/contactService';
+import { useToast } from '../context/ToastContext';
 import './Contact.css';
 
 const Contact: React.FC = () => {
+    const { success, error } = useToast();
+    const [loading, setLoading] = useState(false);
     const [formState, setFormState] = useState({
         name: '',
         email: '',
@@ -19,10 +23,25 @@ const Contact: React.FC = () => {
         });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Form submitted:', formState);
-        // Add form submission logic here
+        setLoading(true);
+        try {
+            await contactService.sendMessage(formState);
+            success('Message sent successfully! We will get back to you soon.');
+            setFormState({
+                name: '',
+                email: '',
+                subject: '',
+                message: ''
+            });
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.message || 'Failed to send message. Please try again later.';
+            error(errorMessage);
+            console.error('Contact form error:', err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const faqs = [
@@ -147,7 +166,8 @@ const Contact: React.FC = () => {
                                                 type="submit"
                                                 variant="contained"
                                                 size="large"
-                                                endIcon={<Send />}
+                                                endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <Send />}
+                                                disabled={loading}
                                                 sx={{
                                                     py: 1.5,
                                                     px: 4,
@@ -158,7 +178,7 @@ const Contact: React.FC = () => {
                                                     boxShadow: '0 8px 20px rgba(67, 56, 202, 0.3)'
                                                 }}
                                             >
-                                                Send Message
+                                                {loading ? 'Sending...' : 'Send Message'}
                                             </Button>
                                         </Grid>
                                     </Grid>
