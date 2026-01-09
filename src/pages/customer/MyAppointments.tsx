@@ -78,7 +78,8 @@ const MyAppointments: React.FC = () => {
         queryFn: () => appointmentService.getMyAppointments({ limit: 100 }), // Fetch more to filter locally
     });
 
-    const allAppointments = (data?.data as PaginatedResponse<Appointment>)?.data || [];
+    // Backend returns { success, data: Appointment[], meta }, not nested in PaginatedResponse
+    const allAppointments = (data?.data as Appointment[]) || [];
 
     // Filter and sort appointments
     const { upcoming, past, cancelled } = useMemo(() => {

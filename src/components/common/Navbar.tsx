@@ -279,10 +279,11 @@ const Navbar: React.FC = () => {
                                                 sx={{
                                                     color: isActive ? 'white' : '#64748b',
                                                     fontWeight: 600,
-                                                    px: 3,
+                                                    px: 2.5,
                                                     py: 1,
                                                     borderRadius: '30px',
                                                     textTransform: 'none',
+                                                    whiteSpace: 'nowrap',
                                                     bgcolor: isActive ? 'primary.main' : 'transparent',
                                                     transition: 'all 0.3s ease',
                                                     '&:hover': {

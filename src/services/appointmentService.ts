@@ -73,7 +73,7 @@ class AppointmentService {
     /**
      * Get my appointments (customer)
      */
-    async getMyAppointments(filters: AppointmentFilters = {}): Promise<ApiResponse<PaginatedResponse<Appointment>>> {
+    async getMyAppointments(filters: AppointmentFilters = {}): Promise<ApiResponse<Appointment[]>> {
         const params = new URLSearchParams();
 
         if (filters.status) params.append('status', filters.status);
@@ -81,7 +81,7 @@ class AppointmentService {
         if (filters.page) params.append('page', filters.page.toString());
         if (filters.limit) params.append('limit', filters.limit.toString());
 
-        const response = await api.get<ApiResponse<PaginatedResponse<Appointment>>>(
+        const response = await api.get<ApiResponse<Appointment[]>>(
             `/appointments?${params.toString()}`
         );
         return response.data;
