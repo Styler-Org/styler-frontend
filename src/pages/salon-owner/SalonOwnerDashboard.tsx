@@ -327,7 +327,7 @@ const SalonOwnerDashboard: React.FC = () => {
                                             onClick={() => navigate('/salons-owner/my-salons')}
                                             sx={{
                                                 bgcolor: 'white',
-                                                color: '#6366f1',
+                                                color: 'white',
                                                 fontWeight: 700,
                                                 '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' }
                                             }}

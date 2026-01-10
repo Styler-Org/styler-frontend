@@ -194,11 +194,21 @@ export interface Appointment {
     salonId: string;
     salon?: Salon; // Populated salon data when expanded from the API
     barberId?: string;
-    services: string[];
-    scheduledDate: string;
-    scheduledTime: string;
+    serviceIds: string[]; // Array of service IDs (can be populated)
+    scheduledAt: string; // ISO datetime string
+    duration: number; // Duration in minutes
+    location: {
+        type: 'salon' | 'home';
+        address?: Address;
+    };
+    pricing: {
+        services: number;
+        homeServiceFee: number;
+        platformFee: number;
+        total: number;
+    };
     status: AppointmentStatus;
-    totalAmount: number;
+    paymentStatus: string;
     notes?: string;
     createdAt: string;
     updatedAt: string;

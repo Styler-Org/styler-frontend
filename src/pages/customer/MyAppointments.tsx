@@ -85,10 +85,16 @@ const MyAppointments: React.FC = () => {
     const { upcoming, past, cancelled } = useMemo(() => {
         const now = dayjs();
         const filtered = allAppointments.filter(app => {
-            const matchesSearch =
-                (app.salonId as any)?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (app.services as any[])?.some(s => s.name.toLowerCase().includes(searchQuery.toLowerCase())); // Changed serviceIds to services
-            return matchesSearch;
+            // If no search query, include all appointments
+            if (!searchQuery.trim()) return true;
+
+            // Handle both populated and non-populated salonId/serviceIds
+            const salonName = typeof app.salonId === 'string' ? '' : (app.salonId as any)?.name || '';
+            const serviceMatch = Array.isArray(app.serviceIds)
+                ? app.serviceIds.some(s => typeof s === 'object' && (s as any).name?.toLowerCase().includes(searchQuery.toLowerCase()))
+                : false;
+
+            return salonName.toLowerCase().includes(searchQuery.toLowerCase()) || serviceMatch;
         });
 
         const upcomingApps: Appointment[] = [];
@@ -102,7 +108,7 @@ const MyAppointments: React.FC = () => {
                 pastApps.push(app);
             } else {
                 // Pending, Confirmed, In Progress
-                const appDate = dayjs(app.scheduledDate); // Note: Should probably use checks against full datetime if available
+                const appDate = dayjs(app.scheduledAt); // Use scheduledAt from API
                 if (appDate.isAfter(now.subtract(1, 'day'))) { // Allow "today" to be upcoming
                     upcomingApps.push(app);
                 } else {
@@ -112,10 +118,10 @@ const MyAppointments: React.FC = () => {
         });
 
         // Sort upcoming by soonest first
-        upcomingApps.sort((a, b) => dayjs(a.scheduledDate).valueOf() - dayjs(b.scheduledDate).valueOf());
+        upcomingApps.sort((a, b) => dayjs(a.scheduledAt).valueOf() - dayjs(b.scheduledAt).valueOf());
         // Sort others by newest first
-        pastApps.sort((a, b) => dayjs(b.scheduledDate).valueOf() - dayjs(a.scheduledDate).valueOf());
-        cancelledApps.sort((a, b) => dayjs(b.scheduledDate).valueOf() - dayjs(a.scheduledDate).valueOf());
+        pastApps.sort((a, b) => dayjs(b.scheduledAt).valueOf() - dayjs(a.scheduledAt).valueOf());
+        cancelledApps.sort((a, b) => dayjs(b.scheduledAt).valueOf() - dayjs(a.scheduledAt).valueOf());
 
         return { upcoming: upcomingApps, past: pastApps, cancelled: cancelledApps };
     }, [allAppointments, searchQuery]);
@@ -150,9 +156,10 @@ const MyAppointments: React.FC = () => {
         const salonName = (appointment.salonId as any)?.name || 'Unknown Salon';
         const salonAddress = (appointment.salonId as any)?.address?.street || '';
         const barberName = (appointment.barberId as any)?.userId?.name || 'Any Stylist';
-        const serviceNames = (appointment.services as any[])?.map(s => s.name).join(', '); // Changed serviceIds to services
-        const dateObj = dayjs(appointment.scheduledDate);
+        const serviceNames = (appointment.serviceIds as any[])?.map(s => s.name).join(', ') || 'Service';
+        const dateTimeObj = dayjs(appointment.scheduledAt); // Use scheduledAt from API
         const statusColor = getStatusColor(appointment.status);
+        const totalAmount = (appointment as any).pricing?.total || 0; // Use pricing.total from API
 
         return (
             <Card
@@ -187,14 +194,14 @@ const MyAppointments: React.FC = () => {
                             borderBottom: { xs: '1px solid rgba(0,0,0,0.05)', sm: 'none' }
                         }}>
                             <Typography variant="h4" sx={{ fontWeight: 800, color: '#334155' }}>
-                                {dateObj.format('DD')}
+                                {dateTimeObj.format('DD')}
                             </Typography>
                             <Typography variant="h6" sx={{ fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>
-                                {dateObj.format('MMM')}
+                                {dateTimeObj.format('MMM')}
                             </Typography>
                             <Box sx={{ flexGrow: { xs: 1, sm: 0 } }} />
                             <Chip
-                                label={appointment.scheduledTime}
+                                label={dateTimeObj.format('hh:mm A')}
                                 size="small"
                                 icon={<TimeIcon sx={{ fontSize: '14px !important' }} />}
                                 sx={{
@@ -287,7 +294,7 @@ const MyAppointments: React.FC = () => {
                             bgcolor: { xs: 'white', sm: '#f8fafc' }
                         }}>
                             <Typography variant="h6" sx={{ fontWeight: 800, color: '#6366f1', mb: { xs: 0, sm: 2 } }}>
-                                {formatCurrency(appointment.totalAmount)}
+                                {formatCurrency(totalAmount)}
                             </Typography>
                             <Box sx={{ flexGrow: { xs: 1, sm: 0 }, display: { xs: 'block', sm: 'none' } }} />
 
@@ -298,7 +305,7 @@ const MyAppointments: React.FC = () => {
                                 onClick={() => navigate(`/appointments/${appointment._id}`)} // Updated route
                                 sx={{
                                     bgcolor: 'white',
-                                    color: '#334155',
+                                    color: 'white',
                                     fontWeight: 700,
                                     borderRadius: '12px',
                                     textTransform: 'none',

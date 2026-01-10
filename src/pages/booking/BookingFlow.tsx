@@ -37,6 +37,7 @@ import {
 import { salonService } from '../../services/salonService';
 import { barberService } from '../../services/barberService';
 import { appointmentService } from '../../services/appointmentService';
+import { paymentService } from '../../services/paymentService';
 import { Salon, Service, Barber } from '../../types';
 import './BookingFlow.css';
 
@@ -63,6 +64,18 @@ const BookingFlow: React.FC = () => {
     const [notes, setNotes] = useState('');
 
     const steps = ['Select Service', 'Choose Barber', 'Pick Date & Time', 'Confirm'];
+
+    // Load Razorpay SDK
+    useEffect(() => {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        document.body.appendChild(script);
+
+        return () => {
+            document.body.removeChild(script);
+        };
+    }, []);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -138,19 +151,95 @@ const BookingFlow: React.FC = () => {
                 .hour(selectedTime.hour())
                 .minute(selectedTime.minute());
 
-            await appointmentService.createAppointment({
+            // Step 1: Create appointment
+            const appointmentResponse = await appointmentService.createAppointment({
                 salonId: salonId!,
                 barberId: selectedBarber._id,
-                serviceIds: [selectedService._id], // Changed from 'services' to 'serviceIds'
-                scheduledAt: appointmentDateTime.toISOString(), // Combined into ISO datetime string
-                locationType: 'salon', // Added required field
+                serviceIds: [selectedService._id],
+                scheduledAt: appointmentDateTime.toISOString(),
+                locationType: 'salon',
                 notes,
             });
 
-            setSuccess(true);
+            const appointment = appointmentResponse.data;
+            if (!appointment) {
+                throw new Error('Failed to create appointment');
+            }
+
+            // Step 2: Initiate payment
+            const paymentResponse = await paymentService.initiatePayment({
+                appointmentId: appointment._id,
+                method: 'upi' as any, // Razorpay allows multiple payment methods in modal
+            });
+
+            const paymentData = paymentResponse.data;
+            if (!paymentData) {
+                throw new Error('Failed to initiate payment');
+            }
+
+            // Step 3: Load and configure Razorpay
+            const options = {
+                key: import.meta.env.VITE_RAZORPAY_KEY_ID as string,
+                amount: paymentData.amount,
+                currency: paymentData.currency,
+                name: salon?.name || 'Styler',
+                description: `${selectedService.name} - Appointment`,
+                order_id: paymentData.orderId,
+                handler: async function (response: any) {
+                    try {
+                        // Step 4: Verify payment on backend
+                        await paymentService.verifyPayment(
+                            paymentData.orderId,
+                            response.razorpay_payment_id,
+                            response.razorpay_signature
+                        );
+
+                        // Payment successful
+                        setSuccess(true);
+                        setTimeout(() => {
+                            navigate(`/payment/success?appointmentId=${appointment._id}`);
+                        }, 1500);
+                    } catch (error: any) {
+                        setError('Payment verification failed. Please contact support.');
+                        setTimeout(() => {
+                            navigate(`/payment/failed?appointmentId=${appointment._id}`);
+                        }, 2000);
+                    }
+                },
+                prefill: {
+                    name: (selectedBarber?.userId as any)?.name || '',
+                    email: '',
+                    contact: '',
+                },
+                theme: {
+                    color: '#667eea',
+                },
+                modal: {
+                    ondismiss: function () {
+                        setSubmitting(false);
+                        setError('Payment cancelled. You can retry or contact salon directly.');
+                    },
+                },
+            };
+
+            // Check if Razorpay is loaded
+            if (!window.Razorpay) {
+                throw new Error('Razorpay SDK not loaded. Please refresh and try again.');
+            }
+
+            const rzp = new window.Razorpay(options);
+
+            rzp.on('payment.failed', function (response: any) {
+                setError(response.error.description || 'Payment failed. Please try again.');
+                setTimeout(() => {
+                    navigate(`/payment/failed?appointmentId=${appointment._id}`);
+                }, 2000);
+                setSubmitting(false);
+            });
+
+            rzp.open();
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to book appointment');
-        } finally {
+            setError(err.response?.data?.message || 'Failed to process booking');
             setSubmitting(false);
         }
     };

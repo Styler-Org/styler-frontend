@@ -144,6 +144,14 @@ function AppContent() {
                     }
                 />
                 <Route
+                    path="/appointments/:id"
+                    element={
+                        <ProtectedRoute role={UserRole.CUSTOMER}>
+                            <Layout><AppointmentDetails /></Layout>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
                     path="/customer/appointments/:id"
                     element={
                         <ProtectedRoute role={UserRole.CUSTOMER}>
