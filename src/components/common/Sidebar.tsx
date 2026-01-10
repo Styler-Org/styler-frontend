@@ -1,9 +1,11 @@
 import React from 'react';
-import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography, Divider, Avatar, IconButton } from '@mui/material';
+import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography, Divider, Avatar, IconButton, Badge } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Logout as LogoutIcon } from '@mui/icons-material';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../stores/authStore';
 import { getNavLinksForRole } from '../../utils/navigationConfig';
+import { notificationService } from '../../services/notificationService';
 import Logo from './Logo';
 
 const DRAWER_WIDTH = 280;
@@ -19,6 +21,14 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, variant }) => {
     const location = useLocation();
     const { user, clearAuth } = useAuthStore();
     const navLinks = getNavLinksForRole(user?.role);
+
+    // Fetch unread notification count
+    const { data: unreadCount = 0 } = useQuery({
+        queryKey: ['unreadNotificationCount'],
+        queryFn: () => notificationService.getUnreadCount(),
+        refetchInterval: 30000, // Refetch every 30 seconds
+        enabled: !!user, // Only fetch if user is logged in
+    });
 
     const handleLogout = () => {
         clearAuth();
@@ -57,6 +67,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, variant }) => {
             <List sx={{ px: 2, flexGrow: 1 }}>
                 {navLinks.map((item) => {
                     const isActive = location.pathname === item.path;
+                    const isNotifications = item.label === 'Notifications';
+
                     return (
                         <ListItem key={item.path} disablePadding sx={{ mb: 1 }}>
                             <ListItemButton
@@ -77,7 +89,25 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, variant }) => {
                                     minWidth: 40,
                                     color: isActive ? 'primary.main' : 'text.secondary'
                                 }}>
-                                    {item.icon}
+                                    {isNotifications && unreadCount > 0 ? (
+                                        <Badge
+                                            badgeContent={unreadCount}
+                                            color="error"
+                                            max={99}
+                                            sx={{
+                                                '& .MuiBadge-badge': {
+                                                    fontSize: '0.7rem',
+                                                    height: '18px',
+                                                    minWidth: '18px',
+                                                    fontWeight: 600,
+                                                }
+                                            }}
+                                        >
+                                            {item.icon}
+                                        </Badge>
+                                    ) : (
+                                        item.icon
+                                    )}
                                 </ListItemIcon>
                                 <ListItemText
                                     primary={item.label}

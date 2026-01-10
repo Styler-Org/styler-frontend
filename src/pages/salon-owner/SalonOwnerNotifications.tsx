@@ -26,9 +26,11 @@ import {
     DeleteOutline as DeleteIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
 import { notificationService, Notification } from '../../services/notificationService';
 
 const SalonOwnerNotifications: React.FC = () => {
+    const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState(0);
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(true);
@@ -138,6 +140,8 @@ const SalonOwnerNotifications: React.FC = () => {
                 prev.map(n => (n._id === id ? { ...n, isRead: true } : n))
             );
             fetchUnreadCount();
+            // Invalidate query to update sidebar badge
+            queryClient.invalidateQueries({ queryKey: ['unreadNotificationCount'] });
         } catch (err) {
             console.error('Error marking notification as read:', err);
         }
@@ -149,6 +153,8 @@ const SalonOwnerNotifications: React.FC = () => {
             await notificationService.deleteNotification(id);
             setNotifications(prev => prev.filter(n => n._id !== id));
             fetchUnreadCount();
+            // Invalidate query to update sidebar badge
+            queryClient.invalidateQueries({ queryKey: ['unreadNotificationCount'] });
         } catch (err) {
             console.error('Error deleting notification:', err);
         }
@@ -159,6 +165,8 @@ const SalonOwnerNotifications: React.FC = () => {
             await notificationService.markAllAsRead();
             setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
             setUnreadCount(0);
+            // Invalidate query to update sidebar badge
+            queryClient.invalidateQueries({ queryKey: ['unreadNotificationCount'] });
         } catch (err) {
             console.error('Error marking all as read:', err);
         }
