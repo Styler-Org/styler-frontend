@@ -63,6 +63,13 @@ const Navbar: React.FC = () => {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const [mobileOpen, setMobileOpen] = React.useState(false);
 
+    // Pages with dark/purple hero backgrounds that need white logo
+    const darkBackgroundPages = ['/', '/login', '/signup'];
+    const hasDarkBackground = darkBackgroundPages.includes(location.pathname);
+
+    // Determine logo variant: white on dark backgrounds when not scrolled, otherwise default gradient
+    const logoVariant = (!scrolled && hasDarkBackground) ? 'light' : 'default';
+
     const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
     };
@@ -239,7 +246,7 @@ const Navbar: React.FC = () => {
             >
                 <Container maxWidth={false}>
                     <Toolbar disableGutters sx={{ height: scrolled ? 72 : 90, transition: 'all 0.3s ease' }}>
-                        <Logo size={isMobile ? "small" : "medium"} variant="default" />
+                        <Logo size={isMobile ? "small" : "medium"} variant={logoVariant} />
 
                         {isMobile ? (
                             <IconButton

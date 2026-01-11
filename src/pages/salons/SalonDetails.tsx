@@ -363,7 +363,7 @@ const SalonDetails: React.FC = () => {
                                     onClick={() => navigate(`/booking/${salon._id}`)}
                                     sx={{
                                         bgcolor: 'white',
-                                        color: '#667eea',
+                                        color: 'white',
                                         py: 2,
                                         fontSize: '1.1rem',
                                         fontWeight: 700,
