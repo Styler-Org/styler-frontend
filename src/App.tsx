@@ -10,6 +10,7 @@ import AuthModal from './components/auth/AuthModal';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import DashboardLayout from './components/layout/DashboardLayout';
 import { useAuthStore } from './stores/authStore';
+import { useNotificationSocket } from './hooks/useNotificationSocket';
 import { UserRole } from './types';
 
 // Pages

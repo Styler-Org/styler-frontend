@@ -106,28 +106,14 @@ const StaffManagement: React.FC = () => {
         setLoading(true);
 
         try {
-            // First, check if the user exists in Styler
-            const userService = (await import('../../services/userService')).userService;
-            const checkResult = await userService.checkUserExists(formData.email, formData.phone);
+            // Use new endpoint that creates/finds user and registers barber
+            const api = (await import('../../services/api')).default;
 
-            if (!checkResult.success || !checkResult.data?.exists) {
-                toast.error('This barber is not registered in Styler. Please ask them to create an account first.');
-                setLoading(false);
-                return;
-            }
-
-            // If user exists and is a barber, proceed with registration
-            const userData = checkResult.data?.user;
-            if (userData && userData.role !== 'barber') {
-                toast.error(`This user is registered as ${userData.role}, not as a barber. Only barbers can be added as staff.`);
-                setLoading(false);
-                return;
-            }
-
-            // User exists and is a barber, proceed with adding to salon
-            await registerBarber({
-                salonId: formData.salonId,
-                displayName: formData.name,
+            await api.post(`/salons/${formData.salonId}/staff`, {
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                displayName: formData.name, // Use same name as display name
                 specializations: formData.specialties,
                 experience: formData.experience
             });
@@ -148,7 +134,8 @@ const StaffManagement: React.FC = () => {
                 fetchSalonBarbers(formData.salonId);
             }
         } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to add staff member');
+            const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to add staff member';
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
