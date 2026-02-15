@@ -212,6 +212,11 @@ export interface Appointment {
     notes?: string;
     createdAt: string;
     updatedAt: string;
+
+    // Convenience properties (derived from scheduledAt and pricing.total)
+    scheduledDate?: string;
+    scheduledTime?: string;
+    totalAmount?: number;
 }
 
 export interface Payment {

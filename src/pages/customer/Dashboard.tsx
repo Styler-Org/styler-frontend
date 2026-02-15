@@ -33,7 +33,7 @@ const CustomerDashboard: React.FC = () => {
         queryFn: () => appointmentService.getMyAppointments(),
     });
 
-    const appointments = (data?.data?.data as Appointment[]) || [];
+    const appointments = (data?.data as Appointment[]) || [];
     const upcomingAppointments = appointments.filter(
         (apt) => apt.status === 'confirmed' || apt.status === 'pending'
     );
@@ -134,14 +134,16 @@ const CustomerDashboard: React.FC = () => {
                                             <Box className="appointment-card-details" sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                     <CalendarIcon fontSize="small" />
-                                                    <Typography variant="body2">{formatDate(appointment.scheduledDate)}</Typography>
+                                                    <Typography variant="body2">{formatDate(appointment.scheduledDate || appointment.scheduledAt)}</Typography>
                                                 </Box>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                     <ScheduleIcon fontSize="small" />
-                                                    <Typography variant="body2">{appointment.scheduledTime}</Typography>
+                                                    <Typography variant="body2">
+                                                        {appointment.scheduledTime || new Date(appointment.scheduledAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                                    </Typography>
                                                 </Box>
                                                 <Typography variant="body2" fontWeight={600} sx={{ color: 'primary.main' }}>
-                                                    {formatCurrency(appointment.totalAmount)}
+                                                    {formatCurrency(appointment.totalAmount ?? appointment.pricing.total)}
                                                 </Typography>
                                             </Box>
                                         </CardContent>

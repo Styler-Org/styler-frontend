@@ -538,7 +538,7 @@ const Home: React.FC = () => {
                                 py: 2,
                                 fontSize: '1.2rem',
                                 bgcolor: 'white',
-                                color: '#6366f1',
+                                color: 'white',
                                 fontWeight: 800,
                                 boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
                                 '&:hover': {
