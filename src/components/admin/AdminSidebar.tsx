@@ -74,7 +74,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, onMobileClose }
                     Admin Panel
                 </Typography>
                 <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                    Styler Management
+                    StylerApp Management
                 </Typography>
             </Box>
 

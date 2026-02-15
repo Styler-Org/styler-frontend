@@ -191,7 +191,7 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
                         <Logo variant="light" size="large" clickable={false} />
                     </Box>
                     <Typography className="login-tagline">
-                        Experience the art of grooming with Styler. Check in to check out the best salons near you.
+                        Experience the art of grooming with StylerApp. Check in to check out the best salons near you.
                     </Typography>
 
                     <Box className="login-features">

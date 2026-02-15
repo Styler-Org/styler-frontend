@@ -163,8 +163,8 @@ export const COLORS = {
 
 // Storage keys
 export const STORAGE_KEYS = {
-    AUTH_TOKEN: 'styler_auth_token',
-    REFRESH_TOKEN: 'styler_refresh_token',
-    USER_DATA: 'styler_user',
-    THEME: 'styler_theme',
+    AUTH_TOKEN: 'stylerapp_auth_token',
+    REFRESH_TOKEN: 'stylerapp_refresh_token',
+    USER_DATA: 'stylerapp_user',
+    THEME: 'stylerapp_theme',
 };

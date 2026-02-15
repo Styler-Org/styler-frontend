@@ -527,7 +527,7 @@ const Home: React.FC = () => {
                             Ready to Transform Your Look?
                         </Typography>
                         <Typography variant="h6" sx={{ mb: 5, color: 'rgba(255,255,255,0.9)', maxWidth: 600, mx: 'auto', lineHeight: 1.6 }}>
-                            Join thousands of satisfied customers who trust Styler for their premium grooming needs.
+                            Join thousands of satisfied customers who trust StylerApp for their premium grooming needs.
                         </Typography>
                         <Button
                             variant="contained"

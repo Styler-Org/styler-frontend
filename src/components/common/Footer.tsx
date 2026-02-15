@@ -107,7 +107,7 @@ const Footer: React.FC = () => {
 
                 <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
                     <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-                        © {new Date().getFullYear()} Styler Inc. All rights reserved.
+                        © {new Date().getFullYear()} StylerApp Inc. All rights reserved.
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 3 }}>
                         <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', cursor: 'pointer', '&:hover': { color: 'white' } }}>

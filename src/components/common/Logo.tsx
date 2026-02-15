@@ -16,15 +16,15 @@ const Logo: React.FC<LogoProps> = ({ variant = 'default', size = 'medium', click
     const sizeMap = {
         small: {
             fontSize: '1.25rem',
-            iconSize: 20
+            iconSize: 24
         },
         medium: {
             fontSize: '1.75rem',
-            iconSize: 28
+            iconSize: 36
         },
         large: {
             fontSize: '2.5rem',
-            iconSize: 40
+            iconSize: 50
         },
     };
 
@@ -64,10 +64,10 @@ const Logo: React.FC<LogoProps> = ({ variant = 'default', size = 'medium', click
 
     // Typography styles based on variant
     const textStyle = {
-        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        fontWeight: 800,
+        fontFamily: '"Outfit", "Inter", -apple-system, sans-serif',
+        fontWeight: 700,
         fontSize: currentSize.fontSize,
-        letterSpacing: '-0.03em',
+        letterSpacing: '-0.02em',
         lineHeight: 1,
         // Gradient handling
         background: variant === 'default' ? colorMap.default.bg : 'none',
@@ -80,42 +80,46 @@ const Logo: React.FC<LogoProps> = ({ variant = 'default', size = 'medium', click
     const logoContent = (
         <Box
             className={`styler-logo styler-logo-${variant} styler-logo-${size}`}
-            aria-label="Styler Logo"
+            aria-label="StylerApp Logo"
+            sx={{ gap: 0, alignItems: 'center' }}
         >
-            {/* "STY" Part */}
             <Typography component="span" sx={textStyle}>
-                STY
+                St
             </Typography>
 
-            {/* Scissors Icon */}
-            <Box className="logo-scissor-container">
+            <Box className="logo-scissor-wrapper" sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: size === 'small' ? '0px' : '1px',
+                position: 'relative',
+                top: size === 'large' ? '0.05em' : 0
+            }}>
                 <ScissorsIcon
-                    className="logo-scissor-icon"
+                    className="logo-scissor-icon-anim"
                     sx={{
-                        fontSize: currentSize.iconSize,
-                        color: variant === 'default' ? 'url(#logo-gradient)' : colorMap[variant].icon,
-                        // If gradient is needed for icon specifically
-                        fill: variant === 'default' ? 'url(#styler_gradient)' : undefined
+                        fontSize: currentSize.iconSize || 'inherit',
+                        color: variant === 'default' ? '#4f46e5' : colorMap[variant].icon,
+                        fill: variant === 'default' ? 'url(#styler-gradient-def)' : undefined,
+                        transform: 'rotate(180deg)',
+                        filter: variant === 'default' ? 'drop-shadow(0px 2px 4px rgba(79, 70, 229, 0.3))' : 'none'
                     }}
                 />
 
-                {/* 
-                   SVG Defs for Gradient Icon 
-                   Only rendered once if variant is default 
-                */}
                 {variant === 'default' && (
                     <svg width={0} height={0} style={{ position: 'absolute', visibility: 'hidden' }}>
-                        <linearGradient id="styler_gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#4f46e5" />
-                            <stop offset="100%" stopColor="#7c3aed" />
-                        </linearGradient>
+                        <defs>
+                            <linearGradient id="styler-gradient-def" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#4f46e5" />
+                                <stop offset="100%" stopColor="#7c3aed" />
+                            </linearGradient>
+                        </defs>
                     </svg>
                 )}
             </Box>
 
-            {/* "LER" Part */}
             <Typography component="span" sx={textStyle}>
-                LER
+                lerApp
             </Typography>
         </Box>
     );

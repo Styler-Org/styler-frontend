@@ -43,7 +43,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                             <MenuIcon />
                         </IconButton>
                         <Typography variant="h6" noWrap component="div">
-                            Styler Dashboard
+                            StylerApp Dashboard
                         </Typography>
                     </Toolbar>
                 </AppBar>

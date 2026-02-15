@@ -59,7 +59,7 @@ const Contact: React.FC = () => {
         },
         {
             question: "Are the stylists verified?",
-            answer: "Absolutely. All salons and stylists on Styler go through a rigorous vetting process to ensure they meet our high standards of quality and professionalism."
+            answer: "Absolutely. All salons and stylists on StylerApp go through a rigorous vetting process to ensure they meet our high standards of quality and professionalism."
         }
     ];
 
@@ -84,8 +84,8 @@ const Contact: React.FC = () => {
                                 <Paper className="info-card">
                                     <div className="icon-box"><Email /></div>
                                     <Typography variant="h6">Email Us</Typography>
-                                    <Typography variant="body2" color="text.secondary">support@styler.com</Typography>
-                                    <Typography variant="body2" color="text.secondary">partners@styler.com</Typography>
+                                    <Typography variant="body2" color="text.secondary">support@stylerapp.com</Typography>
+                                    <Typography variant="body2" color="text.secondary">partners@stylerapp.com</Typography>
                                 </Paper>
                             </motion.div>
                             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>

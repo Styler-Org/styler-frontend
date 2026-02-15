@@ -73,7 +73,7 @@ const About: React.FC = () => {
     ];
 
     const timeline = [
-        { year: '2019', event: 'Styler Founded', description: 'Started with a vision to revolutionize salon bookings' },
+        { year: '2019', event: 'StylerApp Founded', description: 'Started with a vision to revolutionize salon bookings' },
         { year: '2020', event: '10 Salon Partners', description: 'Expanded to 10 premium salons across the city' },
         { year: '2022', event: '5000+ Appointments', description: 'Reached milestone of 5000 successful bookings' },
         { year: '2024', event: '20+ Locations', description: 'Now serving customers at 20+ locations' },
@@ -191,7 +191,7 @@ const About: React.FC = () => {
                                 Making Premium <br />Grooming Accessible
                             </Typography>
                             <Typography variant="body1" paragraph color="text.secondary" sx={{ fontSize: '1.1rem', lineHeight: 1.8 }}>
-                                At Styler, we believe everyone deserves access to premium grooming services. We're on a mission
+                                At StylerApp, we believe everyone deserves access to premium grooming services. We're on a mission
                                 to connect clients with the best salons and stylists, making it easy to book, convenient to visit,
                                 and delightful to experience.
                             </Typography>
@@ -234,7 +234,7 @@ const About: React.FC = () => {
                             What Drives Us
                         </Typography>
                         <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
-                            The principles that guide everything we do at Styler.
+                            The principles that guide everything we do at StylerApp.
                         </Typography>
                     </Box>
 
