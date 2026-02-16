@@ -145,7 +145,7 @@ const AppointmentDetails: React.FC = () => {
     const statusColor = getStatusColor(appointment.status);
 
     const salon = appointment.salon || (appointment.salonId as any);
-    const salonName = salon?.name || salon?.displayName || 'Unknown Salon';
+    const salonName = salon?.displayName || salon?.businessName || salon?.name || 'Unknown Salon';
     const salonAddressObj = salon?.address;
     const salonAddress = salonAddressObj
         ? `${salonAddressObj.street}, ${salonAddressObj.city}`
@@ -161,6 +161,30 @@ const AppointmentDetails: React.FC = () => {
     const scheduledDate = dayjs(appointment.scheduledAt);
 
     const canCancel = ['pending', 'confirmed'].includes(appointment.status);
+
+    // Call Handler
+    const handleCall = () => {
+        const salonPhone = salon?.phone;
+        if (salonPhone) {
+            window.location.href = `tel:${salonPhone}`;
+        } else {
+            toast.error('Salon phone number not available');
+        }
+    };
+
+    // Directions Handler
+    const handleDirections = () => {
+        const coordinates = salon?.address?.location?.coordinates;
+        if (coordinates && coordinates.length === 2) {
+            const [lng, lat] = coordinates;
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+        } else if (salonAddressObj) {
+            const fullAddress = `${salonAddressObj.street}, ${salonAddressObj.city}, ${salonAddressObj.state}, ${salonAddressObj.pincode}`;
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(fullAddress)}`, '_blank');
+        } else {
+            toast.error('Salon location details not available');
+        }
+    };
 
     return (
         <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc', py: { xs: 4, md: 6 }, px: { xs: 2, md: 4 } }}>
@@ -281,7 +305,19 @@ const AppointmentDetails: React.FC = () => {
                                         fullWidth
                                         variant="outlined"
                                         startIcon={<PhoneIcon />}
-                                        sx={{ flex: 1, borderRadius: 3, py: 1.5, borderColor: '#e2e8f0', color: '#64748b' }}
+                                        onClick={handleCall}
+                                        sx={{
+                                            flex: 1,
+                                            borderRadius: 3,
+                                            py: 1.5,
+                                            borderColor: '#e2e8f0',
+                                            color: '#64748b',
+                                            '&:hover': {
+                                                borderColor: theme.palette.primary.main,
+                                                color: theme.palette.primary.main,
+                                                bgcolor: alpha(theme.palette.primary.main, 0.05)
+                                            }
+                                        }}
                                     >
                                         Call
                                     </Button>
@@ -289,7 +325,19 @@ const AppointmentDetails: React.FC = () => {
                                         fullWidth
                                         variant="outlined"
                                         startIcon={<DirectionsIcon />}
-                                        sx={{ flex: 1, borderRadius: 3, py: 1.5, borderColor: '#e2e8f0', color: '#64748b' }}
+                                        onClick={handleDirections}
+                                        sx={{
+                                            flex: 1,
+                                            borderRadius: 3,
+                                            py: 1.5,
+                                            borderColor: '#e2e8f0',
+                                            color: '#64748b',
+                                            '&:hover': {
+                                                borderColor: theme.palette.primary.main,
+                                                color: theme.palette.primary.main,
+                                                bgcolor: alpha(theme.palette.primary.main, 0.05)
+                                            }
+                                        }}
                                     >
                                         Directions
                                     </Button>
