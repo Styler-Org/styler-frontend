@@ -3,7 +3,7 @@ import { useAuthStore } from '../stores/authStore';
 
 // Create axios instance with base configuration
 const api: AxiosInstance = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL!,
+    baseURL: (import.meta as any).env.VITE_API_BASE_URL!,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -34,6 +34,11 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 
+        // Skip interceptor for login and register routes
+        if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/register')) {
+            return Promise.reject(error);
+        }
+
         // Handle 401 Unauthorized
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
@@ -47,11 +52,11 @@ api.interceptors.response.use(
 
                 // Try to refresh the token
                 const response = await axios.post(
-                    `${import.meta.env.VITE_API_BASE_URL!}/auth/refresh-token`,
+                    `${(import.meta as any).env.VITE_API_BASE_URL!}/auth/refresh-token`,
                     { refreshToken }
                 );
 
-                const { accessToken, refreshToken: newRefreshToken } = response.data.data.tokens;
+                const { accessToken, refreshToken: newRefreshToken } = response.data.data;
 
                 // Update tokens in store
                 useAuthStore.getState().setTokens(accessToken, newRefreshToken);

@@ -4,7 +4,7 @@ import { ApiResponse, PaginatedResponse, Salon, Service } from '../types';
 // ==================== Request Types ====================
 
 export interface SalonSearchFilters {
-    name?: string;
+    searchText?: string;
     city?: string;
     serviceType?: string;
     sortBy?: 'rating' | 'reviews' | 'name' | 'nearest';
@@ -98,7 +98,7 @@ class SalonService {
     async searchSalons(filters: SalonSearchFilters = {}): Promise<ApiResponse<PaginatedResponse<Salon>>> {
         const params = new URLSearchParams();
 
-        if (filters.name) params.append('name', filters.name);
+        if (filters.searchText) params.append('searchText', filters.searchText);
         if (filters.city) params.append('city', filters.city);
         if (filters.serviceType) params.append('serviceType', filters.serviceType);
         if (filters.sortBy) params.append('sort', filters.sortBy);

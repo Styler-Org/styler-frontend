@@ -25,6 +25,7 @@ import {
     Clear as ClearIcon,
     GridView as GridViewIcon,
     ViewList as ViewListIcon,
+    Map as MapIcon,
     Sort as SortIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
@@ -32,6 +33,7 @@ import { useQuery } from '@tanstack/react-query';
 import { salonService } from '../../services/salonService';
 import SalonCard from '../../components/salon/SalonCard';
 import SalonCardSkeleton from '../../components/common/SalonCardSkeleton';
+import Map, { MarkerData } from '../../components/Map';
 import { Salon } from '../../types';
 import { useGeolocation, calculateDistance, formatDistance } from '../../hooks/useGeolocation';
 import './SalonList.css';
@@ -39,7 +41,7 @@ import './SalonList.css';
 const MotionBox = motion(Box);
 
 type SortOption = 'nearest' | 'rating' | 'reviews' | 'name';
-type ViewMode = 'grid' | 'list';
+type ViewMode = 'grid' | 'list' | 'map';
 
 interface SalonWithDistance extends Salon {
     distance?: number;
@@ -48,38 +50,36 @@ interface SalonWithDistance extends Salon {
 const SalonList: React.FC = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
-    const [countryFilter, setCountryFilter] = useState('');
-    const [cityFilter, setCityFilter] = useState('');
+    const [countryFilter, setCountryFilter] = useState('India');
+    const [cityFilter, setCityFilter] = useState('Lucknow');
+    const [placeFilter, setPlaceFilter] = useState('');
     const [sortBy, setSortBy] = useState<SortOption>('rating');
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
     const [showLocationAlert, setShowLocationAlert] = useState(false);
 
     const { coordinates, error: locationError, loading: locationLoading, getCurrentPosition } = useGeolocation();
 
-    // Country-City mapping
-    const countryCityMap: Record<string, string[]> = {
-        'India': ['Mumbai', 'Delhi', 'Bangalore', 'Pune', 'Hyderabad', 'Chennai', 'Kolkata', 'Ahmedabad'],
-        'USA': ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio'],
-        'UK': ['London', 'Manchester', 'Birmingham', 'Leeds', 'Glasgow', 'Liverpool', 'Edinburgh'],
-        'UAE': ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah'],
-    };
-
-    // Get cities based on selected country
-    const availableCities = countryFilter ? countryCityMap[countryFilter] || [] : [];
-
-    // Reset city when country changes
-    const handleCountryChange = (country: string) => {
-        setCountryFilter(country);
-        setCityFilter(''); // Reset city when country changes
-    };
+    // Places in Lucknow mapping
+    const lucknowPlaces = [
+        'Gomti Nagar',
+        'Aliganj',
+        'Hazratganj',
+        'Indira Nagar',
+        'Aminabad',
+        'Chowk',
+        'Mahanagar',
+    ];
 
     const { data, isLoading } = useQuery({
-        queryKey: ['salons', searchQuery, cityFilter, sortBy],
-        queryFn: () => salonService.searchSalons({
-            name: searchQuery,
-            city: cityFilter,
-            sortBy: sortBy !== 'nearest' ? sortBy : undefined // Don't send 'nearest' to API
-        }),
+        queryKey: ['salons', searchQuery, placeFilter, cityFilter, sortBy],
+        queryFn: () => {
+            const combinedSearch = [searchQuery, placeFilter].filter(Boolean).join(' ');
+            return salonService.searchSalons({
+                searchText: combinedSearch || undefined,
+                city: cityFilter,
+                sortBy: sortBy !== 'nearest' ? sortBy : undefined // Don't send 'nearest' to API
+            });
+        },
     });
 
     const salons: Salon[] = (data?.data && Array.isArray(data.data)) ? data.data : [];
@@ -107,6 +107,18 @@ const SalonList: React.FC = () => {
         return processed;
     }, [salons, coordinates, sortBy]);
 
+    const mapMarkers: MarkerData[] = useMemo(() => {
+        return processedSalons
+            .filter(salon => salon.address?.location?.coordinates)
+            .map(salon => ({
+                id: salon._id,
+                lat: salon.address.location!.coordinates[1],
+                lng: salon.address.location!.coordinates[0],
+                title: salon.name,
+                onClick: () => navigate(`/salons/${salon._id}`),
+            }));
+    }, [processedSalons, navigate]);
+
     const handleFindNearest = () => {
         getCurrentPosition();
         if (coordinates) {
@@ -117,11 +129,10 @@ const SalonList: React.FC = () => {
 
     const handleClearSearch = () => {
         setSearchQuery('');
-        setCountryFilter('');
-        setCityFilter('');
+        setPlaceFilter('');
     };
 
-    const hasActiveFilters = searchQuery || countryFilter || cityFilter;
+    const hasActiveFilters = searchQuery || placeFilter;
 
     return (
         <Box className="salon-list-page">
@@ -201,32 +212,39 @@ const SalonList: React.FC = () => {
                     <Grid container spacing={2} alignItems="center">
                         <Grid size={{ xs: 12, md: 8 }}>
                             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                                <FormControl size="small" sx={{ minWidth: 150 }}>
+                                <FormControl size="small" sx={{ minWidth: 120 }}>
                                     <InputLabel>Country</InputLabel>
                                     <Select
                                         value={countryFilter}
-                                        onChange={(e) => handleCountryChange(e.target.value)}
+                                        disabled
                                         label="Country"
                                         sx={{ borderRadius: '12px', bgcolor: 'white' }}
                                     >
-                                        <MenuItem value="">All Countries</MenuItem>
                                         <MenuItem value="India">India</MenuItem>
-                                        <MenuItem value="USA">United States</MenuItem>
-                                        <MenuItem value="UK">United Kingdom</MenuItem>
-                                        <MenuItem value="UAE">United Arab Emirates</MenuItem>
                                     </Select>
                                 </FormControl>
-                                <FormControl size="small" sx={{ minWidth: 150 }} disabled={!countryFilter}>
+                                <FormControl size="small" sx={{ minWidth: 120 }}>
                                     <InputLabel>City</InputLabel>
                                     <Select
                                         value={cityFilter}
-                                        onChange={(e) => setCityFilter(e.target.value)}
+                                        disabled
                                         label="City"
                                         sx={{ borderRadius: '12px', bgcolor: 'white' }}
                                     >
-                                        <MenuItem value="">All Cities</MenuItem>
-                                        {availableCities.map((city) => (
-                                            <MenuItem key={city} value={city}>{city}</MenuItem>
+                                        <MenuItem value="Lucknow">Lucknow</MenuItem>
+                                    </Select>
+                                </FormControl>
+                                <FormControl size="small" sx={{ minWidth: 180 }}>
+                                    <InputLabel>Place in Lucknow</InputLabel>
+                                    <Select
+                                        value={placeFilter}
+                                        onChange={(e) => setPlaceFilter(e.target.value)}
+                                        label="Place in Lucknow"
+                                        sx={{ borderRadius: '12px', bgcolor: 'white' }}
+                                    >
+                                        <MenuItem value="">All Places</MenuItem>
+                                        {lucknowPlaces.map((place) => (
+                                            <MenuItem key={place} value={place}>{place}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
@@ -265,6 +283,9 @@ const SalonList: React.FC = () => {
                                     <ToggleButton value="list" sx={{ border: 'none', borderRadius: 1.5, p: 0.7 }}>
                                         <ViewListIcon fontSize="small" />
                                     </ToggleButton>
+                                    <ToggleButton value="map" sx={{ border: 'none', borderRadius: 1.5, p: 0.7 }}>
+                                        <MapIcon fontSize="small" />
+                                    </ToggleButton>
                                 </ToggleButtonGroup>
                             </Box>
                         </Grid>
@@ -276,11 +297,8 @@ const SalonList: React.FC = () => {
                             {searchQuery && (
                                 <Chip label={`Search: ${searchQuery}`} onDelete={() => setSearchQuery('')} size="small" sx={{ borderRadius: '8px' }} />
                             )}
-                            {countryFilter && (
-                                <Chip label={countryFilter} onDelete={() => { setCountryFilter(''); setCityFilter(''); }} size="small" sx={{ borderRadius: '8px' }} />
-                            )}
-                            {cityFilter && (
-                                <Chip label={cityFilter} onDelete={() => setCityFilter('')} size="small" sx={{ borderRadius: '8px' }} />
+                            {placeFilter && (
+                                <Chip label={`Place: ${placeFilter}`} onDelete={() => setPlaceFilter('')} size="small" sx={{ borderRadius: '8px' }} />
                             )}
                             <Button size="small" onClick={handleClearSearch} sx={{ ml: 1, color: 'text.secondary' }}>
                                 Clear All
@@ -321,6 +339,15 @@ const SalonList: React.FC = () => {
                                 Clear All Filters
                             </Button>
                         )}
+                    </Box>
+                ) : viewMode === 'map' ? (
+                    <Box sx={{ width: '100%', height: '600px', borderRadius: 4, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                        <Map
+                            center={coordinates ? { lat: coordinates.latitude, lng: coordinates.longitude } : undefined}
+                            zoom={13}
+                            markers={mapMarkers}
+                            height="100%"
+                        />
                     </Box>
                 ) : (
                     <Grid container spacing={4}>

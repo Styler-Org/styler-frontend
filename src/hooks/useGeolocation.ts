@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { mapsService } from '../services/maps';
 
 export interface GeolocationState {
     coordinates: {
         latitude: number;
         longitude: number;
     } | null;
+    city: string | null;
     error: string | null;
     loading: boolean;
     permission: PermissionState | null;
@@ -13,6 +15,7 @@ export interface GeolocationState {
 export const useGeolocation = () => {
     const [state, setState] = useState<GeolocationState>({
         coordinates: null,
+        city: null,
         error: null,
         loading: false,
         permission: null,
@@ -27,12 +30,22 @@ export const useGeolocation = () => {
         setState(prev => ({ ...prev, loading: true, error: null }));
 
         navigator.geolocation.getCurrentPosition(
-            (position) => {
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                let city = null;
+
+                try {
+                    city = await mapsService.getCityFromCoordinates(latitude, longitude);
+                } catch (err) {
+                    console.error('Failed to get city from coordinates', err);
+                }
+
                 setState({
                     coordinates: {
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude,
+                        latitude,
+                        longitude,
                     },
+                    city,
                     error: null,
                     loading: false,
                     permission: 'granted',
@@ -53,6 +66,7 @@ export const useGeolocation = () => {
                 }
                 setState({
                     coordinates: null,
+                    city: null,
                     error: errorMessage,
                     loading: false,
                     permission: 'denied',

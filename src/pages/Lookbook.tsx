@@ -26,7 +26,7 @@ const styles: StyleItem[] = [
     },
     {
         id: 2,
-        image: 'https://images.unsplash.com/photo-1621605815971-fbc98d694d8d?q=80&w=800&auto=format&fit=crop',
+        image: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?q=80&w=800&auto=format&fit=crop',
         category: 'Beard',
         title: 'Sharp Line Up & Beard Sculpt',
         likes: 89,
@@ -34,7 +34,7 @@ const styles: StyleItem[] = [
     },
     {
         id: 3,
-        image: 'https://images.unsplash.com/photo-1593702295094-aea8c5c13d7b?q=80&w=800&auto=format&fit=crop',
+        image: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=800&auto=format&fit=crop',
         category: 'Haircut',
         title: 'Classic Pompadour',
         likes: 215,
