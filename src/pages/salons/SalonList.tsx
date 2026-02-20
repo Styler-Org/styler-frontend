@@ -183,17 +183,9 @@ const SalonList: React.FC = () => {
                                                 variant="contained"
                                                 onClick={handleFindNearest}
                                                 size="large"
+                                                className="near-me-btn"
                                                 startIcon={locationLoading ? null : <MyLocationIcon />}
                                                 disabled={locationLoading}
-                                                sx={{
-                                                    borderRadius: '30px',
-                                                    px: 4,
-                                                    height: 48,
-                                                    textTransform: 'none',
-                                                    fontSize: '1rem',
-                                                    fontWeight: 600,
-                                                    background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
-                                                }}
                                             >
                                                 {locationLoading ? 'Locating...' : 'Near Me'}
                                             </Button>
@@ -211,65 +203,63 @@ const SalonList: React.FC = () => {
                 <Container maxWidth="lg">
                     <Grid container spacing={2} alignItems="center">
                         <Grid size={{ xs: 12, md: 8 }}>
-                            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                                <FormControl size="small" sx={{ minWidth: 120 }}>
-                                    <InputLabel>Country</InputLabel>
-                                    <Select
-                                        value={countryFilter}
-                                        disabled
-                                        label="Country"
-                                        sx={{ borderRadius: '12px', bgcolor: 'white' }}
-                                    >
-                                        <MenuItem value="India">India</MenuItem>
-                                    </Select>
-                                </FormControl>
-                                <FormControl size="small" sx={{ minWidth: 120 }}>
-                                    <InputLabel>City</InputLabel>
-                                    <Select
-                                        value={cityFilter}
-                                        disabled
-                                        label="City"
-                                        sx={{ borderRadius: '12px', bgcolor: 'white' }}
-                                    >
-                                        <MenuItem value="Lucknow">Lucknow</MenuItem>
-                                    </Select>
-                                </FormControl>
-                                <FormControl size="small" sx={{ minWidth: 180 }}>
-                                    <InputLabel>Place in Lucknow</InputLabel>
-                                    <Select
-                                        value={placeFilter}
-                                        onChange={(e) => setPlaceFilter(e.target.value)}
-                                        label="Place in Lucknow"
-                                        sx={{ borderRadius: '12px', bgcolor: 'white' }}
-                                    >
-                                        <MenuItem value="">All Places</MenuItem>
-                                        {lucknowPlaces.map((place) => (
-                                            <MenuItem key={place} value={place}>{place}</MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                                <FormControl size="small" sx={{ minWidth: 180 }}>
-                                    <InputLabel>Sort By</InputLabel>
-                                    <Select
-                                        value={sortBy}
-                                        onChange={(e) => setSortBy(e.target.value as SortOption)}
-                                        label="Sort By"
-                                        startAdornment={<SortIcon sx={{ mr: 1, fontSize: 18, color: 'text.secondary' }} />}
-                                        sx={{ borderRadius: '12px', bgcolor: 'white' }}
-                                    >
-                                        <MenuItem value="rating">Highest Rated</MenuItem>
-                                        <MenuItem value="reviews">Most Reviews</MenuItem>
-                                        <MenuItem value="name">Name (A-Z)</MenuItem>
-                                        {coordinates && <MenuItem value="nearest">Nearest First</MenuItem>}
-                                    </Select>
-                                </FormControl>
+                            <Box className="filter-scroll-wrapper">
+                                <Box className="filter-scroll-container">
+                                    <FormControl size="small" className="premium-select" sx={{ minWidth: 120 }}>
+                                        <InputLabel>Country</InputLabel>
+                                        <Select
+                                            value={countryFilter}
+                                            disabled
+                                            label="Country"
+                                        >
+                                            <MenuItem value="India">India</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                    <FormControl size="small" className="premium-select" sx={{ minWidth: 120 }}>
+                                        <InputLabel>City</InputLabel>
+                                        <Select
+                                            value={cityFilter}
+                                            disabled
+                                            label="City"
+                                        >
+                                            <MenuItem value="Lucknow">Lucknow</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                    <FormControl size="small" className="premium-select" sx={{ minWidth: 180 }}>
+                                        <InputLabel>Place in Lucknow</InputLabel>
+                                        <Select
+                                            value={placeFilter}
+                                            onChange={(e) => setPlaceFilter(e.target.value)}
+                                            label="Place in Lucknow"
+                                        >
+                                            <MenuItem value="">All Places</MenuItem>
+                                            {lucknowPlaces.map((place) => (
+                                                <MenuItem key={place} value={place}>{place}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                    <FormControl size="small" className="premium-select" sx={{ minWidth: 180 }}>
+                                        <InputLabel>Sort By</InputLabel>
+                                        <Select
+                                            value={sortBy}
+                                            onChange={(e) => setSortBy(e.target.value as SortOption)}
+                                            label="Sort By"
+                                            startAdornment={<SortIcon sx={{ mr: 1, fontSize: 18, color: 'text.secondary' }} />}
+                                        >
+                                            <MenuItem value="rating">Highest Rated</MenuItem>
+                                            <MenuItem value="reviews">Most Reviews</MenuItem>
+                                            <MenuItem value="name">Name (A-Z)</MenuItem>
+                                            {coordinates && <MenuItem value="nearest">Nearest First</MenuItem>}
+                                        </Select>
+                                    </FormControl>
+                                </Box>
                             </Box>
                         </Grid>
                         <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' }, alignItems: 'center', gap: 2 }}>
                             <Typography variant="body2" color="text.secondary" fontWeight={500}>
                                 {isLoading ? 'Searching...' : `${processedSalons.length} results`}
                             </Typography>
-                            <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                            <Box className="view-mode-container">
                                 <ToggleButtonGroup
                                     value={viewMode}
                                     exclusive
@@ -277,13 +267,13 @@ const SalonList: React.FC = () => {
                                     size="small"
                                     sx={{ p: 0.5 }}
                                 >
-                                    <ToggleButton value="grid" sx={{ border: 'none', borderRadius: 1.5, p: 0.7 }}>
+                                    <ToggleButton value="grid" className="view-mode-toggle">
                                         <GridViewIcon fontSize="small" />
                                     </ToggleButton>
-                                    <ToggleButton value="list" sx={{ border: 'none', borderRadius: 1.5, p: 0.7 }}>
+                                    <ToggleButton value="list" className="view-mode-toggle">
                                         <ViewListIcon fontSize="small" />
                                     </ToggleButton>
-                                    <ToggleButton value="map" sx={{ border: 'none', borderRadius: 1.5, p: 0.7 }}>
+                                    <ToggleButton value="map" className="view-mode-toggle">
                                         <MapIcon fontSize="small" />
                                     </ToggleButton>
                                 </ToggleButtonGroup>

@@ -1,7 +1,16 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { importLibrary } from '@googlemaps/js-api-loader';
-import { Box, CircularProgress, Typography } from '@mui/material';
-import { mapsService } from '../services/maps';
+import React, { useEffect } from 'react';
+import { Box } from '@mui/material';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default marker icon missing issue in React Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png'
+});
 
 export interface MarkerData {
     id: string;
@@ -20,6 +29,15 @@ interface MapProps {
     fallbackLocation?: { lat: number; lng: number };
 }
 
+// Helper component to center map when coordinates change
+const MapUpdater: React.FC<{ center: { lat: number; lng: number }; zoom: number }> = ({ center, zoom }) => {
+    const map = useMap();
+    useEffect(() => {
+        map.setView([center.lat, center.lng], zoom);
+    }, [center, map, zoom]);
+    return null;
+};
+
 const Map: React.FC<MapProps> = ({
     center,
     zoom = 13,
@@ -28,98 +46,42 @@ const Map: React.FC<MapProps> = ({
     width = '100%',
     fallbackLocation = { lat: 26.8467, lng: 80.9462 } // Lucknow
 }) => {
-    const mapRef = useRef<HTMLDivElement>(null);
-    const [map, setMap] = useState<any>(null);
-    const [error, setError] = useState<string | null>(null);
-    const markersRef = useRef<any[]>([]);
-    const mapLibRef = useRef<any>(null);
-    const markerLibRef = useRef<any>(null);
-
-    useEffect(() => {
-        let isMounted = true;
-
-        const initMap = async () => {
-            try {
-                await mapsService.init();
-                if (isMounted && mapRef.current && !map) {
-                    const mapsLibrary = await importLibrary('maps');
-                    mapLibRef.current = mapsLibrary;
-                    markerLibRef.current = await importLibrary('marker');
-
-                    const newMap = new mapsLibrary.Map(mapRef.current, {
-                        center: center || fallbackLocation,
-                        zoom,
-                        mapTypeControl: false,
-                        streetViewControl: false,
-                        fullscreenControl: false,
-                        mapId: 'DEMO_MAP_ID' // Required for advanced markers if we switch to them, good practice
-                    });
-                    setMap(newMap);
-                }
-            } catch (err: any) {
-                console.error('Failed to initialize map:', err);
-                if (isMounted) {
-                    setError('Failed to load Google Maps. Please check your API key and billing status.');
-                }
-            }
-        };
-
-        initMap();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [mapRef, map]);
-
-    useEffect(() => {
-        if (map && center) {
-            map.setCenter(center);
-            map.setZoom(zoom);
-        } else if (map && !center) {
-            map.setCenter(fallbackLocation);
-            map.setZoom(zoom);
-        }
-    }, [map, center, zoom, fallbackLocation]);
-
-    useEffect(() => {
-        if (map) {
-            // Clear existing markers
-            markersRef.current.forEach(marker => marker.setMap(null));
-            markersRef.current = [];
-
-            // Add new markers
-            markers.forEach((markerData) => {
-                const marker = new markerLibRef.current.Marker({
-                    position: { lat: markerData.lat, lng: markerData.lng },
-                    map,
-                    title: markerData.title,
-                });
-
-                if (markerData.onClick) {
-                    marker.addListener('click', markerData.onClick);
-                }
-
-                markersRef.current.push(marker);
-            });
-        }
-    }, [map, markers]);
-
-    if (error) {
-        return (
-            <Box sx={{ height, width, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.100', borderRadius: 2 }}>
-                <Typography color="error" variant="body2">{error}</Typography>
-            </Box>
-        );
-    }
+    const mapCenter = center || fallbackLocation;
 
     return (
-        <Box sx={{ position: 'relative', height, width, borderRadius: 2, overflow: 'hidden' }}>
-            {!map && (
-                <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.100', zIndex: 1 }}>
-                    <CircularProgress size={30} />
-                </Box>
-            )}
-            <Box ref={mapRef} sx={{ height: '100%', width: '100%' }} />
+        <Box sx={{ position: 'relative', height, width, borderRadius: 2, overflow: 'hidden', zIndex: 0 }}>
+            <MapContainer
+                center={[mapCenter.lat, mapCenter.lng]}
+                zoom={zoom}
+                scrollWheelZoom={false}
+                style={{ height: '100%', width: '100%', zIndex: 1 }}
+            >
+                <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <MapUpdater center={mapCenter} zoom={zoom} />
+
+                {markers.map((marker) => (
+                    <Marker
+                        key={marker.id}
+                        position={[marker.lat, marker.lng]}
+                        eventHandlers={{
+                            click: () => {
+                                if (marker.onClick) {
+                                    marker.onClick();
+                                }
+                            }
+                        }}
+                    >
+                        {marker.title && (
+                            <Popup>
+                                {marker.title}
+                            </Popup>
+                        )}
+                    </Marker>
+                ))}
+            </MapContainer>
         </Box>
     );
 };

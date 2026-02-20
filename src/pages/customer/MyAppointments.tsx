@@ -337,7 +337,7 @@ const MyAppointments: React.FC = () => {
     };
 
     return (
-        <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc', py: { xs: 4, md: 8 } }}>
+        <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc', pt: { xs: 14, md: 16 }, pb: { xs: 8, md: 12 } }}>
             <Container maxWidth="lg">
                 <Box sx={{ mb: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
                     <Box>

@@ -30,26 +30,34 @@ export const useGeolocation = () => {
         setState(prev => ({ ...prev, loading: true, error: null }));
 
         navigator.geolocation.getCurrentPosition(
-            async (position) => {
+            (position) => {
                 const { latitude, longitude } = position.coords;
-                let city = null;
 
-                try {
-                    city = await mapsService.getCityFromCoordinates(latitude, longitude);
-                } catch (err) {
-                    console.error('Failed to get city from coordinates', err);
-                }
-
-                setState({
+                // Set coordinates immediately so UI updates and we can calculate distance
+                setState(prev => ({
+                    ...prev,
                     coordinates: {
                         latitude,
                         longitude,
                     },
-                    city,
                     error: null,
-                    loading: false,
+                    loading: false, // Turn off loading immediately once we have coords
                     permission: 'granted',
-                });
+                }));
+
+                // Fetch city asynchronously without blocking
+                mapsService.getCityFromCoordinates(latitude, longitude)
+                    .then(city => {
+                        setState(prev => ({
+                            ...prev,
+                            city
+                        }));
+                    })
+                    .catch(err => {
+                        console.error('Failed to get city from coordinates', err);
+                        // We do not set an error state here because we already have the coordinates,
+                        // which is the primary requirement for "Near Me".
+                    });
             },
             (error) => {
                 let errorMessage = 'Unable to retrieve your location';
@@ -74,8 +82,8 @@ export const useGeolocation = () => {
             },
             {
                 enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0,
+                timeout: 5000, // Reduced timeout so it fails faster if unreachable
+                maximumAge: 60000, // Allow using cached location up to 1 minute old
             }
         );
     };

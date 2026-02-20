@@ -93,32 +93,28 @@ const SalonCard: React.FC<SalonCardProps> = ({ salon, onClick }) => {
                             <>
                                 <IconButton
                                     onClick={handlePrevImage}
+                                    className="nav-arrow-btn"
                                     sx={{
                                         position: 'absolute',
-                                        left: 8,
+                                        left: 12,
                                         top: '50%',
                                         transform: 'translateY(-50%)',
-                                        bgcolor: 'rgba(0,0,0,0.5)',
-                                        color: 'white',
-                                        '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
-                                        width: 32,
-                                        height: 32
+                                        width: 36,
+                                        height: 36
                                     }}
                                 >
                                     <ChevronLeft />
                                 </IconButton>
                                 <IconButton
                                     onClick={handleNextImage}
+                                    className="nav-arrow-btn"
                                     sx={{
                                         position: 'absolute',
-                                        right: 8,
+                                        right: 12,
                                         top: '50%',
                                         transform: 'translateY(-50%)',
-                                        bgcolor: 'rgba(0,0,0,0.5)',
-                                        color: 'white',
-                                        '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
-                                        width: 32,
-                                        height: 32
+                                        width: 36,
+                                        height: 36
                                     }}
                                 >
                                     <ChevronRight />
@@ -144,6 +140,7 @@ const SalonCard: React.FC<SalonCardProps> = ({ salon, onClick }) => {
                                     <Box
                                         key={index}
                                         onClick={(e) => handleDotClick(e, index)}
+                                        className={index === currentImageIndex ? 'nav-dot active' : 'nav-dot'}
                                         sx={{
                                             width: 8,
                                             height: 8,
@@ -190,31 +187,34 @@ const SalonCard: React.FC<SalonCardProps> = ({ salon, onClick }) => {
                 />
             </Box>
 
-            <CardContent sx={{ flex: 1 }}>
-                <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 800, color: '#6366f1' }}>
+            <CardContent sx={{ flex: 1, p: 3 }}>
+                <Typography className="salon-card-title" component="h3" gutterBottom>
                     {salon.displayName}
                 </Typography>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
-                    <LocationIcon fontSize="small" color="action" />
-                    <Typography variant="body2" color="text.secondary">
+                <Box className="salon-info-item" sx={{ mb: 1 }}>
+                    <LocationIcon fontSize="small" />
+                    <Typography variant="body2" sx={{ color: 'inherit' }}>
                         {salon.address?.city}{salon.address?.state ? `, ${salon.address.state}` : ''}
                     </Typography>
                 </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
-                    <StarIcon fontSize="small" sx={{ color: '#f59e0b' }} />
-                    <Typography variant="body2">
+                <Box className="salon-reviews" sx={{ mb: 1.5 }}>
+                    <StarIcon fontSize="medium" sx={{ color: '#f59e0b' }} />
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#334155' }}>
                         {typeof salon.rating === 'object' && salon.rating.average
-                            ? `${salon.rating.average.toFixed(1)} (${salon.rating.count || 0} reviews)`
+                            ? `${salon.rating.average.toFixed(1)} `
                             : typeof salon.rating === 'number' && salon.rating > 0
-                                ? `${salon.rating.toFixed(1)} (${salon.totalReviews || 0} reviews)`
-                                : 'No rating'}
+                                ? `${salon.rating.toFixed(1)} `
+                                : 'New'}
+                    </Typography>
+                    <Typography className="review-count">
+                        ({typeof salon.rating === 'object' && salon.rating.count ? salon.rating.count : salon.totalReviews || 0} reviews)
                     </Typography>
                 </Box>
 
                 {salon.description && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                    <Typography className="salon-description" sx={{ mb: 2, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                         {salon.description}
                     </Typography>
                 )}
@@ -228,25 +228,22 @@ const SalonCard: React.FC<SalonCardProps> = ({ salon, onClick }) => {
                 )}
             </CardContent>
 
-            <CardActions sx={{ px: 2, pb: 2 }}>
+            <CardActions sx={{ px: 3, pb: 3, pt: 0 }}>
                 <Button
                     fullWidth
                     variant="contained"
+                    className="book-now-btn"
                     onClick={(e) => {
                         e.stopPropagation();
                         onClick?.();
                     }}
                     disabled={!isOpen}
                     sx={{
-                        background: '#4338ca',
-                        fontWeight: 600,
                         py: 1.5,
-                        '&:hover': {
-                            background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
-                        },
                         '&:disabled': {
-                            background: '#e5e7eb',
-                            color: '#9ca3af',
+                            background: '#e2e8f0',
+                            color: '#94a3b8',
+                            boxShadow: 'none'
                         }
                     }}
                 >

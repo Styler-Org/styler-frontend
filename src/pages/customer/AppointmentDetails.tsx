@@ -163,7 +163,7 @@ const AppointmentDetails: React.FC = () => {
     const canCancel = ['pending', 'confirmed'].includes(appointment.status);
 
     return (
-        <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc', py: { xs: 4, md: 6 }, px: { xs: 2, md: 4 } }}>
+        <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc', pt: { xs: 14, md: 16 }, pb: { xs: 6, md: 8 }, px: { xs: 2, md: 4 } }}>
             <Container maxWidth="xl">
                 {/* Header Navigation */}
                 <Box sx={{ mb: 4 }}>
