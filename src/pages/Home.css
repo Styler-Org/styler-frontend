@@ -249,6 +249,7 @@
     .hero-section {
         min-height: 70vh;
         text-align: center;
+        padding-top: 100px;
     }
 
     .hero-content {

@@ -89,6 +89,7 @@
     .contact-hero {
         padding: 6rem 0 8rem;
         clip-path: ellipse(180% 100% at 50% 0%);
+        padding-top: 100px;
     }
 
     .contact-form-paper {

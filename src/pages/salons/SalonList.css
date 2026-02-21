@@ -201,6 +201,7 @@
     .salon-list-hero {
         padding: 120px 0 80px;
         border-radius: 0 0 32px 32px;
+        padding-top: 100px;
     }
 
     .filter-bar-sticky {

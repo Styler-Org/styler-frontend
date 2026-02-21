@@ -167,4 +167,8 @@
     .hero-title {
         font-size: 2.5rem !important;
     }
+
+    .lookbook-hero {
+        padding-top: 100px;
+    }
 }

@@ -120,5 +120,6 @@
     .services-hero {
         min-height: 500px;
         border-radius: 0 0 24px 24px;
+        padding-top: 100px;
     }
 }

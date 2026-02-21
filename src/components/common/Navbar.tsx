@@ -64,7 +64,7 @@ const Navbar: React.FC = () => {
     const [mobileOpen, setMobileOpen] = React.useState(false);
 
     // Pages with dark/purple hero backgrounds that need white logo
-    const darkBackgroundPages = ['/', '/login', '/signup'];
+    const darkBackgroundPages = ['/', '/login', '/signup', '/lookbook'];
     const hasDarkBackground = darkBackgroundPages.includes(location.pathname);
 
     // Determine logo variant: white on dark backgrounds when not scrolled, otherwise default gradient
