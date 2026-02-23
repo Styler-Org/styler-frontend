@@ -3,22 +3,16 @@ import { ApiResponse, AuthResponse, User, UserRole } from '../types';
 
 // ==================== Request Types ====================
 
-export interface LoginRequest {
-    emailOrPhone: string;
-    password: string;
-}
-
-export interface RegisterRequest {
-    email: string;
+export interface RequestOtpRequest {
     phone: string;
-    password: string;
-    name: string;
-    role?: UserRole;
 }
 
-export interface ChangePasswordRequest {
-    currentPassword: string;
-    newPassword: string;
+export interface VerifyOtpRequest {
+    phone: string;
+    otp: string;
+    name?: string;
+    email?: string;
+    role?: UserRole;
 }
 
 export interface RefreshTokenRequest {
@@ -29,18 +23,18 @@ export interface RefreshTokenRequest {
 
 class AuthService {
     /**
-     * Register a new user
+     * Request OTP
      */
-    async register(data: RegisterRequest): Promise<ApiResponse<AuthResponse>> {
-        const response = await api.post<ApiResponse<AuthResponse>>('/auth/register', data);
+    async requestOtp(data: RequestOtpRequest): Promise<ApiResponse<{ phone: string; message: string }>> {
+        const response = await api.post<ApiResponse<{ phone: string; message: string }>>('/auth/request-otp', data);
         return response.data;
     }
 
     /**
-     * Login user
+     * Verify OTP (Login or Register)
      */
-    async login(data: LoginRequest): Promise<ApiResponse<AuthResponse>> {
-        const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', data);
+    async verifyOtp(data: VerifyOtpRequest): Promise<ApiResponse<AuthResponse>> {
+        const response = await api.post<ApiResponse<AuthResponse>>('/auth/verify-otp', data);
         return response.data;
     }
 
@@ -60,13 +54,7 @@ class AuthService {
         return response.data;
     }
 
-    /**
-     * Change password
-     */
-    async changePassword(data: ChangePasswordRequest): Promise<ApiResponse<void>> {
-        const response = await api.post<ApiResponse<void>>('/auth/change-password', data);
-        return response.data;
-    }
+
 
     /**
      * Refresh access token

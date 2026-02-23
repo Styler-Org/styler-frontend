@@ -34,8 +34,9 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 
-        // Skip interceptor for login and register routes
-        if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/register')) {
+        // Skip interceptor for authentication routes where 401 is expected
+        const authRoutes = ['/auth/login', '/auth/register', '/auth/verify-otp', '/auth/request-otp'];
+        if (originalRequest.url && authRoutes.some(route => originalRequest.url!.includes(route))) {
             return Promise.reject(error);
         }
 

@@ -6,8 +6,6 @@ import {
     Button,
     CardContent,
     Typography,
-    Tabs,
-    Tab,
     ToggleButtonGroup,
     ToggleButton,
     InputAdornment,
@@ -20,15 +18,12 @@ import {
 import {
     Person as PersonIcon,
     Email as EmailIcon,
-    Lock as LockIcon,
     Phone as PhoneIcon,
     ContentCut as ScissorsIcon,
     CalendarMonth as CalendarIcon,
-    Store as StoreIcon,
-    Visibility as VisibilityIcon,
-    VisibilityOff as VisibilityOffIcon,
     ArrowForward as ArrowForwardIcon,
     Close as CloseIcon,
+    VpnKey as VpnKeyIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { authService } from '../../services/authService';
@@ -41,18 +36,7 @@ import '../../pages/Login.css'; // Reuse existing styles
 
 const MotionBox = motion(Box);
 
-interface LoginFormValues {
-    email: string;
-    password: string;
-}
-
-interface RegisterFormValues {
-    name: string;
-    email: string;
-    phone: string;
-    password: string;
-    confirmPassword: string;
-}
+type OtpStep = 'PHONE_ENTRY' | 'OTP_VERIFICATION' | 'REGISTRATION_DETAILS';
 
 const AuthModal: React.FC = () => {
     const theme = useTheme();
@@ -64,20 +48,14 @@ const AuthModal: React.FC = () => {
     const setAuth = useAuthStore((state) => state.setAuth);
 
     // Form State
-    const [activeTab, setActiveTab] = useState(0);
+    const [step, setStep] = useState<OtpStep>('PHONE_ENTRY');
     const [loading, setLoading] = useState(false);
     const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.CUSTOMER);
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    const [loginData, setLoginData] = useState<LoginFormValues>({ email: '', password: '' });
-    const [registerData, setRegisterData] = useState<RegisterFormValues>({
-        name: '',
-        email: '',
-        phone: '',
-        password: '',
-        confirmPassword: '',
-    });
+    const [phone, setPhone] = useState('');
+    const [otp, setOtp] = useState('');
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
 
     // Sync URL with Modal State
     useEffect(() => {
@@ -102,19 +80,61 @@ const AuthModal: React.FC = () => {
         }
     }, [isLoginModalOpen, closeLoginModal]);
 
-    const handleLoginSubmit = async (e: React.FormEvent) => {
+    // Added reset state on close
+    useEffect(() => {
+        if (!isLoginModalOpen) {
+            setStep('PHONE_ENTRY');
+            setPhone('');
+            setOtp('');
+            setName('');
+            setEmail('');
+            setSelectedRole(UserRole.CUSTOMER);
+        }
+    }, [isLoginModalOpen]);
+
+    const handleRequestOtp = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!phone || phone.length < 10) {
+            toast.error('Please enter a valid phone number');
+            return;
+        }
+
         setLoading(true);
         try {
-            const response = await authService.login({
-                emailOrPhone: loginData.email,
-                password: loginData.password,
+            const response = await authService.requestOtp({ phone });
+            if (response.success) {
+                toast.success('OTP sent successfully!');
+                setStep('OTP_VERIFICATION');
+            }
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to send OTP';
+            toast.error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleVerifyOtp = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!otp || otp.length < 6) {
+            toast.error('Please enter a valid 6-digit OTP');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await authService.verifyOtp({
+                phone,
+                otp,
+                ...(step === 'REGISTRATION_DETAILS' ? { name, email, role: selectedRole } : {})
             });
 
             if (response.success && response.data) {
                 const { user, tokens } = response.data;
                 setAuth(user, tokens.accessToken, tokens.refreshToken);
-                toast.success('Login successful!');
+                toast.success('Authentication successful!');
                 closeLoginModal();
 
                 // Navigation logic based on role
@@ -134,55 +154,29 @@ const AuthModal: React.FC = () => {
                 }
             }
         } catch (err: any) {
-            const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || 'Login failed';
-            toast.error(errorMessage);
-        } finally {
-            setLoading(false);
-        }
-    };
+            try {
+                // Safely parse error message, handling potential arrays or objects from backend
+                let errorMessage = 'Verification failed';
+                const rawError = err.response?.data?.error?.message || err.response?.data?.message || err.response?.data?.name || err.message;
 
-    const handleRegisterSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (registerData.password !== registerData.confirmPassword) {
-            toast.error('Passwords do not match');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const response = await authService.register({
-                name: registerData.name,
-                email: registerData.email,
-                password: registerData.password,
-                phone: registerData.phone,
-                role: selectedRole,
-            });
-
-            if (response.success && response.data && response.data.tokens) {
-                const { user, tokens } = response.data;
-                setAuth(user, tokens.accessToken, tokens.refreshToken);
-                toast.success('Account created successfully!');
-                closeLoginModal();
-
-                switch (selectedRole) {
-                    case UserRole.BARBER:
-                        navigate('/barber/dashboard', { replace: true });
-                        break;
-                    case UserRole.SALON_OWNER:
-                        navigate('/salon-owner/dashboard', { replace: true });
-                        break;
-                    case UserRole.CUSTOMER:
-                    default:
-                        navigate('/customer/dashboard', { replace: true });
+                if (typeof rawError === 'string') {
+                    errorMessage = rawError;
+                } else if (Array.isArray(rawError) && rawError.length > 0) {
+                    errorMessage = String(rawError[0]);
+                } else if (rawError) {
+                    errorMessage = String(rawError);
                 }
-            } else {
-                setActiveTab(0);
-                toast.success('Registration successful! Please login.');
+
+                // If the user doesn't exist and name is required, fallback to registration details
+                if (String(errorMessage).toLowerCase().includes('name is required')) {
+                    setStep('REGISTRATION_DETAILS');
+                } else {
+                    toast.error(String(errorMessage));
+                }
+            } catch (innerErr) {
+                console.error('Error parsing backend response:', innerErr);
+                toast.error('Verification failed due to a server error.');
             }
-        } catch (err: any) {
-            const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || 'Registration failed';
-            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -225,7 +219,7 @@ const AuthModal: React.FC = () => {
                     <CloseIcon />
                 </IconButton>
 
-                {/* Left Side - Branding (Hidden on mobile if needed, but keeping for design consistency) */}
+                {/* Left Side - Branding */}
                 {!isMobile && (
                     <Box className="login-left" sx={{ width: '45%' }}>
                         <MotionBox
@@ -275,55 +269,31 @@ const AuthModal: React.FC = () => {
 
                         <Box className="login-form-header" sx={{ textAlign: 'center', mb: 4 }}>
                             <Typography variant="h4" sx={{ fontWeight: 800, color: '#1e293b', mb: 1 }}>
-                                {activeTab === 0 ? 'Welcome Back' : 'Create Account'}
+                                {step === 'PHONE_ENTRY' && 'Welcome '}
+                                {step === 'OTP_VERIFICATION' && 'Verify OTP'}
+                                {step === 'REGISTRATION_DETAILS' && 'Welcome to Styler! 🎉'}
                             </Typography>
                             <Typography variant="body2" sx={{ color: '#64748b' }}>
-                                {activeTab === 0 ? 'Please enter your details to sign in' : 'Join us to book your next appointment'}
+                                {step === 'PHONE_ENTRY' && 'Please enter your phone number to sign in or sign up.'}
+                                {step === 'OTP_VERIFICATION' && `Enter the 6-digit code sent to ${phone}`}
+                                {step === 'REGISTRATION_DETAILS' && 'It looks like you are new here. Please complete your profile to continue.'}
                             </Typography>
                         </Box>
 
-                        <Tabs
-                            value={activeTab}
-                            onChange={(_, newValue) => setActiveTab(newValue)}
-                            variant="fullWidth"
-                            className="login-tabs"
-                            sx={{ mb: 4 }}
-                        >
-                            <Tab label="Login" />
-                            <Tab label="Sign Up" />
-                        </Tabs>
-
                         <CardContent sx={{ p: 0 }}>
-                            {activeTab === 0 && (
-                                <Box component="form" onSubmit={handleLoginSubmit}>
+                            {step === 'PHONE_ENTRY' && (
+                                <Box component="form" onSubmit={handleRequestOtp}>
                                     <TextField
                                         fullWidth
-                                        label="Email Address"
-                                        value={loginData.email}
-                                        onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                                        label="Phone Number"
+                                        type="tel"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
                                         required
-                                        sx={{ mb: 2.5 }}
-                                        InputProps={{
-                                            startAdornment: <InputAdornment position="start"><EmailIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
-                                        }}
-                                    />
-                                    <TextField
-                                        fullWidth
-                                        label="Password"
-                                        type={showPassword ? 'text' : 'password'}
-                                        value={loginData.password}
-                                        onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                                        required
+                                        inputProps={{ maxLength: 10 }}
                                         sx={{ mb: 4 }}
                                         InputProps={{
-                                            startAdornment: <InputAdornment position="start"><LockIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
-                                            endAdornment: (
-                                                <InputAdornment position="end">
-                                                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                                                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                                                    </IconButton>
-                                                </InputAdornment>
-                                            ),
+                                            startAdornment: <InputAdornment position="start"><PhoneIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
                                         }}
                                     />
                                     <Button
@@ -331,19 +301,57 @@ const AuthModal: React.FC = () => {
                                         variant="contained"
                                         fullWidth
                                         size="large"
-                                        disabled={loading}
+                                        disabled={loading || phone.length < 10}
                                         endIcon={!loading && <ArrowForwardIcon />}
-                                        sx={{
-                                            height: 50,
-                                        }}
+                                        sx={{ height: 50 }}
                                     >
-                                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Log In'}
+                                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Send OTP'}
                                     </Button>
                                 </Box>
                             )}
 
-                            {activeTab === 1 && (
-                                <Box component="form" onSubmit={handleRegisterSubmit}>
+                            {step === 'OTP_VERIFICATION' && (
+                                <Box component="form" onSubmit={handleVerifyOtp} className="login-form">
+                                    <TextField
+                                        fullWidth
+                                        label="Enter OTP"
+                                        type="text"
+                                        value={otp}
+                                        onChange={(e) => setOtp(e.target.value)}
+                                        required
+                                        inputProps={{ maxLength: 6 }}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <VpnKeyIcon sx={{ color: '#94a3b8' }} />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        sx={{ mb: 4 }}
+                                    />
+
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        fullWidth
+                                        size="large"
+                                        disabled={loading || otp.length < 6}
+                                        endIcon={!loading && <ArrowForwardIcon />}
+                                        sx={{ height: 50 }}
+                                    >
+                                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Verify OTP'}
+                                    </Button>
+
+                                    <Box sx={{ mt: 3, textAlign: 'center' }}>
+                                        <Button type="button" onClick={() => setStep('PHONE_ENTRY')} sx={{ color: '#64748b', textTransform: 'none', fontWeight: 600 }}>
+                                            Change Phone Number
+                                        </Button>
+                                    </Box>
+                                </Box>
+                            )}
+
+                            {step === 'REGISTRATION_DETAILS' && (
+                                <Box component="form" onSubmit={handleVerifyOtp}>
                                     <Box sx={{ mb: 3 }}>
                                         <Typography variant="caption" sx={{ display: 'block', mb: 1, fontWeight: 700, color: '#64748b', textAlign: 'center' }}>
                                             I AM A:
@@ -366,46 +374,23 @@ const AuthModal: React.FC = () => {
                                             fullWidth
                                             label="Full Name"
                                             size="small"
-                                            value={registerData.name}
-                                            onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
                                             required
+                                            InputProps={{
+                                                startAdornment: <InputAdornment position="start"><PersonIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
+                                            }}
                                         />
                                         <TextField
                                             fullWidth
-                                            label="Email"
+                                            label="Email (Optional)"
                                             size="small"
-                                            value={registerData.email}
-                                            onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                                            required
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            InputProps={{
+                                                startAdornment: <InputAdornment position="start"><EmailIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
+                                            }}
                                         />
-                                        <TextField
-                                            fullWidth
-                                            label="Phone"
-                                            size="small"
-                                            value={registerData.phone}
-                                            onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
-                                            required
-                                        />
-                                        <Box sx={{ display: 'flex', gap: 2 }}>
-                                            <TextField
-                                                fullWidth
-                                                label="Password"
-                                                type="password"
-                                                size="small"
-                                                value={registerData.password}
-                                                onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                                                required
-                                            />
-                                            <TextField
-                                                fullWidth
-                                                label="Confirm"
-                                                type="password"
-                                                size="small"
-                                                value={registerData.confirmPassword}
-                                                onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
-                                                required
-                                            />
-                                        </Box>
                                     </Box>
 
                                     <Button
@@ -413,13 +398,10 @@ const AuthModal: React.FC = () => {
                                         variant="contained"
                                         fullWidth
                                         size="large"
-                                        disabled={loading}
-                                        sx={{
-                                            mt: 3,
-                                            height: 50,
-                                        }}
+                                        disabled={loading || !name}
+                                        sx={{ mt: 3, height: 50 }}
                                     >
-                                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign Up'}
+                                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Complete Registration'}
                                     </Button>
                                 </Box>
                             )}

@@ -4,30 +4,21 @@ import {
     Box,
     TextField,
     Button,
-    Card,
     CardContent,
     Typography,
-    Tabs,
-    Tab,
-    ToggleButtonGroup,
-    ToggleButton,
     InputAdornment,
     CircularProgress,
-    IconButton,
 } from '@mui/material';
 import {
     Person as PersonIcon,
     Email as EmailIcon,
-    Lock as LockIcon,
     Phone as PhoneIcon,
-    Login as LoginIcon,
     PersonAdd as PersonAddIcon,
     ContentCut as ScissorsIcon,
     CalendarMonth as CalendarIcon,
     Store as StoreIcon,
-    Visibility as VisibilityIcon,
-    VisibilityOff as VisibilityOffIcon,
     ArrowForward as ArrowForwardIcon,
+    VpnKey as VpnKeyIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { authService } from '../services/authService';
@@ -39,38 +30,21 @@ import './Login.css';
 
 const MotionBox = motion(Box);
 
-interface LoginFormValues {
-    email: string;
-    password: string;
-}
-
-interface RegisterFormValues {
-    name: string;
-    email: string;
-    phone: string;
-    password: string;
-    confirmPassword: string;
-}
+type OtpStep = 'PHONE_ENTRY' | 'OTP_VERIFICATION' | 'REGISTRATION_DETAILS';
 
 interface LoginProps {
     isRegisterMode?: boolean;
 }
 
 const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
-    const [activeTab, setActiveTab] = useState(isRegisterMode ? 1 : 0);
+    const [step, setStep] = useState<OtpStep>('PHONE_ENTRY');
     const [loading, setLoading] = useState(false);
-    const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.CUSTOMER);
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    const [loginData, setLoginData] = useState<LoginFormValues>({ email: '', password: '' });
-    const [registerData, setRegisterData] = useState<RegisterFormValues>({
-        name: '',
-        email: '',
-        phone: '',
-        password: '',
-        confirmPassword: '',
-    });
+    // Form States
+    const [phone, setPhone] = useState('');
+    const [otp, setOtp] = useState('');
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
 
     const navigate = useNavigate();
     const setAuth = useAuthStore((state) => state.setAuth);
@@ -94,84 +68,77 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
         }
     };
 
-    const handleLoginSubmit = async (e: React.FormEvent) => {
+    const handleRequestOtp = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!phone || phone.length < 10) {
+            toast.error('Please enter a valid phone number');
+            return;
+        }
+
         setLoading(true);
         try {
-            const response = await authService.login({
-                emailOrPhone: loginData.email,
-                password: loginData.password,
-            });
-
-            if (response.success && response.data) {
-                const { user, tokens } = response.data;
-                setAuth(user, tokens.accessToken, tokens.refreshToken);
-                toast.success('Login successful! Welcome back.');
-
-                switch (user.role) {
-                    case UserRole.BARBER:
-                        setTimeout(() => navigate('/barber/dashboard'), 500);
-                        break;
-                    case UserRole.SALON_OWNER:
-                        setTimeout(() => navigate('/salon-owner/dashboard'), 500);
-                        break;
-                    case UserRole.SUPER_ADMIN:
-                        setTimeout(() => navigate('/admin/superadmin'), 500);
-                        break;
-                    case UserRole.CUSTOMER:
-                    default:
-                        setTimeout(() => navigate('/customer/dashboard'), 500);
-                }
+            const response = await authService.requestOtp({ phone });
+            if (response.success) {
+                toast.success('OTP sent successfully!');
+                setStep('OTP_VERIFICATION');
             }
         } catch (err: any) {
-            const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || 'Login failed';
+            const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to send OTP';
             toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleRegisterSubmit = async (e: React.FormEvent) => {
+    const handleVerifyOtp = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (registerData.password !== registerData.confirmPassword) {
-            toast.error('Passwords do not match');
+        if (!otp || otp.length < 6) {
+            toast.error('Please enter a valid 6-digit OTP');
             return;
         }
 
         setLoading(true);
         try {
-            const response = await authService.register({
-                name: registerData.name,
-                email: registerData.email,
-                password: registerData.password,
-                phone: registerData.phone,
-                role: selectedRole,
+            const response = await authService.verifyOtp({
+                phone,
+                otp,
+                ...(step === 'REGISTRATION_DETAILS' ? { name, email } : {})
             });
 
-            if (response.success && response.data && response.data.tokens) {
+            if (response.success && response.data) {
                 const { user, tokens } = response.data;
                 setAuth(user, tokens.accessToken, tokens.refreshToken);
-                toast.success('Account created successfully! Welcome aboard.');
+                toast.success('Authentication successful!');
 
-                switch (selectedRole) {
-                    case UserRole.BARBER:
-                        setTimeout(() => navigate('/barber/dashboard'), 500);
-                        break;
-                    case UserRole.SALON_OWNER:
-                        setTimeout(() => navigate('/salon-owner/dashboard'), 500);
-                        break;
-                    case UserRole.CUSTOMER:
-                    default:
-                        setTimeout(() => navigate('/customer/dashboard'), 500);
-                }
-            } else {
-                setActiveTab(0);
-                toast.success('Registration successful! Please login.');
+                const dashboardPath = getDashboardPath(user.role);
+                setTimeout(() => navigate(dashboardPath), 500);
             }
         } catch (err: any) {
-            const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || 'Registration failed';
-            toast.error(errorMessage);
+            try {
+                // Safely parse error message, handling potential arrays or objects from backend
+                let errorMessage = 'Verification failed';
+                const rawError = err.response?.data?.error?.message || err.response?.data?.message || err.response?.data?.name || err.message;
+
+                if (typeof rawError === 'string') {
+                    errorMessage = rawError;
+                } else if (Array.isArray(rawError) && rawError.length > 0) {
+                    errorMessage = String(rawError[0]);
+                } else if (rawError) {
+                    errorMessage = String(rawError);
+                }
+
+                // If the user doesn't exist and name is required, fallback to registration details
+                if (String(errorMessage).toLowerCase().includes('name is required')) {
+                    setStep('REGISTRATION_DETAILS');
+                } else {
+                    toast.error(String(errorMessage));
+                }
+            } catch (innerErr) {
+                console.error('Error parsing backend response:', innerErr);
+                toast.error('Verification failed due to a server error.');
+            }
         } finally {
             setLoading(false);
         }
@@ -229,62 +196,33 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
                     className="login-form-container"
                 >
                     <Box className="login-form-header">
-                        <Typography variant="h1">Welcome Back</Typography>
-                        <Typography variant="body1">Please enter your details to sign in</Typography>
+                        <Typography variant="h1">
+                            {step === 'PHONE_ENTRY' && 'Welcome '}
+                            {step === 'OTP_VERIFICATION' && 'Verify OTP'}
+                            {step === 'REGISTRATION_DETAILS' && 'Welcome to Styler! 🎉'}
+                        </Typography>
+                        <Typography variant="body1">
+                            {step === 'PHONE_ENTRY' && 'Please enter your phone number to sign in or sign up.'}
+                            {step === 'OTP_VERIFICATION' && `Enter the 6-digit code sent to ${phone}`}
+                            {step === 'REGISTRATION_DETAILS' && 'It looks like you are new here. Please complete your profile to continue.'}
+                        </Typography>
                     </Box>
 
-                    <Tabs
-                        value={activeTab}
-                        onChange={(_, newValue) => setActiveTab(newValue)}
-                        variant="fullWidth"
-                        className="login-tabs"
-                    >
-                        <Tab label="Login" />
-                        <Tab label="Create Account" />
-                    </Tabs>
-
-                    <CardContent sx={{ p: 0 }}>
-                        {/* Login Tab */}
-                        {activeTab === 0 && (
-                            <Box component="form" onSubmit={handleLoginSubmit} className="login-form">
+                    <CardContent sx={{ p: 0, mt: 4 }}>
+                        {step === 'PHONE_ENTRY' && (
+                            <Box component="form" onSubmit={handleRequestOtp} className="login-form">
                                 <TextField
                                     fullWidth
-                                    label="Email Address"
-                                    type="email"
-                                    value={loginData.email}
-                                    onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                                    label="Phone Number"
+                                    type="tel"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
                                     required
+                                    inputProps={{ maxLength: 10 }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
-                                                <EmailIcon sx={{ color: '#94a3b8' }} />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                    sx={{ mb: 2.5 }}
-                                />
-
-                                <TextField
-                                    fullWidth
-                                    label="Password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={loginData.password}
-                                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                                    required
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <LockIcon sx={{ color: '#94a3b8' }} />
-                                            </InputAdornment>
-                                        ),
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <IconButton
-                                                    onClick={() => setShowPassword(!showPassword)}
-                                                    edge="end"
-                                                >
-                                                    {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                                                </IconButton>
+                                                <PhoneIcon sx={{ color: '#94a3b8' }} />
                                             </InputAdornment>
                                         ),
                                     }}
@@ -296,68 +234,63 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
                                     variant="contained"
                                     fullWidth
                                     size="large"
-                                    disabled={loading}
+                                    disabled={loading || phone.length < 10}
                                     endIcon={!loading && <ArrowForwardIcon />}
-                                    sx={{
-                                        height: 56,
-                                    }}
+                                    sx={{ height: 56 }}
                                 >
-                                    {loading ? <CircularProgress size={24} color="inherit" /> : 'Log In'}
+                                    {loading ? <CircularProgress size={24} color="inherit" /> : 'Send OTP'}
+                                </Button>
+                            </Box>
+                        )}
+
+                        {step === 'OTP_VERIFICATION' && (
+                            <Box component="form" onSubmit={handleVerifyOtp} className="login-form">
+                                <TextField
+                                    fullWidth
+                                    label="Enter OTP"
+                                    type="text"
+                                    value={otp}
+                                    onChange={(e) => setOtp(e.target.value)}
+                                    required
+                                    inputProps={{ maxLength: 6 }}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <VpnKeyIcon sx={{ color: '#94a3b8' }} />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                    sx={{ mb: 4 }}
+                                />
+
+                                <Button
+                                    type="submit"
+                                    variant="contained"
+                                    fullWidth
+                                    size="large"
+                                    disabled={loading || otp.length < 6}
+                                    endIcon={!loading && <ArrowForwardIcon />}
+                                    sx={{ height: 56 }}
+                                >
+                                    {loading ? <CircularProgress size={24} color="inherit" /> : 'Verify OTP'}
                                 </Button>
 
                                 <Box sx={{ mt: 3, textAlign: 'center' }}>
-                                    <Button sx={{ color: '#64748b', textTransform: 'none', fontWeight: 600 }}>
-                                        Forgot Password?
+                                    <Button type="button" onClick={() => setStep('PHONE_ENTRY')} sx={{ color: '#64748b', textTransform: 'none', fontWeight: 600 }}>
+                                        Change Phone Number
                                     </Button>
                                 </Box>
                             </Box>
                         )}
 
-                        {/* Signup Tab */}
-                        {activeTab === 1 && (
-                            <Box component="form" onSubmit={handleRegisterSubmit} className="login-form">
-                                <Box sx={{ mb: 3 }}>
-                                    <Typography variant="caption" sx={{ display: 'block', mb: 1.5, fontWeight: 600, color: '#64748b', textAlign: 'center' }}>
-                                        SELECT YOUR ACCOUNT TYPE
-                                    </Typography>
-                                    <ToggleButtonGroup
-                                        value={selectedRole}
-                                        exclusive
-                                        onChange={(_, newRole) => newRole && setSelectedRole(newRole)}
-                                        fullWidth
-                                        className="role-selection-group"
-                                    >
-                                        <ToggleButton value={UserRole.CUSTOMER} className="role-card-btn">
-                                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                                                <CalendarIcon fontSize="small" />
-                                                <Typography variant="body2" fontWeight={600}>Customer</Typography>
-                                            </Box>
-                                        </ToggleButton>
-                                        <ToggleButton value={UserRole.BARBER} className="role-card-btn">
-                                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                                                <ScissorsIcon fontSize="small" />
-                                                <Typography variant="body2" fontWeight={600}>Barber</Typography>
-                                            </Box>
-                                        </ToggleButton>
-                                        <ToggleButton value={UserRole.SALON_OWNER} className="role-card-btn">
-                                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                                                <StoreIcon fontSize="small" />
-                                                <Typography variant="body2" fontWeight={600}>Owner</Typography>
-                                            </Box>
-                                        </ToggleButton>
-                                    </ToggleButtonGroup>
-                                </Box>
-
-                                <Typography variant="caption" sx={{ display: 'block', mb: 1.5, fontWeight: 600, color: '#64748b' }}>
-                                    PERSONAL DETAILS
-                                </Typography>
-
-                                <Box sx={{ display: 'grid', gap: 2.5 }}>
+                        {step === 'REGISTRATION_DETAILS' && (
+                            <Box component="form" onSubmit={handleVerifyOtp} className="login-form">
+                                <Box sx={{ display: 'grid', gap: 2.5, mb: 4 }}>
                                     <TextField
                                         fullWidth
                                         label="Full Name"
-                                        value={registerData.name}
-                                        onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
                                         required
                                         InputProps={{
                                             startAdornment: <InputAdornment position="start"><PersonIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
@@ -366,64 +299,14 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
 
                                     <TextField
                                         fullWidth
-                                        label="Email Address"
+                                        label="Email Address (Optional)"
                                         type="email"
-                                        value={registerData.email}
-                                        onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
                                         InputProps={{
                                             startAdornment: <InputAdornment position="start"><EmailIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
                                         }}
                                     />
-
-                                    <TextField
-                                        fullWidth
-                                        label="Phone Number"
-                                        value={registerData.phone}
-                                        onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
-                                        required
-                                        inputProps={{ maxLength: 10 }}
-                                        InputProps={{
-                                            startAdornment: <InputAdornment position="start"><PhoneIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
-                                        }}
-                                    />
-
-                                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                                        <TextField
-                                            fullWidth
-                                            label="Password"
-                                            type={showPassword ? 'text' : 'password'}
-                                            value={registerData.password}
-                                            onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                                            required
-                                            InputProps={{
-                                                endAdornment: (
-                                                    <InputAdornment position="end">
-                                                        <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" size="small">
-                                                            {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-                                                        </IconButton>
-                                                    </InputAdornment>
-                                                ),
-                                            }}
-                                        />
-                                        <TextField
-                                            fullWidth
-                                            label="Confirm"
-                                            type={showConfirmPassword ? 'text' : 'password'}
-                                            value={registerData.confirmPassword}
-                                            onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
-                                            required
-                                            InputProps={{
-                                                endAdornment: (
-                                                    <InputAdornment position="end">
-                                                        <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} edge="end" size="small">
-                                                            {showConfirmPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-                                                        </IconButton>
-                                                    </InputAdornment>
-                                                ),
-                                            }}
-                                        />
-                                    </Box>
                                 </Box>
 
                                 <Button
@@ -431,13 +314,10 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
                                     variant="contained"
                                     fullWidth
                                     size="large"
-                                    disabled={loading}
-                                    sx={{
-                                        mt: 4,
-                                        height: 56,
-                                    }}
+                                    disabled={loading || !name}
+                                    sx={{ height: 56 }}
                                 >
-                                    {loading ? <CircularProgress size={24} color="inherit" /> : 'Create Account'}
+                                    {loading ? <CircularProgress size={24} color="inherit" /> : 'Complete Registration'}
                                 </Button>
                             </Box>
                         )}

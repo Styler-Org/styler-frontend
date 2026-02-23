@@ -15,7 +15,6 @@ interface AuthState {
     logout: () => Promise<void>;
     updateUser: (user: Partial<User>) => void;
     loadProfile: () => Promise<void>;
-    changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean }>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -79,23 +78,6 @@ export const useAuthStore = create<AuthState>()(
                     }
                 } catch (error) {
                     console.error('Failed to load profile:', error);
-                }
-            },
-
-            changePassword: async (currentPassword, newPassword) => {
-                try {
-                    const { default: authService } = await import('../services/authService');
-                    await authService.changePassword({ currentPassword, newPassword });
-                    set({
-                        user: null,
-                        accessToken: null,
-                        refreshToken: null,
-                        isAuthenticated: false,
-                    });
-                    return { success: true };
-                } catch (error) {
-                    console.error('Failed to change password:', error);
-                    throw error;
                 }
             },
         }),
