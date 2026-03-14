@@ -12,51 +12,76 @@ import {
 import {
     Person as PersonIcon,
     Email as EmailIcon,
-    Phone as PhoneIcon,
-    PersonAdd as PersonAddIcon,
+    Lock as LockIcon,
+    VpnKey as VpnKeyIcon,
     ContentCut as ScissorsIcon,
     CalendarMonth as CalendarIcon,
     Store as StoreIcon,
     ArrowForward as ArrowForwardIcon,
-    VpnKey as VpnKeyIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { authService } from '../services/authService';
 import { useAuthStore } from '../stores/authStore';
 import toast from 'react-hot-toast';
-import { UserRole } from '../types';
+import { AuthResponse, UserRole } from '../types';
 import Logo from '../components/common/Logo';
 import './Login.css';
 
 const MotionBox = motion(Box);
 
-type OtpStep = 'PHONE_ENTRY' | 'OTP_VERIFICATION' | 'REGISTRATION_DETAILS';
+const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1
+        }
+    }
+};
+
+const itemVariant = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+};
+
+type AuthStep = 'CREDENTIALS_ENTRY' | 'OTP_VERIFICATION' | 'REGISTRATION_DETAILS';
 
 interface LoginProps {
     isRegisterMode?: boolean;
 }
 
 const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
-    const [step, setStep] = useState<OtpStep>('PHONE_ENTRY');
+    const [step, setStep] = useState<AuthStep>('CREDENTIALS_ENTRY');
     const [loading, setLoading] = useState(false);
+    const [resendTimer, setResendTimer] = useState(0);
 
-    // Form States
+    const [credentials, setCredentials] = useState({ emailOrPhone: '', password: '' });
     const [phone, setPhone] = useState('');
     const [otp, setOtp] = useState('');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [pendingAuth, setPendingAuth] = useState<AuthResponse | null>(null);
 
     const navigate = useNavigate();
     const setAuth = useAuthStore((state) => state.setAuth);
     const { isAuthenticated, user } = useAuthStore();
 
-    // Redirect if already authenticated
     useEffect(() => {
         if (isAuthenticated && user) {
             const dashboardPath = getDashboardPath(user.role);
             navigate(dashboardPath, { replace: true });
         }
     }, [isAuthenticated, user, navigate]);
+
+    useEffect(() => {
+        let interval: ReturnType<typeof setInterval>;
+        if (resendTimer > 0 && step === 'OTP_VERIFICATION') {
+            interval = setInterval(() => {
+                setResendTimer((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [resendTimer, step]);
 
     const getDashboardPath = (role: string) => {
         switch (role) {
@@ -68,11 +93,54 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
         }
     };
 
-    const handleRequestOtp = async (e: React.FormEvent) => {
+    const normalizePhone = (value: string) => value.replace(/\D/g, '').slice(-10);
+
+    const handlePrimaryLogin = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!credentials.emailOrPhone.trim() || !credentials.password.trim()) {
+            toast.error('Please enter your email/phone and password');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await authService.login({
+                emailOrPhone: credentials.emailOrPhone.trim(),
+                password: credentials.password,
+            });
+
+            if (response.success && response.data) {
+                const fallbackPhone = normalizePhone(credentials.emailOrPhone);
+                const otpPhone = response.data.user.phone || fallbackPhone;
+
+                if (!otpPhone || otpPhone.length < 10) {
+                    toast.error('Phone number is required to complete OTP verification');
+                    return;
+                }
+
+                await authService.requestOtp({ phone: otpPhone });
+
+                setPendingAuth(response.data);
+                setPhone(otpPhone);
+                setOtp('');
+                setStep('OTP_VERIFICATION');
+                setResendTimer(30);
+                toast.success('Password verified. OTP sent to your phone.');
+            }
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || 'Login failed';
+            toast.error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRequestOtp = async (e?: React.FormEvent) => {
+        e?.preventDefault();
+
         if (!phone || phone.length < 10) {
-            toast.error('Please enter a valid phone number');
+            toast.error('Missing phone number for OTP verification');
             return;
         }
 
@@ -81,7 +149,7 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
             const response = await authService.requestOtp({ phone });
             if (response.success) {
                 toast.success('OTP sent successfully!');
-                setStep('OTP_VERIFICATION');
+                setResendTimer(30);
             }
         } catch (err: any) {
             const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to send OTP';
@@ -107,17 +175,23 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
                 ...(step === 'REGISTRATION_DETAILS' ? { name, email } : {})
             });
 
-            if (response.success && response.data) {
-                const { user, tokens } = response.data;
-                setAuth(user, tokens.accessToken, tokens.refreshToken);
-                toast.success('Authentication successful!');
+            if (response.success) {
+                const authPayload = response.data || pendingAuth;
 
-                const dashboardPath = getDashboardPath(user.role);
+                if (!authPayload) {
+                    toast.error('Authentication payload missing after OTP verification');
+                    return;
+                }
+
+                const { user: authUser, tokens } = authPayload;
+                setAuth(authUser, tokens.accessToken, tokens.refreshToken);
+                toast.success('Two-step authentication successful!');
+
+                const dashboardPath = getDashboardPath(authUser.role);
                 setTimeout(() => navigate(dashboardPath), 500);
             }
         } catch (err: any) {
             try {
-                // Safely parse error message, handling potential arrays or objects from backend
                 let errorMessage = 'Verification failed';
                 const rawError = err.response?.data?.error?.message || err.response?.data?.message || err.response?.data?.name || err.message;
 
@@ -129,7 +203,6 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
                     errorMessage = String(rawError);
                 }
 
-                // If the user doesn't exist and name is required, fallback to registration details
                 if (String(errorMessage).toLowerCase().includes('name is required')) {
                     setStep('REGISTRATION_DETAILS');
                 } else {
@@ -146,12 +219,11 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
 
     return (
         <Box className="login-page">
-            {/* Left Side - Branding */}
             <Box className="login-left">
                 <MotionBox
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
                     className="login-branding"
                 >
                     <Box sx={{ mb: 4 }}>
@@ -187,7 +259,6 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
                 </MotionBox>
             </Box>
 
-            {/* Right Side - Form */}
             <Box className="login-right">
                 <MotionBox
                     initial={{ opacity: 0, x: 50 }}
@@ -197,128 +268,241 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
                 >
                     <Box className="login-form-header">
                         <Typography variant="h1">
-                            {step === 'PHONE_ENTRY' && 'Welcome '}
+                            {step === 'CREDENTIALS_ENTRY' && 'Welcome'}
                             {step === 'OTP_VERIFICATION' && 'Verify OTP'}
                             {step === 'REGISTRATION_DETAILS' && 'Welcome to Styler! 🎉'}
                         </Typography>
                         <Typography variant="body1">
-                            {step === 'PHONE_ENTRY' && 'Please enter your phone number to sign in or sign up.'}
-                            {step === 'OTP_VERIFICATION' && `Enter the 6-digit code sent to ${phone}`}
+                            {step === 'CREDENTIALS_ENTRY' && 'Enter your email/phone and password to continue.'}
+                            {step === 'OTP_VERIFICATION' && `Step 2: Enter the 6-digit OTP sent to ${phone}`}
                             {step === 'REGISTRATION_DETAILS' && 'It looks like you are new here. Please complete your profile to continue.'}
                         </Typography>
                     </Box>
 
                     <CardContent sx={{ p: 0, mt: 4 }}>
-                        {step === 'PHONE_ENTRY' && (
-                            <Box component="form" onSubmit={handleRequestOtp} className="login-form">
-                                <TextField
-                                    fullWidth
-                                    label="Phone Number"
-                                    type="tel"
-                                    value={phone}
-                                    onChange={(e) => setPhone(e.target.value)}
-                                    required
-                                    inputProps={{ maxLength: 10 }}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <PhoneIcon sx={{ color: '#94a3b8' }} />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                    sx={{ mb: 4 }}
-                                />
+                        {step === 'CREDENTIALS_ENTRY' && (
+                            <Box component="form" onSubmit={handlePrimaryLogin} className="login-form">
+                                <MotionBox variants={staggerContainer} initial="hidden" animate="show">
+                                    <MotionBox variants={itemVariant}>
+                                        <TextField
+                                            fullWidth
+                                            label="Email or Phone"
+                                            type="text"
+                                            value={credentials.emailOrPhone}
+                                            onChange={(e) => setCredentials({ ...credentials, emailOrPhone: e.target.value })}
+                                            required
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <EmailIcon sx={{ color: '#94a3b8' }} />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                            sx={{ mb: 3 }}
+                                        />
+                                    </MotionBox>
 
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    fullWidth
-                                    size="large"
-                                    disabled={loading || phone.length < 10}
-                                    endIcon={!loading && <ArrowForwardIcon />}
-                                    sx={{ height: 56 }}
-                                >
-                                    {loading ? <CircularProgress size={24} color="inherit" /> : 'Send OTP'}
-                                </Button>
+                                    <MotionBox variants={itemVariant}>
+                                        <TextField
+                                            fullWidth
+                                            label="Password"
+                                            type="password"
+                                            value={credentials.password}
+                                            onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                                            required
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <LockIcon sx={{ color: '#94a3b8' }} />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                            sx={{ mb: 4 }}
+                                        />
+                                    </MotionBox>
+
+                                    <MotionBox variants={itemVariant}>
+                                        <Button
+                                            type="submit"
+                                            variant="contained"
+                                            fullWidth
+                                            size="large"
+                                            disabled={loading || !credentials.emailOrPhone || !credentials.password}
+                                            endIcon={!loading && <ArrowForwardIcon />}
+                                            sx={{
+                                                height: 56,
+                                                borderRadius: '16px',
+                                                background: 'linear-gradient(135deg, #4f46e5 0%, #312e81 100%)',
+                                                boxShadow: '0 8px 20px rgba(79, 70, 229, 0.25)',
+                                                textTransform: 'none',
+                                                fontSize: '1.1rem',
+                                                fontWeight: 600,
+                                                '&:hover': {
+                                                    background: 'linear-gradient(135deg, #4338ca 0%, #2e287c 100%)',
+                                                    boxShadow: '0 12px 25px rgba(79, 70, 229, 0.4)',
+                                                    transform: 'translateY(-2px)'
+                                                },
+                                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                                            }}
+                                        >
+                                            {loading ? <CircularProgress size={24} color="inherit" /> : 'Continue'}
+                                        </Button>
+                                    </MotionBox>
+                                </MotionBox>
                             </Box>
                         )}
 
                         {step === 'OTP_VERIFICATION' && (
                             <Box component="form" onSubmit={handleVerifyOtp} className="login-form">
-                                <TextField
-                                    fullWidth
-                                    label="Enter OTP"
-                                    type="text"
-                                    value={otp}
-                                    onChange={(e) => setOtp(e.target.value)}
-                                    required
-                                    inputProps={{ maxLength: 6 }}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <VpnKeyIcon sx={{ color: '#94a3b8' }} />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                    sx={{ mb: 4 }}
-                                />
+                                <MotionBox variants={staggerContainer} initial="hidden" animate="show">
+                                    <MotionBox variants={itemVariant}>
+                                        <TextField
+                                            fullWidth
+                                            label="Enter OTP"
+                                            type="text"
+                                            value={otp}
+                                            onChange={(e) => setOtp(e.target.value)}
+                                            required
+                                            inputProps={{ maxLength: 6 }}
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <VpnKeyIcon sx={{ color: '#94a3b8' }} />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                            sx={{ mb: 4 }}
+                                        />
+                                    </MotionBox>
 
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    fullWidth
-                                    size="large"
-                                    disabled={loading || otp.length < 6}
-                                    endIcon={!loading && <ArrowForwardIcon />}
-                                    sx={{ height: 56 }}
-                                >
-                                    {loading ? <CircularProgress size={24} color="inherit" /> : 'Verify OTP'}
-                                </Button>
+                                    <MotionBox variants={itemVariant}>
+                                        <Button
+                                            type="submit"
+                                            variant="contained"
+                                            fullWidth
+                                            size="large"
+                                            disabled={loading || otp.length < 6}
+                                            endIcon={!loading && <ArrowForwardIcon />}
+                                            sx={{
+                                                height: 56,
+                                                borderRadius: '16px',
+                                                background: 'linear-gradient(135deg, #4f46e5 0%, #312e81 100%)',
+                                                boxShadow: '0 8px 20px rgba(79, 70, 229, 0.25)',
+                                                textTransform: 'none',
+                                                fontSize: '1.1rem',
+                                                fontWeight: 600,
+                                                '&:hover': {
+                                                    background: 'linear-gradient(135deg, #4338ca 0%, #2e287c 100%)',
+                                                    boxShadow: '0 12px 25px rgba(79, 70, 229, 0.4)',
+                                                    transform: 'translateY(-2px)'
+                                                },
+                                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                                            }}
+                                        >
+                                            {loading ? <CircularProgress size={24} color="inherit" /> : 'Verify OTP'}
+                                        </Button>
+                                    </MotionBox>
 
-                                <Box sx={{ mt: 3, textAlign: 'center' }}>
-                                    <Button type="button" onClick={() => setStep('PHONE_ENTRY')} sx={{ color: '#64748b', textTransform: 'none', fontWeight: 600 }}>
-                                        Change Phone Number
-                                    </Button>
-                                </Box>
+                                    <MotionBox variants={itemVariant} sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center' }}>
+                                        <Button
+                                            type="button"
+                                            onClick={() => handleRequestOtp()}
+                                            disabled={resendTimer > 0 || loading}
+                                            sx={{
+                                                color: resendTimer > 0 ? '#94a3b8' : '#4f46e5',
+                                                textTransform: 'none',
+                                                fontWeight: 600,
+                                                '&:hover': {
+                                                    color: resendTimer > 0 ? '#94a3b8' : '#4338ca',
+                                                    background: resendTimer > 0 ? 'transparent' : 'rgba(79, 70, 229, 0.05)',
+                                                    borderRadius: '12px'
+                                                }
+                                            }}
+                                        >
+                                            {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : 'Resend OTP'}
+                                        </Button>
+
+                                        <Button
+                                            type="button"
+                                            onClick={() => {
+                                                setStep('CREDENTIALS_ENTRY');
+                                                setResendTimer(0);
+                                                setOtp('');
+                                                setPendingAuth(null);
+                                            }}
+                                            sx={{
+                                                color: '#64748b',
+                                                textTransform: 'none',
+                                                fontWeight: 600,
+                                                '&:hover': {
+                                                    color: '#4f46e5',
+                                                    background: 'rgba(79, 70, 229, 0.05)',
+                                                    borderRadius: '12px'
+                                                }
+                                            }}
+                                        >
+                                            Change Credentials
+                                        </Button>
+                                    </MotionBox>
+                                </MotionBox>
                             </Box>
                         )}
 
                         {step === 'REGISTRATION_DETAILS' && (
                             <Box component="form" onSubmit={handleVerifyOtp} className="login-form">
-                                <Box sx={{ display: 'grid', gap: 2.5, mb: 4 }}>
-                                    <TextField
-                                        fullWidth
-                                        label="Full Name"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        required
-                                        InputProps={{
-                                            startAdornment: <InputAdornment position="start"><PersonIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
-                                        }}
-                                    />
+                                <MotionBox variants={staggerContainer} initial="hidden" animate="show">
+                                    <MotionBox variants={itemVariant} sx={{ display: 'grid', gap: 2.5, mb: 4 }}>
+                                        <TextField
+                                            fullWidth
+                                            label="Full Name"
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            required
+                                            InputProps={{
+                                                startAdornment: <InputAdornment position="start"><PersonIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
+                                            }}
+                                        />
 
-                                    <TextField
-                                        fullWidth
-                                        label="Email Address (Optional)"
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        InputProps={{
-                                            startAdornment: <InputAdornment position="start"><EmailIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
-                                        }}
-                                    />
-                                </Box>
+                                        <TextField
+                                            fullWidth
+                                            label="Email Address"
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                            InputProps={{
+                                                startAdornment: <InputAdornment position="start"><EmailIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
+                                            }}
+                                        />
+                                    </MotionBox>
 
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    fullWidth
-                                    size="large"
-                                    disabled={loading || !name}
-                                    sx={{ height: 56 }}
-                                >
-                                    {loading ? <CircularProgress size={24} color="inherit" /> : 'Complete Registration'}
-                                </Button>
+                                    <MotionBox variants={itemVariant}>
+                                        <Button
+                                            type="submit"
+                                            variant="contained"
+                                            fullWidth
+                                            size="large"
+                                            disabled={loading || !name || !email}
+                                            sx={{
+                                                height: 56,
+                                                borderRadius: '16px',
+                                                background: 'linear-gradient(135deg, #4f46e5 0%, #312e81 100%)',
+                                                boxShadow: '0 8px 20px rgba(79, 70, 229, 0.25)',
+                                                textTransform: 'none',
+                                                fontSize: '1.1rem',
+                                                fontWeight: 600,
+                                                '&:hover': {
+                                                    background: 'linear-gradient(135deg, #4338ca 0%, #2e287c 100%)',
+                                                    boxShadow: '0 12px 25px rgba(79, 70, 229, 0.4)',
+                                                    transform: 'translateY(-2px)'
+                                                },
+                                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                                            }}
+                                        >
+                                            {loading ? <CircularProgress size={24} color="inherit" /> : 'Complete Registration'}
+                                        </Button>
+                                    </MotionBox>
+                                </MotionBox>
                             </Box>
                         )}
                     </CardContent>

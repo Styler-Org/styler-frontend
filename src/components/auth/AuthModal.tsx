@@ -18,7 +18,7 @@ import {
 import {
     Person as PersonIcon,
     Email as EmailIcon,
-    Phone as PhoneIcon,
+    Lock as LockIcon,
     ContentCut as ScissorsIcon,
     CalendarMonth as CalendarIcon,
     ArrowForward as ArrowForwardIcon,
@@ -30,13 +30,13 @@ import { authService } from '../../services/authService';
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
 import toast from 'react-hot-toast';
-import { UserRole } from '../../types';
+import { AuthResponse, UserRole } from '../../types';
 import Logo from '../common/Logo';
 import '../../pages/Login.css'; // Reuse existing styles
 
 const MotionBox = motion(Box);
 
-type OtpStep = 'PHONE_ENTRY' | 'OTP_VERIFICATION' | 'REGISTRATION_DETAILS';
+type AuthStep = 'CREDENTIALS_ENTRY' | 'OTP_VERIFICATION' | 'REGISTRATION_DETAILS';
 
 const AuthModal: React.FC = () => {
     const theme = useTheme();
@@ -48,14 +48,17 @@ const AuthModal: React.FC = () => {
     const setAuth = useAuthStore((state) => state.setAuth);
 
     // Form State
-    const [step, setStep] = useState<OtpStep>('PHONE_ENTRY');
+    const [step, setStep] = useState<AuthStep>('CREDENTIALS_ENTRY');
     const [loading, setLoading] = useState(false);
+    const [resendTimer, setResendTimer] = useState(0);
     const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.CUSTOMER);
 
+    const [credentials, setCredentials] = useState({ emailOrPhone: '', password: '' });
     const [phone, setPhone] = useState('');
     const [otp, setOtp] = useState('');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [pendingAuth, setPendingAuth] = useState<AuthResponse | null>(null);
 
     // Sync URL with Modal State
     useEffect(() => {
@@ -83,20 +86,76 @@ const AuthModal: React.FC = () => {
     // Added reset state on close
     useEffect(() => {
         if (!isLoginModalOpen) {
-            setStep('PHONE_ENTRY');
+            setStep('CREDENTIALS_ENTRY');
+            setResendTimer(0);
+            setCredentials({ emailOrPhone: '', password: '' });
             setPhone('');
             setOtp('');
             setName('');
             setEmail('');
+            setPendingAuth(null);
             setSelectedRole(UserRole.CUSTOMER);
         }
     }, [isLoginModalOpen]);
 
-    const handleRequestOtp = async (e: React.FormEvent) => {
+    useEffect(() => {
+        let interval: ReturnType<typeof setInterval>;
+        if (resendTimer > 0 && step === 'OTP_VERIFICATION') {
+            interval = setInterval(() => {
+                setResendTimer((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [resendTimer, step]);
+
+    const normalizePhone = (value: string) => value.replace(/\D/g, '').slice(-10);
+
+    const handlePrimaryLogin = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!credentials.emailOrPhone.trim() || !credentials.password.trim()) {
+            toast.error('Please enter your email/phone and password');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await authService.login({
+                emailOrPhone: credentials.emailOrPhone.trim(),
+                password: credentials.password,
+            });
+
+            if (response.success && response.data) {
+                const fallbackPhone = normalizePhone(credentials.emailOrPhone);
+                const otpPhone = response.data.user.phone || fallbackPhone;
+
+                if (!otpPhone || otpPhone.length < 10) {
+                    toast.error('Phone number is required to complete OTP verification');
+                    return;
+                }
+
+                await authService.requestOtp({ phone: otpPhone });
+
+                setPendingAuth(response.data);
+                setPhone(otpPhone);
+                setOtp('');
+                setStep('OTP_VERIFICATION');
+                setResendTimer(30);
+                toast.success('Password verified. OTP sent to your phone.');
+            }
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || 'Login failed';
+            toast.error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRequestOtp = async (e?: React.FormEvent) => {
+        e?.preventDefault();
+
         if (!phone || phone.length < 10) {
-            toast.error('Please enter a valid phone number');
+            toast.error('Missing phone number for OTP verification');
             return;
         }
 
@@ -105,7 +164,7 @@ const AuthModal: React.FC = () => {
             const response = await authService.requestOtp({ phone });
             if (response.success) {
                 toast.success('OTP sent successfully!');
-                setStep('OTP_VERIFICATION');
+                setResendTimer(30);
             }
         } catch (err: any) {
             const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to send OTP';
@@ -131,8 +190,14 @@ const AuthModal: React.FC = () => {
                 ...(step === 'REGISTRATION_DETAILS' ? { name, email, role: selectedRole } : {})
             });
 
-            if (response.success && response.data) {
-                const { user, tokens } = response.data;
+            if (response.success) {
+                const authPayload = response.data || pendingAuth;
+                if (!authPayload) {
+                    toast.error('Authentication payload missing after OTP verification');
+                    return;
+                }
+
+                const { user, tokens } = authPayload;
                 setAuth(user, tokens.accessToken, tokens.refreshToken);
                 toast.success('Authentication successful!');
                 closeLoginModal();
@@ -269,31 +334,42 @@ const AuthModal: React.FC = () => {
 
                         <Box className="login-form-header" sx={{ textAlign: 'center', mb: 4 }}>
                             <Typography variant="h4" sx={{ fontWeight: 800, color: '#1e293b', mb: 1 }}>
-                                {step === 'PHONE_ENTRY' && 'Welcome '}
+                                {step === 'CREDENTIALS_ENTRY' && 'Welcome'}
                                 {step === 'OTP_VERIFICATION' && 'Verify OTP'}
                                 {step === 'REGISTRATION_DETAILS' && 'Welcome to Styler! 🎉'}
                             </Typography>
                             <Typography variant="body2" sx={{ color: '#64748b' }}>
-                                {step === 'PHONE_ENTRY' && 'Please enter your phone number to sign in or sign up.'}
-                                {step === 'OTP_VERIFICATION' && `Enter the 6-digit code sent to ${phone}`}
+                                {step === 'CREDENTIALS_ENTRY' && 'Enter your email/phone and password to continue.'}
+                                {step === 'OTP_VERIFICATION' && `Step 2: Enter the 6-digit OTP sent to ${phone}`}
                                 {step === 'REGISTRATION_DETAILS' && 'It looks like you are new here. Please complete your profile to continue.'}
                             </Typography>
                         </Box>
 
                         <CardContent sx={{ p: 0 }}>
-                            {step === 'PHONE_ENTRY' && (
-                                <Box component="form" onSubmit={handleRequestOtp}>
+                            {step === 'CREDENTIALS_ENTRY' && (
+                                <Box component="form" onSubmit={handlePrimaryLogin}>
                                     <TextField
                                         fullWidth
-                                        label="Phone Number"
-                                        type="tel"
-                                        value={phone}
-                                        onChange={(e) => setPhone(e.target.value)}
+                                        label="Email or Phone"
+                                        type="text"
+                                        value={credentials.emailOrPhone}
+                                        onChange={(e) => setCredentials({ ...credentials, emailOrPhone: e.target.value })}
                                         required
-                                        inputProps={{ maxLength: 10 }}
                                         sx={{ mb: 4 }}
                                         InputProps={{
-                                            startAdornment: <InputAdornment position="start"><PhoneIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
+                                            startAdornment: <InputAdornment position="start"><EmailIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
+                                        }}
+                                    />
+                                    <TextField
+                                        fullWidth
+                                        label="Password"
+                                        type="password"
+                                        value={credentials.password}
+                                        onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                                        required
+                                        sx={{ mb: 4 }}
+                                        InputProps={{
+                                            startAdornment: <InputAdornment position="start"><LockIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
                                         }}
                                     />
                                     <Button
@@ -301,11 +377,11 @@ const AuthModal: React.FC = () => {
                                         variant="contained"
                                         fullWidth
                                         size="large"
-                                        disabled={loading || phone.length < 10}
+                                        disabled={loading || !credentials.emailOrPhone || !credentials.password}
                                         endIcon={!loading && <ArrowForwardIcon />}
                                         sx={{ height: 50 }}
                                     >
-                                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Send OTP'}
+                                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Continue'}
                                     </Button>
                                 </Box>
                             )}
@@ -342,9 +418,26 @@ const AuthModal: React.FC = () => {
                                         {loading ? <CircularProgress size={24} color="inherit" /> : 'Verify OTP'}
                                     </Button>
 
-                                    <Box sx={{ mt: 3, textAlign: 'center' }}>
-                                        <Button type="button" onClick={() => setStep('PHONE_ENTRY')} sx={{ color: '#64748b', textTransform: 'none', fontWeight: 600 }}>
-                                            Change Phone Number
+                                    <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center' }}>
+                                        <Button
+                                            type="button"
+                                            onClick={() => handleRequestOtp()}
+                                            disabled={resendTimer > 0 || loading}
+                                            sx={{ color: resendTimer > 0 ? '#94a3b8' : '#4f46e5', textTransform: 'none', fontWeight: 600 }}
+                                        >
+                                            {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : 'Resend OTP'}
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            onClick={() => {
+                                                setStep('CREDENTIALS_ENTRY');
+                                                setResendTimer(0);
+                                                setOtp('');
+                                                setPendingAuth(null);
+                                            }}
+                                            sx={{ color: '#64748b', textTransform: 'none', fontWeight: 600 }}
+                                        >
+                                            Change Credentials
                                         </Button>
                                     </Box>
                                 </Box>
@@ -383,10 +476,11 @@ const AuthModal: React.FC = () => {
                                         />
                                         <TextField
                                             fullWidth
-                                            label="Email (Optional)"
+                                            label="Email Required"
                                             size="small"
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
+                                            required
                                             InputProps={{
                                                 startAdornment: <InputAdornment position="start"><EmailIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
                                             }}
@@ -398,7 +492,7 @@ const AuthModal: React.FC = () => {
                                         variant="contained"
                                         fullWidth
                                         size="large"
-                                        disabled={loading || !name}
+                                        disabled={loading || !name || !email}
                                         sx={{ mt: 3, height: 50 }}
                                     >
                                         {loading ? <CircularProgress size={24} color="inherit" /> : 'Complete Registration'}

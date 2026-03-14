@@ -3,6 +3,11 @@ import { ApiResponse, AuthResponse, User, UserRole } from '../types';
 
 // ==================== Request Types ====================
 
+export interface LoginRequest {
+    emailOrPhone: string;
+    password: string;
+}
+
 export interface RequestOtpRequest {
     phone: string;
 }
@@ -22,6 +27,14 @@ export interface RefreshTokenRequest {
 // ==================== Auth Service ====================
 
 class AuthService {
+    /**
+     * First-factor login (email/phone + password)
+     */
+    async login(data: LoginRequest): Promise<ApiResponse<AuthResponse>> {
+        const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', data);
+        return response.data;
+    }
+
     /**
      * Request OTP
      */
