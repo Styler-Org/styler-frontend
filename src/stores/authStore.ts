@@ -15,6 +15,7 @@ interface AuthState {
     logout: () => Promise<void>;
     updateUser: (user: Partial<User>) => void;
     loadProfile: () => Promise<void>;
+    refreshUser: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -78,6 +79,18 @@ export const useAuthStore = create<AuthState>()(
                     }
                 } catch (error) {
                     console.error('Failed to load profile:', error);
+                }
+            },
+
+            refreshUser: async () => {
+                try {
+                    const { default: authService } = await import('../services/authService');
+                    const response = await authService.getProfile();
+                    if (response.success && response.data) {
+                        set({ user: response.data });
+                    }
+                } catch (error) {
+                    console.error('Failed to refresh user:', error);
                 }
             },
         }),

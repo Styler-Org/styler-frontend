@@ -93,6 +93,8 @@ export interface User {
     profilePicture?: string;
     coverImage?: string;
     addresses?: Address[];
+    wallet?: { balance: number };
+    penaltyAmount?: number;
     isActive: boolean;
     createdAt: string;
     updatedAt: string;

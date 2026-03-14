@@ -5,15 +5,15 @@ const themeOptions: ThemeOptions = {
     palette: {
         mode: 'light',
         primary: {
-            main: '#6366f1', // Indigo 500
+            main: '#4f46e5', // Indigo 600
             light: '#818cf8',
-            dark: '#4338ca', // Indigo 700 - Better contrast
+            dark: '#3730a3',
             contrastText: '#ffffff',
         },
         secondary: {
-            main: '#f43f5e', // Rose 500 - More sophisticated than Hot Pink
-            light: '#fb7185',
-            dark: '#e11d48',
+            main: '#f472b6', // Pink 400
+            light: '#fbcfe8',
+            dark: '#db2777',
             contrastText: '#ffffff',
         },
         success: {
@@ -136,11 +136,11 @@ const themeOptions: ThemeOptions = {
                     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 },
                 contained: {
-                    background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
-                    boxShadow: '0 4px 6px -1px rgba(99, 102, 241, 0.3), 0 2px 4px -1px rgba(99, 102, 241, 0.2)',
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
+                    boxShadow: '0 4px 6px -1px rgba(79, 70, 229, 0.3), 0 2px 4px -1px rgba(79, 70, 229, 0.2)',
                     '&:hover': {
-                        background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
-                        boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.4), 0 4px 6px -2px rgba(99, 102, 241, 0.2)',
+                        background: 'linear-gradient(135deg, #4338ca 0%, #312e81 100%)',
+                        boxShadow: '0 10px 15px -3px rgba(79, 70, 229, 0.4), 0 4px 6px -2px rgba(79, 70, 229, 0.2)',
                         transform: 'translateY(-1px)',
                     },
                 },
@@ -183,7 +183,7 @@ const themeOptions: ThemeOptions = {
                         '&.Mui-focused': {
                             backgroundColor: '#ffffff',
                             '& fieldset': {
-                                borderColor: '#6366f1',
+                                borderColor: '#4f46e5',
                                 borderWidth: '2px',
                             },
                         },

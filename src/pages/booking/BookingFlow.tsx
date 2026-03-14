@@ -37,7 +37,6 @@ import {
 import { salonService } from '../../services/salonService';
 import { barberService } from '../../services/barberService';
 import { appointmentService } from '../../services/appointmentService';
-import { paymentService } from '../../services/paymentService';
 import { Salon, Service, Barber } from '../../types';
 import './BookingFlow.css';
 
@@ -65,16 +64,9 @@ const BookingFlow: React.FC = () => {
 
     const steps = ['Select Service', 'Choose Barber', 'Pick Date & Time', 'Confirm'];
 
-    // Load Razorpay SDK
+    // Load Razorpay SDK (Removed for Zero Prepayment flow)
     useEffect(() => {
-        const script = document.createElement('script');
-        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-        script.async = true;
-        document.body.appendChild(script);
-
-        return () => {
-            document.body.removeChild(script);
-        };
+        // No pre-payment script needed anymore for booking
     }, []);
 
     useEffect(() => {
@@ -166,78 +158,12 @@ const BookingFlow: React.FC = () => {
                 throw new Error('Failed to create appointment');
             }
 
-            // Step 2: Initiate payment
-            const paymentResponse = await paymentService.initiatePayment({
-                appointmentId: appointment._id,
-                method: 'upi' as any, // Razorpay allows multiple payment methods in modal
-            });
+            // Step 2: Skip payment, directly show success for Zero Pre-payment
+            setSuccess(true);
+            setTimeout(() => {
+                navigate(`/payment/success?appointmentId=${appointment._id}`); // Retaining success route for visual continuity
+            }, 1500);
 
-            const paymentData = paymentResponse.data;
-            if (!paymentData) {
-                throw new Error('Failed to initiate payment');
-            }
-
-            // Step 3: Load and configure Razorpay
-            const options = {
-                key: import.meta.env.VITE_RAZORPAY_KEY_ID as string,
-                amount: paymentData.amount,
-                currency: paymentData.currency,
-                name: salon?.name || 'Styler',
-                description: `${selectedService.name} - Appointment`,
-                order_id: paymentData.orderId,
-                handler: async function (response: any) {
-                    try {
-                        // Step 4: Verify payment on backend
-                        await paymentService.verifyPayment(
-                            paymentData.orderId,
-                            response.razorpay_payment_id,
-                            response.razorpay_signature
-                        );
-
-                        // Payment successful
-                        setSuccess(true);
-                        setTimeout(() => {
-                            navigate(`/payment/success?appointmentId=${appointment._id}`);
-                        }, 1500);
-                    } catch (error: any) {
-                        setError('Payment verification failed. Please contact support.');
-                        setTimeout(() => {
-                            navigate(`/payment/failed?appointmentId=${appointment._id}`);
-                        }, 2000);
-                    }
-                },
-                prefill: {
-                    name: (selectedBarber?.userId as any)?.name || '',
-                    email: '',
-                    contact: '',
-                },
-                theme: {
-                    color: '#667eea',
-                },
-                modal: {
-                    ondismiss: function () {
-                        setSubmitting(false);
-                        setError('Payment cancelled. You can retry or contact salon directly.');
-                    },
-                },
-            };
-
-            // Check if Razorpay is loaded
-            if (!window.Razorpay) {
-                throw new Error('Razorpay SDK not loaded. Please refresh and try again.');
-            }
-
-            const rzp = new window.Razorpay(options);
-
-            rzp.on('payment.failed', function (response: any) {
-                setError(response.error.description || 'Payment failed. Please try again.');
-                setTimeout(() => {
-                    navigate(`/payment/failed?appointmentId=${appointment._id}`);
-                }, 2000);
-                setSubmitting(false);
-            });
-
-            rzp.open();
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to process booking');
             setSubmitting(false);
@@ -706,13 +632,26 @@ const BookingFlow: React.FC = () => {
                                 {selectedService && (
                                     <>
                                         <Divider sx={{ my: 2 }} />
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                                                Total
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                                                Total Value
                                             </Typography>
-                                            <Typography variant="h5" sx={{ fontWeight: 800, color: '#667eea' }}>
+                                            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'text.secondary', textDecoration: 'line-through' }}>
                                                 ₹{selectedService.price}
                                             </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                                                Amount Payable Now
+                                            </Typography>
+                                            <Box sx={{ textAlign: 'right' }}>
+                                                <Typography variant="h4" sx={{ fontWeight: 800, color: '#10b981' }}>
+                                                    ₹0
+                                                </Typography>
+                                                <Typography variant="caption" sx={{ color: '#10b981', fontWeight: 600 }}>
+                                                    Pay at salon
+                                                </Typography>
+                                            </Box>
                                         </Box>
                                     </>
                                 )}

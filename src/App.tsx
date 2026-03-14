@@ -39,6 +39,7 @@ import BookingFlow from './pages/booking/BookingFlow';
 // Payment Pages
 import PaymentSuccess from './pages/payment/PaymentSuccess';
 import PaymentFailed from './pages/payment/PaymentFailed';
+import PayBill from './pages/payment/PayBill';
 
 // Customer Pages
 
@@ -134,8 +135,14 @@ function AppContent() {
                 {/* Payment Routes */}
                 <Route path="/payment/success" element={<Layout><PaymentSuccess /></Layout>} />
                 <Route path="/payment/failed" element={<Layout><PaymentFailed /></Layout>} />
-
-
+                <Route
+                    path="/payment/pay-bill/:appointmentId"
+                    element={
+                        <ProtectedRoute role={UserRole.CUSTOMER}>
+                            <Layout><PayBill /></Layout>
+                        </ProtectedRoute>
+                    }
+                />
                 <Route
                     path="/appointments"
                     element={

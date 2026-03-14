@@ -298,6 +298,31 @@ const MyAppointments: React.FC = () => {
                             </Typography>
                             <Box sx={{ flexGrow: { xs: 1, sm: 0 }, display: { xs: 'block', sm: 'none' } }} />
 
+                            {/* Show Pay Bill Button if Appointment is not yet paid or completed */}
+                            {tabValue === 0 && (
+                                <Button
+                                    variant="contained"
+                                    fullWidth={!isMobile}
+                                    onClick={() => navigate(`/payment/pay-bill/${appointment._id}`)}
+                                    sx={{
+                                        mb: 1,
+                                        bgcolor: '#10b981',
+                                        color: 'white',
+                                        fontWeight: 800,
+                                        borderRadius: '12px',
+                                        textTransform: 'none',
+                                        boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)',
+                                        '&:hover': {
+                                            bgcolor: '#059669',
+                                            transform: 'translateY(-1px)',
+                                            boxShadow: '0 6px 20px rgba(16, 185, 129, 0.6)',
+                                        }
+                                    }}
+                                >
+                                    Pay at Salon
+                                </Button>
+                            )}
+
                             <Button
                                 variant="contained"
                                 endIcon={<ArrowForwardIcon />}

@@ -105,15 +105,15 @@ html {
 
 /* Gradient Backgrounds */
 .gradient-primary {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #f472b6 0%, #4f46e5 100%);
 }
 
 .gradient-secondary {
-  background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
+  background: linear-gradient(135deg, #eef2ff 0%, #fdf4ff 100%);
 }
 
 .gradient-dark {
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  background: linear-gradient(135deg, #1e1b4b 0%, #171717 100%);
 }
 
 /* Focus Styles */

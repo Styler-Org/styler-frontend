@@ -18,6 +18,12 @@ export interface RefundRequest {
     reason: string;
 }
 
+export interface PayBillRequest {
+    appointmentId: string;
+    billAmount: number;
+    useWallet: boolean;
+}
+
 // ==================== Response Types ====================
 
 export interface InitiatePaymentResponse {
@@ -51,6 +57,14 @@ class PaymentService {
             paymentId,
             signature,
         });
+        return response.data;
+    }
+
+    /**
+     * Pay Bill at salon
+     */
+    async payBill(data: PayBillRequest): Promise<ApiResponse<any>> {
+        const response = await api.post<ApiResponse<any>>('/payments/pay-bill', data);
         return response.data;
     }
 

@@ -102,27 +102,27 @@ const Home: React.FC = () => {
     const services = [
         {
             icon: <ScissorsIcon />,
-            title: 'Haircut & Styling',
+            title: 'Salons',
             price: '₹500',
             image: '/images/mens-haircut.png',
         },
         {
             icon: <FaceIcon />,
-            title: 'Beard Grooming',
-            price: '₹300',
+            title: 'Dermatologists',
+            price: '₹1500',
             image: '/images/beard-grooming.png',
         },
         {
-            icon: <SparklesIcon />,
-            title: 'Hair Coloring',
-            price: '₹2000',
-            image: '/images/womens-styling.png',
+            icon: <SpaIcon />,
+            title: 'Wellness & Spa',
+            price: '₹3000',
+            image: '/images/spa-facial.png',
         },
         {
-            icon: <SpaIcon />,
-            title: 'Spa & Facial',
-            price: '₹1500',
-            image: '/images/spa-facial.png',
+            icon: <SparklesIcon />,
+            title: 'Nails & Lashes',
+            price: '₹2000',
+            image: '/images/womens-styling.png',
         },
     ];
 
@@ -160,12 +160,12 @@ const Home: React.FC = () => {
         }
         return (
             <>
-                Elevate Your <br />
+                Premium Salons, <br />
                 <span style={{
-                    background: 'linear-gradient(to right, #a78bfa, #f472b6)',
+                    background: 'linear-gradient(to right, #4f46e5, #f472b6)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent'
-                }}>Style & Confidence</span>
+                }}>Zero Pre-Payment</span>
             </>
         );
     };
@@ -223,7 +223,7 @@ const Home: React.FC = () => {
                             lineHeight: 1.6,
                             fontWeight: 400
                         }}>
-                            {heroData?.heroSubtitle || "Discover and book appointments with the city's finest salons and expert stylists. Premium grooming, redefined."}
+                            {heroData?.heroSubtitle || "Book appointments with the city's finest salons. Pay nothing now, pay at the salon, and get exclusive wallet discounts."}
                         </Typography>
 
                         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>

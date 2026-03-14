@@ -10,7 +10,10 @@ import {
     Store as StoreIcon,
     People as PeopleIcon,
     Assessment as AnalyticsIcon,
-    Notifications as NotificationsIcon
+    Notifications as NotificationsIcon,
+    Face as FaceIcon,
+    Spa as SpaIcon,
+    Favorite as FavoriteIcon
 } from '@mui/icons-material';
 
 export interface NavLink {
@@ -40,9 +43,11 @@ export const getNavLinksForRole = (role?: string): NavLink[] => {
         case 'customer':
         default:
             return [
-                { label: 'Find Salons', path: '/salons', icon: <LocationOnIcon /> },
-                { label: 'Services', path: '/services', icon: <ContentCutIcon /> },
-                { label: 'About', path: '/about', icon: <InfoIcon /> },
+                { label: 'Salons', path: '/salons', icon: <LocationOnIcon /> },
+                { label: 'Dermatologists', path: '/dermatologists', icon: <FaceIcon /> },
+                { label: 'Spa', path: '/spa', icon: <SpaIcon /> },
+                { label: 'Appointments', path: '/appointments', icon: <CalendarIcon /> },
+                { label: 'Lookbook', path: '/lookbook', icon: <FavoriteIcon /> },
             ];
     }
 };

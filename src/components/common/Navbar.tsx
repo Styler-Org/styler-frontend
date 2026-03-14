@@ -37,7 +37,10 @@ import {
     Favorite,
     Email,
     Person as PersonIcon, // Re-added PersonIcon
-    Info as InfoIcon // Re-added InfoIcon
+    Info as InfoIcon, // Re-added InfoIcon
+    Spa as SpaIcon,
+    Face as FaceIcon,
+    AccountBalanceWallet as WalletIcon
 } from '@mui/icons-material';
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
@@ -92,9 +95,9 @@ const Navbar: React.FC = () => {
     const getNavLinksForRole = () => {
         if (!isAuthenticated || !user) {
             return [
-                { label: 'Find Salons', path: '/salons', icon: <LocationOnIcon /> },
-                { label: 'Services', path: '/services', icon: <ContentCutIcon /> },
-                { label: 'About', path: '/about', icon: <InfoIcon /> },
+                { label: 'Salons', path: '/salons', icon: <LocationOnIcon /> },
+                { label: 'Dermatologists', path: '/dermatologists', icon: <FaceIcon /> },
+                { label: 'Spa', path: '/spa', icon: <SpaIcon /> },
             ];
         }
 
@@ -117,12 +120,11 @@ const Navbar: React.FC = () => {
             case 'customer':
             default:
                 return [
+                    { label: 'Salons', path: '/salons', icon: <LocationOnIcon /> },
+                    { label: 'Dermatologists', path: '/dermatologists', icon: <FaceIcon /> },
+                    { label: 'Spa', path: '/spa', icon: <SpaIcon /> },
                     { label: 'Appointments', path: '/appointments', icon: <CalendarIcon /> },
                     { label: 'Lookbook', path: '/lookbook', icon: <Favorite /> },
-                    { label: 'Services', path: '/services', icon: <ContentCutIcon /> },
-                    { label: 'Find Salons', path: '/salons', icon: <LocationOnIcon /> },
-                    { label: 'About', path: '/about', icon: <CalendarIcon /> },
-                    { label: 'Contact', path: '/contact', icon: <Email /> },
                 ];
         }
     };
@@ -309,6 +311,20 @@ const Navbar: React.FC = () => {
                                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', ml: 'auto' }}>
                                     {isAuthenticated ? (
                                         <>
+                                            {user?.role === 'customer' && (
+                                                <Box sx={{
+                                                    display: 'flex', alignItems: 'center', gap: 1, px: 2, py: 0.8,
+                                                    borderRadius: '50px',
+                                                    background: 'linear-gradient(135deg, rgba(244, 114, 182, 0.1) 0%, rgba(79, 70, 229, 0.1) 100%)',
+                                                    border: '1px solid rgba(244, 114, 182, 0.3)',
+                                                    mr: 1
+                                                }}>
+                                                    <WalletIcon sx={{ color: '#f472b6', fontSize: 20 }} />
+                                                    <Typography sx={{ fontWeight: 800, color: '#4f46e5', fontSize: '0.9rem' }}>
+                                                        ₹{user?.wallet?.balance || 0}
+                                                    </Typography>
+                                                </Box>
+                                            )}
                                             <IconButton
                                                 onClick={handleMenu}
                                                 sx={{
