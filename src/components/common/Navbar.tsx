@@ -96,8 +96,8 @@ const Navbar: React.FC = () => {
         if (!isAuthenticated || !user) {
             return [
                 { label: 'Salons', path: '/salons', icon: <LocationOnIcon /> },
-                { label: 'Dermatologists', path: '/dermatologists', icon: <FaceIcon /> },
-                { label: 'Spa', path: '/spa', icon: <SpaIcon /> },
+                { label: 'Dermatologists', path: '/salons', state: { category: 'Dermatologists' }, icon: <FaceIcon /> },
+                { label: 'Spa', path: '/salons', state: { category: 'Wellness & Spa' }, icon: <SpaIcon /> },
             ];
         }
 
@@ -121,8 +121,8 @@ const Navbar: React.FC = () => {
             default:
                 return [
                     { label: 'Salons', path: '/salons', icon: <LocationOnIcon /> },
-                    { label: 'Dermatologists', path: '/dermatologists', icon: <FaceIcon /> },
-                    { label: 'Spa', path: '/spa', icon: <SpaIcon /> },
+                    { label: 'Dermatologists', path: '/salons', state: { category: 'Dermatologists' }, icon: <FaceIcon /> },
+                    { label: 'Spa', path: '/salons', state: { category: 'Wellness & Spa' }, icon: <SpaIcon /> },
                     { label: 'Appointments', path: '/appointments', icon: <CalendarIcon /> },
                     { label: 'Lookbook', path: '/lookbook', icon: <Favorite /> },
                 ];
@@ -144,12 +144,13 @@ const Navbar: React.FC = () => {
             <Box sx={{ flex: 1, overflowY: 'auto', py: 2 }}>
                 <List sx={{ px: 2 }}>
                     {navLinks.map((item) => {
-                        const isActive = location.pathname === item.path;
+                        const isActive = location.pathname === item.path && (!('state' in item) || (location.state as any)?.category === (item as any).state?.category);
                         return (
-                            <ListItem key={item.path} disablePadding sx={{ mb: 1.5 }}>
+                            <ListItem key={item.label} disablePadding sx={{ mb: 1.5 }}>
                                 <ListItemButton
                                     component={Link}
                                     to={item.path}
+                                    state={(item as any).state}
                                     onClick={handleDrawerToggle}
                                     sx={{
                                         borderRadius: '12px',
@@ -277,12 +278,13 @@ const Navbar: React.FC = () => {
                                     boxShadow: scrolled ? 'none' : '0 4px 20px rgba(0,0,0,0.05)'
                                 }}>
                                     {navLinks.map((item) => {
-                                        const isActive = location.pathname === item.path;
+                                        const isActive = location.pathname === item.path && (!('state' in item) || (location.state as any)?.category === (item as any).state?.category);
                                         return (
                                             <Button
-                                                key={item.path}
+                                                key={item.label}
                                                 component={Link}
                                                 to={item.path}
+                                                state={(item as any).state}
                                                 disableRipple
                                                 startIcon={item.icon}
                                                 sx={{

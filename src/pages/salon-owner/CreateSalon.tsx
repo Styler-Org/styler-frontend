@@ -639,12 +639,14 @@ const CreateSalon: React.FC = () => {
                                         value={currentService.category}
                                         onChange={(e) => handleServiceChange('category', e.target.value)}
                                     >
+                                        <MenuItem value="Salons">Salons</MenuItem>
+                                        <MenuItem value="Dermatologists">Dermatologists</MenuItem>
+                                        <MenuItem value="Wellness & Spa">Wellness & Spa</MenuItem>
+                                        <MenuItem value="Nails & Lashes">Nails & Lashes</MenuItem>
                                         <MenuItem value="Haircut">Haircut</MenuItem>
                                         <MenuItem value="Shaving">Shaving</MenuItem>
                                         <MenuItem value="Beard">Beard</MenuItem>
                                         <MenuItem value="Facial">Facial</MenuItem>
-                                        <MenuItem value="Hair Color">Hair Color</MenuItem>
-                                        <MenuItem value="Hair Treatment">Hair Treatment</MenuItem>
                                         <MenuItem value="Massage">Massage</MenuItem>
                                         <MenuItem value="Other">Other</MenuItem>
                                     </TextField>

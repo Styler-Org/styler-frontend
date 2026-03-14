@@ -18,6 +18,7 @@ export interface VerifyOtpRequest {
     name?: string;
     email?: string;
     role?: UserRole;
+    dateOfBirth?: string;
 }
 
 export interface RefreshTokenRequest {

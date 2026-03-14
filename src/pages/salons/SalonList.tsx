@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Box,
     Container,
@@ -49,13 +49,27 @@ interface SalonWithDistance extends Salon {
 
 const SalonList: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const initialCategory = location.state?.category || '';
+
     const [searchQuery, setSearchQuery] = useState('');
     const [countryFilter, setCountryFilter] = useState('India');
     const [cityFilter, setCityFilter] = useState('Lucknow');
     const [placeFilter, setPlaceFilter] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState<string>(initialCategory);
     const [sortBy, setSortBy] = useState<SortOption>('rating');
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
     const [showLocationAlert, setShowLocationAlert] = useState(false);
+
+    // Sync category filter when location state changes (e.g., clicking navbar links while already on /salons)
+    useEffect(() => {
+        if (location.state && location.state.category !== undefined) {
+            setCategoryFilter(location.state.category);
+        } else if (location.state === null) {
+            // Optional: reset category if navigating explicitly without state
+            // setCategoryFilter(''); 
+        }
+    }, [location.state]);
 
     const { coordinates, error: locationError, loading: locationLoading, getCurrentPosition } = useGeolocation();
 
@@ -70,13 +84,21 @@ const SalonList: React.FC = () => {
         'Mahanagar',
     ];
 
+    const serviceCategories = [
+        'Salons',
+        'Dermatologists',
+        'Wellness & Spa',
+        'Nails & Lashes'
+    ];
+
     const { data, isLoading } = useQuery({
-        queryKey: ['salons', searchQuery, placeFilter, cityFilter, sortBy],
+        queryKey: ['salons', searchQuery, placeFilter, cityFilter, categoryFilter, sortBy],
         queryFn: () => {
             const combinedSearch = [searchQuery, placeFilter].filter(Boolean).join(' ');
             return salonService.searchSalons({
                 searchText: combinedSearch || undefined,
                 city: cityFilter,
+                serviceCategory: categoryFilter || undefined,
                 sortBy: sortBy !== 'nearest' ? sortBy : undefined // Don't send 'nearest' to API
             });
         },
@@ -130,9 +152,10 @@ const SalonList: React.FC = () => {
     const handleClearSearch = () => {
         setSearchQuery('');
         setPlaceFilter('');
+        setCategoryFilter('');
     };
 
-    const hasActiveFilters = searchQuery || placeFilter;
+    const hasActiveFilters = searchQuery || placeFilter || categoryFilter;
 
     return (
         <Box className="salon-list-page">
@@ -239,6 +262,19 @@ const SalonList: React.FC = () => {
                                         </Select>
                                     </FormControl>
                                     <FormControl size="small" className="premium-select" sx={{ minWidth: 180 }}>
+                                        <InputLabel>Category</InputLabel>
+                                        <Select
+                                            value={categoryFilter}
+                                            onChange={(e) => setCategoryFilter(e.target.value)}
+                                            label="Category"
+                                        >
+                                            <MenuItem value="">All Categories</MenuItem>
+                                            {serviceCategories.map((cat) => (
+                                                <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                    <FormControl size="small" className="premium-select" sx={{ minWidth: 180 }}>
                                         <InputLabel>Sort By</InputLabel>
                                         <Select
                                             value={sortBy}
@@ -289,6 +325,9 @@ const SalonList: React.FC = () => {
                             )}
                             {placeFilter && (
                                 <Chip label={`Place: ${placeFilter}`} onDelete={() => setPlaceFilter('')} size="small" sx={{ borderRadius: '8px' }} />
+                            )}
+                            {categoryFilter && (
+                                <Chip label={`Category: ${categoryFilter}`} onDelete={() => setCategoryFilter('')} size="small" sx={{ borderRadius: '8px' }} />
                             )}
                             <Button size="small" onClick={handleClearSearch} sx={{ ml: 1, color: 'text.secondary' }}>
                                 Clear All

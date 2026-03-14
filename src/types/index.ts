@@ -252,6 +252,11 @@ export interface Review {
     updatedAt: string;
 }
 
+export interface SalonSearchFilters extends SalonFilters {
+    searchText?: string;
+    sortBy?: string;
+}
+
 // Legacy compatibility request types
 export interface LoginRequest {
     emailOrPhone: string;
@@ -302,12 +307,21 @@ export interface SalonFilters {
     serviceType?: string;
     page?: number;
     limit?: number;
+    serviceCategory?: string;
 }
 
 export interface NearbySalonsRequest {
     lat: number;
     lng: number;
     radius?: number;
+    page?: number;
+    limit?: number;
+}
+
+export interface NearbySalonFilters {
+    lat: number;
+    lng: number;
+    radius?: number; // in km
     page?: number;
     limit?: number;
 }

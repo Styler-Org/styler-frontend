@@ -12,7 +12,7 @@ import {
 import {
     Person as PersonIcon,
     Email as EmailIcon,
-    Lock as LockIcon,
+    Phone as PhoneIcon,
     VpnKey as VpnKeyIcon,
     ContentCut as ScissorsIcon,
     CalendarMonth as CalendarIcon,
@@ -44,22 +44,22 @@ const itemVariant = {
     show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
 };
 
-type AuthStep = 'CREDENTIALS_ENTRY' | 'OTP_VERIFICATION' | 'REGISTRATION_DETAILS';
+type AuthStep = 'PHONE_ENTRY' | 'OTP_VERIFICATION' | 'REGISTRATION_DETAILS';
 
 interface LoginProps {
     isRegisterMode?: boolean;
 }
 
 const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
-    const [step, setStep] = useState<AuthStep>('CREDENTIALS_ENTRY');
+    const [step, setStep] = useState<AuthStep>('PHONE_ENTRY');
     const [loading, setLoading] = useState(false);
     const [resendTimer, setResendTimer] = useState(0);
 
-    const [credentials, setCredentials] = useState({ emailOrPhone: '', password: '' });
     const [phone, setPhone] = useState('');
     const [otp, setOtp] = useState('');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [dob, setDob] = useState('');
     const [pendingAuth, setPendingAuth] = useState<AuthResponse | null>(null);
 
     const navigate = useNavigate();
@@ -89,47 +89,31 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
             case 'salon_owner': return '/salon-owner/dashboard';
             case 'superadmin': return '/admin/superadmin';
             case 'customer':
-            default: return '/customer/dashboard';
+            default: return '/salons';
         }
     };
 
     const normalizePhone = (value: string) => value.replace(/\D/g, '').slice(-10);
 
-    const handlePrimaryLogin = async (e: React.FormEvent) => {
+    const handleSendOtp = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!credentials.emailOrPhone.trim() || !credentials.password.trim()) {
-            toast.error('Please enter your email/phone and password');
+        if (!phone.trim() || phone.length < 10) {
+            toast.error('Please enter a valid phone number');
             return;
         }
 
         setLoading(true);
         try {
-            const response = await authService.login({
-                emailOrPhone: credentials.emailOrPhone.trim(),
-                password: credentials.password,
-            });
-
-            if (response.success && response.data) {
-                const fallbackPhone = normalizePhone(credentials.emailOrPhone);
-                const otpPhone = response.data.user.phone || fallbackPhone;
-
-                if (!otpPhone || otpPhone.length < 10) {
-                    toast.error('Phone number is required to complete OTP verification');
-                    return;
-                }
-
-                await authService.requestOtp({ phone: otpPhone });
-
-                setPendingAuth(response.data);
-                setPhone(otpPhone);
+            const response = await authService.requestOtp({ phone: phone.trim() });
+            if (response.success) {
                 setOtp('');
                 setStep('OTP_VERIFICATION');
                 setResendTimer(30);
-                toast.success('Password verified. OTP sent to your phone.');
+                toast.success('OTP sent to your phone.');
             }
         } catch (err: any) {
-            const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || 'Login failed';
+            const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to send OTP';
             toast.error(errorMessage);
         } finally {
             setLoading(false);
@@ -172,7 +156,7 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
             const response = await authService.verifyOtp({
                 phone,
                 otp,
-                ...(step === 'REGISTRATION_DETAILS' ? { name, email } : {})
+                ...(step === 'REGISTRATION_DETAILS' ? { name, email, dateOfBirth: dob } : {})
             });
 
             if (response.success) {
@@ -268,52 +252,33 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
                 >
                     <Box className="login-form-header">
                         <Typography variant="h1">
-                            {step === 'CREDENTIALS_ENTRY' && 'Welcome'}
+                            {step === 'PHONE_ENTRY' && 'Welcome'}
                             {step === 'OTP_VERIFICATION' && 'Verify OTP'}
                             {step === 'REGISTRATION_DETAILS' && 'Welcome to Styler! 🎉'}
                         </Typography>
                         <Typography variant="body1">
-                            {step === 'CREDENTIALS_ENTRY' && 'Enter your email/phone and password to continue.'}
+                            {step === 'PHONE_ENTRY' && 'Enter your phone number to continue.'}
                             {step === 'OTP_VERIFICATION' && `Step 2: Enter the 6-digit OTP sent to ${phone}`}
                             {step === 'REGISTRATION_DETAILS' && 'It looks like you are new here. Please complete your profile to continue.'}
                         </Typography>
                     </Box>
 
                     <CardContent sx={{ p: 0, mt: 4 }}>
-                        {step === 'CREDENTIALS_ENTRY' && (
-                            <Box component="form" onSubmit={handlePrimaryLogin} className="login-form">
+                        {step === 'PHONE_ENTRY' && (
+                            <Box component="form" onSubmit={handleSendOtp} className="login-form">
                                 <MotionBox variants={staggerContainer} initial="hidden" animate="show">
                                     <MotionBox variants={itemVariant}>
                                         <TextField
                                             fullWidth
-                                            label="Email or Phone"
-                                            type="text"
-                                            value={credentials.emailOrPhone}
-                                            onChange={(e) => setCredentials({ ...credentials, emailOrPhone: e.target.value })}
+                                            label="Phone Number"
+                                            type="tel"
+                                            value={phone}
+                                            onChange={(e) => setPhone(e.target.value)}
                                             required
                                             InputProps={{
                                                 startAdornment: (
                                                     <InputAdornment position="start">
-                                                        <EmailIcon sx={{ color: '#94a3b8' }} />
-                                                    </InputAdornment>
-                                                ),
-                                            }}
-                                            sx={{ mb: 3 }}
-                                        />
-                                    </MotionBox>
-
-                                    <MotionBox variants={itemVariant}>
-                                        <TextField
-                                            fullWidth
-                                            label="Password"
-                                            type="password"
-                                            value={credentials.password}
-                                            onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-                                            required
-                                            InputProps={{
-                                                startAdornment: (
-                                                    <InputAdornment position="start">
-                                                        <LockIcon sx={{ color: '#94a3b8' }} />
+                                                        <PhoneIcon sx={{ color: '#94a3b8' }} />
                                                     </InputAdornment>
                                                 ),
                                             }}
@@ -327,7 +292,7 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
                                             variant="contained"
                                             fullWidth
                                             size="large"
-                                            disabled={loading || !credentials.emailOrPhone || !credentials.password}
+                                            disabled={loading || phone.length < 10}
                                             endIcon={!loading && <ArrowForwardIcon />}
                                             sx={{
                                                 height: 56,
@@ -425,7 +390,7 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
                                         <Button
                                             type="button"
                                             onClick={() => {
-                                                setStep('CREDENTIALS_ENTRY');
+                                                setStep('PHONE_ENTRY');
                                                 setResendTimer(0);
                                                 setOtp('');
                                                 setPendingAuth(null);
@@ -441,7 +406,7 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
                                                 }
                                             }}
                                         >
-                                            Change Credentials
+                                            Change Phone Number
                                         </Button>
                                     </MotionBox>
                                 </MotionBox>
@@ -474,6 +439,19 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
                                                 startAdornment: <InputAdornment position="start"><EmailIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
                                             }}
                                         />
+
+                                        <TextField
+                                            fullWidth
+                                            label="Date of Birth"
+                                            type="date"
+                                            value={dob}
+                                            onChange={(e) => setDob(e.target.value)}
+                                            required
+                                            InputLabelProps={{ shrink: true }}
+                                            InputProps={{
+                                                startAdornment: <InputAdornment position="start"><CalendarIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
+                                            }}
+                                        />
                                     </MotionBox>
 
                                     <MotionBox variants={itemVariant}>
@@ -482,7 +460,7 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
                                             variant="contained"
                                             fullWidth
                                             size="large"
-                                            disabled={loading || !name || !email}
+                                            disabled={loading || !name || !email || !dob}
                                             sx={{
                                                 height: 56,
                                                 borderRadius: '16px',

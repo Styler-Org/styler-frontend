@@ -371,7 +371,7 @@ const Home: React.FC = () => {
                                     whileInView={{ opacity: 1, scale: 1 }}
                                     transition={{ delay: index * 0.1 }}
                                     viewport={{ once: true }}
-                                    onClick={() => navigate('/services')}
+                                    onClick={() => navigate('/salons', { state: { category: service.title } })}
                                     elevation={0}
                                 >
                                     <Box

@@ -57,12 +57,14 @@ interface ServiceFormData {
 }
 
 const categories = [
+    'Salons',
+    'Dermatologists',
+    'Wellness & Spa',
+    'Nails & Lashes',
     'Haircut',
     'Shaving',
     'Beard',
     'Facial',
-    'Hair Color',
-    'Hair Treatment',
     'Massage',
     'Other'
 ];

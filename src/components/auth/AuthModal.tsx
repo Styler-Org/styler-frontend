@@ -23,6 +23,7 @@ import {
     CalendarMonth as CalendarIcon,
     ArrowForward as ArrowForwardIcon,
     Close as CloseIcon,
+    Phone as PhoneIcon,
     VpnKey as VpnKeyIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
@@ -36,7 +37,7 @@ import '../../pages/Login.css'; // Reuse existing styles
 
 const MotionBox = motion(Box);
 
-type AuthStep = 'CREDENTIALS_ENTRY' | 'OTP_VERIFICATION' | 'REGISTRATION_DETAILS';
+type AuthStep = 'PHONE_ENTRY' | 'OTP_VERIFICATION' | 'REGISTRATION_DETAILS';
 
 const AuthModal: React.FC = () => {
     const theme = useTheme();
@@ -48,16 +49,16 @@ const AuthModal: React.FC = () => {
     const setAuth = useAuthStore((state) => state.setAuth);
 
     // Form State
-    const [step, setStep] = useState<AuthStep>('CREDENTIALS_ENTRY');
+    const [step, setStep] = useState<AuthStep>('PHONE_ENTRY');
     const [loading, setLoading] = useState(false);
     const [resendTimer, setResendTimer] = useState(0);
     const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.CUSTOMER);
 
-    const [credentials, setCredentials] = useState({ emailOrPhone: '', password: '' });
     const [phone, setPhone] = useState('');
     const [otp, setOtp] = useState('');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [dob, setDob] = useState('');
     const [pendingAuth, setPendingAuth] = useState<AuthResponse | null>(null);
 
     // Sync URL with Modal State
@@ -86,13 +87,13 @@ const AuthModal: React.FC = () => {
     // Added reset state on close
     useEffect(() => {
         if (!isLoginModalOpen) {
-            setStep('CREDENTIALS_ENTRY');
+            setStep('PHONE_ENTRY');
             setResendTimer(0);
-            setCredentials({ emailOrPhone: '', password: '' });
             setPhone('');
             setOtp('');
             setName('');
             setEmail('');
+            setDob('');
             setPendingAuth(null);
             setSelectedRole(UserRole.CUSTOMER);
         }
@@ -110,41 +111,25 @@ const AuthModal: React.FC = () => {
 
     const normalizePhone = (value: string) => value.replace(/\D/g, '').slice(-10);
 
-    const handlePrimaryLogin = async (e: React.FormEvent) => {
+    const handleSendOtp = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!credentials.emailOrPhone.trim() || !credentials.password.trim()) {
-            toast.error('Please enter your email/phone and password');
+        if (!phone.trim() || phone.length < 10) {
+            toast.error('Please enter a valid phone number');
             return;
         }
 
         setLoading(true);
         try {
-            const response = await authService.login({
-                emailOrPhone: credentials.emailOrPhone.trim(),
-                password: credentials.password,
-            });
-
-            if (response.success && response.data) {
-                const fallbackPhone = normalizePhone(credentials.emailOrPhone);
-                const otpPhone = response.data.user.phone || fallbackPhone;
-
-                if (!otpPhone || otpPhone.length < 10) {
-                    toast.error('Phone number is required to complete OTP verification');
-                    return;
-                }
-
-                await authService.requestOtp({ phone: otpPhone });
-
-                setPendingAuth(response.data);
-                setPhone(otpPhone);
+            const response = await authService.requestOtp({ phone: phone.trim() });
+            if (response.success) {
                 setOtp('');
                 setStep('OTP_VERIFICATION');
                 setResendTimer(30);
-                toast.success('Password verified. OTP sent to your phone.');
+                toast.success('OTP sent to your phone.');
             }
         } catch (err: any) {
-            const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || 'Login failed';
+            const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to send OTP';
             toast.error(errorMessage);
         } finally {
             setLoading(false);
@@ -187,7 +172,7 @@ const AuthModal: React.FC = () => {
             const response = await authService.verifyOtp({
                 phone,
                 otp,
-                ...(step === 'REGISTRATION_DETAILS' ? { name, email, role: selectedRole } : {})
+                ...(step === 'REGISTRATION_DETAILS' ? { name, email, role: selectedRole, dateOfBirth: dob } : {})
             });
 
             if (response.success) {
@@ -334,42 +319,30 @@ const AuthModal: React.FC = () => {
 
                         <Box className="login-form-header" sx={{ textAlign: 'center', mb: 4 }}>
                             <Typography variant="h4" sx={{ fontWeight: 800, color: '#1e293b', mb: 1 }}>
-                                {step === 'CREDENTIALS_ENTRY' && 'Welcome'}
+                                {step === 'PHONE_ENTRY' && 'Welcome'}
                                 {step === 'OTP_VERIFICATION' && 'Verify OTP'}
                                 {step === 'REGISTRATION_DETAILS' && 'Welcome to Styler! 🎉'}
                             </Typography>
                             <Typography variant="body2" sx={{ color: '#64748b' }}>
-                                {step === 'CREDENTIALS_ENTRY' && 'Enter your email/phone and password to continue.'}
+                                {step === 'PHONE_ENTRY' && 'Enter your phone number to continue.'}
                                 {step === 'OTP_VERIFICATION' && `Step 2: Enter the 6-digit OTP sent to ${phone}`}
                                 {step === 'REGISTRATION_DETAILS' && 'It looks like you are new here. Please complete your profile to continue.'}
                             </Typography>
                         </Box>
 
                         <CardContent sx={{ p: 0 }}>
-                            {step === 'CREDENTIALS_ENTRY' && (
-                                <Box component="form" onSubmit={handlePrimaryLogin}>
+                            {step === 'PHONE_ENTRY' && (
+                                <Box component="form" onSubmit={handleSendOtp}>
                                     <TextField
                                         fullWidth
-                                        label="Email or Phone"
-                                        type="text"
-                                        value={credentials.emailOrPhone}
-                                        onChange={(e) => setCredentials({ ...credentials, emailOrPhone: e.target.value })}
+                                        label="Phone Number"
+                                        type="tel"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
                                         required
                                         sx={{ mb: 4 }}
                                         InputProps={{
-                                            startAdornment: <InputAdornment position="start"><EmailIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
-                                        }}
-                                    />
-                                    <TextField
-                                        fullWidth
-                                        label="Password"
-                                        type="password"
-                                        value={credentials.password}
-                                        onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-                                        required
-                                        sx={{ mb: 4 }}
-                                        InputProps={{
-                                            startAdornment: <InputAdornment position="start"><LockIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
+                                            startAdornment: <InputAdornment position="start"><PhoneIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
                                         }}
                                     />
                                     <Button
@@ -377,7 +350,7 @@ const AuthModal: React.FC = () => {
                                         variant="contained"
                                         fullWidth
                                         size="large"
-                                        disabled={loading || !credentials.emailOrPhone || !credentials.password}
+                                        disabled={loading || phone.length < 10}
                                         endIcon={!loading && <ArrowForwardIcon />}
                                         sx={{ height: 50 }}
                                     >
@@ -430,14 +403,14 @@ const AuthModal: React.FC = () => {
                                         <Button
                                             type="button"
                                             onClick={() => {
-                                                setStep('CREDENTIALS_ENTRY');
+                                                setStep('PHONE_ENTRY');
                                                 setResendTimer(0);
                                                 setOtp('');
                                                 setPendingAuth(null);
                                             }}
                                             sx={{ color: '#64748b', textTransform: 'none', fontWeight: 600 }}
                                         >
-                                            Change Credentials
+                                            Change Phone Number
                                         </Button>
                                     </Box>
                                 </Box>
@@ -485,6 +458,19 @@ const AuthModal: React.FC = () => {
                                                 startAdornment: <InputAdornment position="start"><EmailIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
                                             }}
                                         />
+                                        <TextField
+                                            fullWidth
+                                            label="Date of Birth"
+                                            type="date"
+                                            size="small"
+                                            value={dob}
+                                            onChange={(e) => setDob(e.target.value)}
+                                            required
+                                            InputLabelProps={{ shrink: true }}
+                                            InputProps={{
+                                                startAdornment: <InputAdornment position="start"><CalendarIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
+                                            }}
+                                        />
                                     </Box>
 
                                     <Button
@@ -492,7 +478,7 @@ const AuthModal: React.FC = () => {
                                         variant="contained"
                                         fullWidth
                                         size="large"
-                                        disabled={loading || !name || !email}
+                                        disabled={loading || !name || !email || !dob}
                                         sx={{ mt: 3, height: 50 }}
                                     >
                                         {loading ? <CircularProgress size={24} color="inherit" /> : 'Complete Registration'}
