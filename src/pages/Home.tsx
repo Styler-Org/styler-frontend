@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Container, Typography, Button, Grid, Card, CardContent, Box, Avatar } from '@mui/material';
+import { Container, Typography, Button, Grid, Card, CardContent, Box, Avatar, Paper, InputBase, Divider, IconButton } from '@mui/material';
 import {
     ArrowForward as ArrowForwardIcon,
     LocationOn as LocationOnIcon,
@@ -16,6 +16,8 @@ import {
     Spa as SpaIcon,
     Security as SecurityIcon,
     LocalOffer as OfferIcon,
+    Search as SearchIcon,
+    MyLocation as MyLocationIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -45,6 +47,9 @@ const Home: React.FC = () => {
 
     // Strapi Data State
     const [heroData, setHeroData] = useState<any>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchLocation, setSearchLocation] = useState('');
+    const [searchDate, setSearchDate] = useState('');
 
     // Fetch Strapi Data
     useEffect(() => {
@@ -165,9 +170,14 @@ const Home: React.FC = () => {
                     background: 'linear-gradient(to right, #4f46e5, #f472b6)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent'
-                }}>Zero Pre-Payment</span>
+                }}>Beauty & Wellness</span>
             </>
         );
+    };
+
+    const handleSearch = () => {
+        // Navigate to salons page with search parameters
+        navigate('/salons', { state: { query: searchQuery, location: searchLocation, date: searchDate } });
     };
 
     return (
@@ -226,48 +236,86 @@ const Home: React.FC = () => {
                             {heroData?.heroSubtitle || "Book appointments with the city's finest salons. Pay nothing now, pay at the salon, and get exclusive wallet discounts."}
                         </Typography>
 
-                        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-                            <Button
-                                variant="contained"
+                        <Paper
+                            component="form"
+                            onSubmit={(e) => { e.preventDefault(); handleSearch(); }}
+                            sx={{
+                                p: '8px 16px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                width: '100%',
+                                maxWidth: 900,
+                                mx: 'auto',
+                                borderRadius: '50px',
+                                boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+                                bgcolor: 'white',
+                                flexDirection: { xs: 'column', md: 'row' },
+                                gap: { xs: 2, md: 0 },
+                                mt: 2
+                            }}
+                        >
+                            <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, width: '100%' }}>
+                                <SearchIcon sx={{ color: 'text.secondary', mr: 1, ml: 1 }} />
+                                <InputBase
+                                    sx={{ ml: 1, flex: 1, fontSize: '1.1rem' }}
+                                    placeholder="Any treatment or venue"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </Box>
+                            
+                            <Divider sx={{ height: 40, m: 1, display: { xs: 'none', md: 'block' } }} orientation="vertical" />
+                            <Divider sx={{ width: '100%', m: 1, display: { xs: 'block', md: 'none' } }} />
+
+                            <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, width: '100%' }}>
+                                <LocationOnIcon sx={{ color: 'text.secondary', mr: 1, ml: 1 }} />
+                                <InputBase
+                                    sx={{ ml: 1, flex: 1, fontSize: '1.1rem' }}
+                                    placeholder="Current location"
+                                    value={searchLocation}
+                                    onChange={(e) => setSearchLocation(e.target.value)}
+                                />
+                                <IconButton type="button" sx={{ p: '10px' }} aria-label="my location">
+                                    <MyLocationIcon sx={{ fontSize: '1.2rem' }} />
+                                </IconButton>
+                            </Box>
+
+                            <Divider sx={{ height: 40, m: 1, display: { xs: 'none', md: 'block' } }} orientation="vertical" />
+                            <Divider sx={{ width: '100%', m: 1, display: { xs: 'block', md: 'none' } }} />
+
+                            <Box sx={{ display: 'flex', alignItems: 'center', flex: { xs: 1, md: 0.8 }, width: '100%' }}>
+                                <CalendarIcon sx={{ color: 'text.secondary', mr: 1, ml: 1 }} />
+                                <InputBase
+                                    sx={{ ml: 1, flex: 1, fontSize: '1.1rem' }}
+                                    placeholder="Any date"
+                                    type="text"
+                                    onFocus={(e) => (e.target as HTMLInputElement).type = 'date'}
+                                    onBlur={(e) => { if(!e.target.value) (e.target as HTMLInputElement).type = 'text'; }}
+                                    value={searchDate}
+                                    onChange={(e) => setSearchDate(e.target.value)}
+                                />
+                            </Box>
+
+                            <Button 
+                                variant="contained" 
+                                color="primary" 
                                 size="large"
-                                onClick={() => navigate('/salons')}
-                                sx={{
-                                    px: 5,
-                                    py: 1.8,
+                                onClick={handleSearch}
+                                sx={{ 
+                                    borderRadius: '50px', 
+                                    px: 5, 
+                                    py: 1.8, 
+                                    ml: { xs: 0, md: 2 },
+                                    width: { xs: '100%', md: 'auto' },
                                     fontSize: '1.1rem',
-                                    background: 'white',
-                                    color: '#4f46e5',
                                     fontWeight: 700,
-                                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-                                    '&:hover': {
-                                        background: '#f8fafc',
-                                        transform: 'translateY(-2px)'
-                                    }
+                                    textTransform: 'none',
+                                    boxShadow: '0 10px 20px rgba(79, 70, 229, 0.4)'
                                 }}
                             >
-                                Find a Salon
+                                Search
                             </Button>
-                            <Button
-                                variant="outlined"
-                                size="large"
-                                onClick={() => navigate('/services')}
-                                sx={{
-                                    px: 5,
-                                    py: 1.8,
-                                    fontSize: '1.1rem',
-                                    fontWeight: 600,
-                                    color: 'white',
-                                    borderColor: 'rgba(255,255,255,0.4)',
-                                    backdropFilter: 'blur(5px)',
-                                    '&:hover': {
-                                        borderColor: 'white',
-                                        bgcolor: 'rgba(255,255,255,0.1)'
-                                    },
-                                }}
-                            >
-                                Explore Services
-                            </Button>
-                        </Box>
+                        </Paper>
                     </MotionBox>
                 </Container>
             </Box >

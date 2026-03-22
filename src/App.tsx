@@ -15,10 +15,6 @@ import { UserRole } from './types';
 
 // Pages
 import Home from './pages/Home';
-import About from './pages/About';
-import Blog from './pages/Blog';
-import Lookbook from './pages/Lookbook';
-import Contact from './pages/Contact';
 import Login from './pages/Login';
 import Services from './pages/Services';
 import ServiceDetails from './pages/ServiceDetails';
@@ -110,16 +106,14 @@ function AppContent() {
             <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<Layout><Home /></Layout>} />
-                <Route path="/about" element={<Layout><About /></Layout>} />
-                <Route path="/blog" element={<Layout><Blog /></Layout>} />
-                <Route path="/lookbook" element={<Layout><Lookbook /></Layout>} />
-                <Route path="/contact" element={<Layout><Contact /></Layout>} />
                 <Route path="/login" element={<Layout showFooter={false} showNavbar={false}><Login /></Layout>} />
                 <Route path="/services" element={<Layout><Services /></Layout>} />
                 <Route path="/services/:id" element={<Layout><ServiceDetails /></Layout>} />
 
                 {/* Salon Discovery Routes */}
                 <Route path="/salons" element={<Layout><SalonList /></Layout>} />
+                <Route path="/dermatologists" element={<Layout><SalonList fixedCategory="Dermatologists" labelPlural="dermatologists" /></Layout>} />
+                <Route path="/spas" element={<Layout><SalonList fixedCategory="Wellness & Spa" labelPlural="spas" /></Layout>} />
                 <Route path="/salons/:id" element={<Layout><SalonDetails /></Layout>} />
 
                 {/* Booking Route */}

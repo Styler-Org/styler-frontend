@@ -96,8 +96,8 @@ const Navbar: React.FC = () => {
         if (!isAuthenticated || !user) {
             return [
                 { label: 'Salons', path: '/salons', icon: <LocationOnIcon /> },
-                { label: 'Dermatologists', path: '/salons', state: { category: 'Dermatologists' }, icon: <FaceIcon /> },
-                { label: 'Spa', path: '/salons', state: { category: 'Wellness & Spa' }, icon: <SpaIcon /> },
+                { label: 'Dermatologists', path: '/dermatologists', icon: <FaceIcon /> },
+                { label: 'Spa', path: '/spas', icon: <SpaIcon /> },
             ];
         }
 
@@ -121,10 +121,9 @@ const Navbar: React.FC = () => {
             default:
                 return [
                     { label: 'Salons', path: '/salons', icon: <LocationOnIcon /> },
-                    { label: 'Dermatologists', path: '/salons', state: { category: 'Dermatologists' }, icon: <FaceIcon /> },
-                    { label: 'Spa', path: '/salons', state: { category: 'Wellness & Spa' }, icon: <SpaIcon /> },
+                    { label: 'Dermatologists', path: '/dermatologists', icon: <FaceIcon /> },
+                    { label: 'Spa', path: '/spas', icon: <SpaIcon /> },
                     { label: 'Appointments', path: '/appointments', icon: <CalendarIcon /> },
-                    { label: 'Lookbook', path: '/lookbook', icon: <Favorite /> },
                 ];
         }
     };

@@ -15,7 +15,7 @@ import './Footer.css';
 const Footer: React.FC = () => {
     const footerLinks = {
         'Company': [
-            { label: 'About Us', path: '/about' },
+            { label: 'About Us', path: '#' },
             { label: 'Careers', path: '#' },
             { label: 'Blog', path: '#' },
             { label: 'Contact', path: '#' },
