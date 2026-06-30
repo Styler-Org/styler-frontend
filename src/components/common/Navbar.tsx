@@ -410,8 +410,6 @@ const Navbar: React.FC = () => {
                                             },
                                         },
                                     }}
-                                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                                 >
                                     {/* User info header */}
                                     <Box sx={{ px: 2.5, pt: 2.5, pb: 2, bgcolor: '#f8fafc', borderBottom: '1px solid #f1f5f9', borderRadius: '20px 20px 0 0' }}>
