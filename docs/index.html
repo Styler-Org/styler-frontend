@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Legal – Styler</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+  .card { background: #fff; border-radius: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 8px 28px rgba(0,0,0,0.06); padding: 48px 40px; max-width: 420px; width: 100%; text-align: center; }
+  .logo { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 32px; }
+  .logo svg { width: 40px; height: 40px; background: linear-gradient(135deg,#1e1b4b,#312e81); border-radius: 12px; padding: 6px; }
+  .logo span { font-size: 24px; font-weight: 900; color: #1e1b4b; }
+  h1 { font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
+  p { color: #64748b; font-size: 14px; margin-bottom: 32px; }
+  a { display: block; padding: 14px 20px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 15px; margin-bottom: 12px; transition: opacity .15s; }
+  a:hover { opacity: 0.85; }
+  .primary { background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; }
+  .secondary { background: #ede9fe; color: #4f46e5; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polyline points="13,11 19,18 25,26" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="23,11 17,18 11,26" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="25" cy="26" r="3.2" stroke="white" stroke-width="2.4"/>
+      <circle cx="11" cy="26" r="3.2" stroke="white" stroke-width="2.4"/>
+    </svg>
+    <span>Styler</span>
+  </div>
+  <h1>Legal Documents</h1>
+  <p>Salon booking, simplified.</p>
+  <a href="privacy-policy.html" class="primary">Privacy Policy</a>
+  <a href="terms.html" class="secondary">Terms of Service</a>
+  <a href="data-privacy.html" class="secondary">Data &amp; Privacy</a>
+</div>
+</body>
+</html>

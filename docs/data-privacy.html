@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data &amp; Privacy – Styler</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #0f172a; line-height: 1.7; }
+  .header { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); padding: 48px 24px 40px; text-align: center; }
+  .logo { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 24px; text-decoration: none; }
+  .logo svg { width: 36px; height: 36px; }
+  .logo span { font-size: 22px; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
+  .header h1 { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+  .header p { color: rgba(255,255,255,0.65); font-size: 14px; }
+  .nav { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 12px 24px; display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; }
+  .nav a { color: #6366f1; text-decoration: none; font-size: 14px; font-weight: 600; }
+  .nav a:hover { text-decoration: underline; }
+  .content { max-width: 720px; margin: 48px auto; padding: 0 24px 80px; }
+  h2 { font-size: 18px; font-weight: 800; color: #1e1b4b; margin: 36px 0 12px; }
+  p { color: #334155; margin-bottom: 14px; }
+  .updated { display: inline-block; background: #ede9fe; color: #6d28d9; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px; margin-bottom: 28px; }
+  footer { text-align: center; padding: 32px 24px; font-size: 13px; color: #94a3b8; border-top: 1px solid #e2e8f0; }
+</style>
+</head>
+<body>
+<div class="header">
+  <a class="logo" href="/">
+    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polyline points="13,11 19,18 25,26" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="23,11 17,18 11,26" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="25" cy="26" r="3.2" stroke="white" stroke-width="2.4"/>
+      <circle cx="11" cy="26" r="3.2" stroke="white" stroke-width="2.4"/>
+    </svg>
+    <span>Styler</span>
+  </a>
+  <h1>Data &amp; Privacy</h1>
+  <p>Your data controls, explained plainly</p>
+</div>
+<div class="nav">
+  <a href="privacy-policy.html">Privacy Policy</a>
+  <a href="terms.html">Terms of Service</a>
+  <a href="data-privacy.html">Data &amp; Privacy</a>
+</div>
+<div class="content">
+  <span class="updated">Last updated: January 1, 2026</span>
+
+  <p>This page explains the data controls available to you within Styler, in plain language.</p>
+
+  <h2>1. Data You Control</h2>
+  <p>You can edit your name, phone number, and profile picture at any time from <strong>Profile → Edit Profile</strong>. You can add or remove saved addresses from <strong>Profile → Saved Addresses</strong>. Changes take effect immediately.</p>
+
+  <h2>2. Notification Preferences</h2>
+  <p>You can manage push notifications, email notifications, booking reminders, and promotional offers from <strong>Profile → Settings → Notifications</strong>. Your choices are saved to your account and apply across all your devices.</p>
+
+  <h2>3. Location Data</h2>
+  <p>Styler requests access to your location to surface nearby salons. Location data is used only while the app is in use and is never stored on our servers. You can revoke location permission at any time from your device settings.</p>
+
+  <h2>4. Camera &amp; Photos</h2>
+  <p>Camera and photo library access is requested only when you upload a profile photo. No images are accessed without your explicit action.</p>
+
+  <h2>5. Data Retention</h2>
+  <p>We keep your booking history to provide support and generate personalised recommendations. You can request a full deletion of your account and associated data from <strong>Profile → Settings → Delete Account</strong>.</p>
+
+  <h2>6. Account Deletion</h2>
+  <p>Deleting your account deactivates your profile and removes it from active use within 30 days. Some transaction records may be retained for up to 7 years as required by Indian tax and financial regulations. Records retained for legal compliance will not be used for any other purpose.</p>
+
+  <h2>7. Third-Party Services</h2>
+  <p>We use trusted third-party providers for the following functions, all bound by strict data protection agreements:</p>
+  <p><strong>MongoDB Atlas</strong> — database storage &nbsp;|&nbsp; <strong>AWS S3</strong> — profile image storage &nbsp;|&nbsp; <strong>Twilio</strong> — OTP SMS delivery &nbsp;|&nbsp; <strong>Razorpay</strong> — payment processing &nbsp;|&nbsp; <strong>Firebase</strong> — push notifications</p>
+
+  <h2>8. Security</h2>
+  <p>All communication between the app and our servers is encrypted using TLS 1.2+. Passwords and tokens are never stored in plaintext. OTPs expire within 10 minutes and are single-use.</p>
+
+  <h2>9. Contact</h2>
+  <p>For data-related requests or concerns, email <a href="mailto:privacy@stylerapp.in">privacy@stylerapp.in</a>. We respond within 72 hours.</p>
+</div>
+<footer>&copy; 2026 Styler. All rights reserved.</footer>
+</body>
+</html>
