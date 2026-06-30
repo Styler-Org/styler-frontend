@@ -1,21 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-    Box,
-    Container,
-    Typography,
-    Button,
-    CircularProgress,
-    Card,
-    CardContent,
-    GridLegacy as Grid,
-    Chip,
-    Avatar,
-    Divider,
-    Paper,
-    IconButton,
-    useTheme,
-    useMediaQuery,
+    Box, Container, Typography, Button, CircularProgress, Grid,
+    Chip, Avatar, Divider, IconButton, alpha,
+    useTheme, useMediaQuery,
 } from '@mui/material';
 import {
     ArrowBack as ArrowBackIcon,
@@ -29,11 +17,21 @@ import {
     ChevronLeft,
     ChevronRight,
     FiberManualRecord,
+    CalendarToday as CalendarIcon,
+    ArrowForward as ArrowForwardIcon,
+    Circle as CircleIcon,
 } from '@mui/icons-material';
+import { motion } from 'framer-motion';
 import { salonService } from '../../services/salonService';
 import { barberService } from '../../services/barberService';
 import { Salon, Service, Barber } from '../../types';
-import './SalonDetails.css';
+
+const MotionBox = motion(Box);
+
+const fadeUp = {
+    hidden: { opacity: 0, y: 20 },
+    show:   { opacity: 1, y: 0, transition: { duration: 0.5 } },
+};
 
 const SalonDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -50,105 +48,85 @@ const SalonDetails: React.FC = () => {
     useEffect(() => {
         const fetchSalonData = async () => {
             if (!id) return;
-
             setLoading(true);
             try {
                 const salonResponse = await salonService.getSalonById(id);
                 setSalon(salonResponse.data as Salon);
-
                 try {
                     const servicesResponse = await salonService.getSalonServices(id);
                     setServices(servicesResponse.data || []);
-                } catch (err) {
-                    console.error('Error fetching services:', err);
-                }
-
+                } catch (err) { console.error('Error fetching services:', err); }
                 try {
                     const staffResponse = await barberService.getSalonBarbers(id);
                     setStaff(staffResponse.data || []);
-                } catch (err) {
-                    console.error('Error fetching staff:', err);
-                }
+                } catch (err) { console.error('Error fetching staff:', err); }
             } catch (err) {
                 console.error('Error fetching salon:', err);
             } finally {
                 setLoading(false);
             }
         };
-
         fetchSalonData();
     }, [id]);
 
-    // Auto-advance carousel
     useEffect(() => {
         if (!salon?.images || salon.images.length <= 1) return;
-
         const timer = setInterval(() => {
-            setCurrentImageIndex((prev) => (prev + 1) % salon.images.length);
+            setCurrentImageIndex(prev => (prev + 1) % salon.images.length);
         }, 5000);
-
         return () => clearInterval(timer);
     }, [salon?.images]);
 
     const formatRating = (rating: any): string => {
         if (!rating) return 'N/A';
         if (typeof rating === 'number') return rating.toFixed(1);
-        if (typeof rating === 'object' && rating.average && typeof rating.average === 'number') {
-            return rating.average.toFixed(1);
-        }
+        if (typeof rating === 'object' && rating.average && typeof rating.average === 'number') return rating.average.toFixed(1);
         return 'N/A';
     };
 
     const isSalonOpen = (): boolean => {
         if (!salon?.operatingHours || salon.operatingHours.length === 0) return false;
-
         const now = new Date();
         const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' });
         const currentTime = now.getHours() * 60 + now.getMinutes();
-
-        const todayHours = salon.operatingHours.find(
-            (hours) => hours.day.toLowerCase() === currentDay.toLowerCase()
-        );
-
+        const todayHours = salon.operatingHours.find(h => h.day.toLowerCase() === currentDay.toLowerCase());
         if (!todayHours || !todayHours.isOpen || !todayHours.slots || todayHours.slots.length === 0) return false;
-
-        // Check if current time falls within any of the time slots
         const firstSlot = todayHours.slots[0];
         const [openHour, openMin] = firstSlot.start.split(':').map(Number);
         const [closeHour, closeMin] = firstSlot.end.split(':').map(Number);
-
-        const openingTime = openHour * 60 + openMin;
-        const closingTime = closeHour * 60 + closeMin;
-
-        return currentTime >= openingTime && currentTime <= closingTime;
+        return currentTime >= (openHour * 60 + openMin) && currentTime <= (closeHour * 60 + closeMin);
     };
 
     const handlePrevImage = () => {
         if (!salon?.images) return;
-        setCurrentImageIndex((prev) => (prev - 1 + salon.images.length) % salon.images.length);
+        setCurrentImageIndex(prev => (prev - 1 + salon.images.length) % salon.images.length);
     };
-
     const handleNextImage = () => {
         if (!salon?.images) return;
-        setCurrentImageIndex((prev) => (prev + 1) % salon.images.length);
+        setCurrentImageIndex(prev => (prev + 1) % salon.images.length);
     };
 
     if (loading) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', bgcolor: '#f8f9fa' }}>
-                <CircularProgress size={60} sx={{ color: '#667eea' }} />
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', bgcolor: '#f8fafc', flexDirection: 'column', gap: 2 }}>
+                <CircularProgress size={44} sx={{ color: '#6366f1' }} />
+                <Typography sx={{ color: '#64748b', fontSize: '0.9rem' }}>Loading venue details...</Typography>
             </Box>
         );
     }
 
     if (!salon) {
         return (
-            <Container sx={{ py: 8, textAlign: 'center' }}>
-                <Typography variant="h4" gutterBottom>Salon not found</Typography>
-                <Button variant="contained" onClick={() => navigate('/salons')} sx={{ mt: 2 }}>
-                    Browse Salons
+            <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 3, bgcolor: '#f8fafc' }}>
+                <Box sx={{ width: 80, height: 80, borderRadius: '24px', bgcolor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <LocationIcon sx={{ fontSize: 36, color: '#94a3b8' }} />
+                </Box>
+                <Typography sx={{ fontFamily: '"Outfit", sans-serif', fontWeight: 700, fontSize: '1.5rem', color: '#09090b' }}>Venue not found</Typography>
+                <Typography sx={{ color: '#64748b' }}>This venue may have moved or been removed.</Typography>
+                <Button variant="contained" onClick={() => navigate('/salons')} sx={{ borderRadius: '14px', px: 3, py: 1.4, fontWeight: 700, background: 'linear-gradient(135deg, #6366f1, #7c3aed)' }}>
+                    Browse Venues
                 </Button>
-            </Container>
+            </Box>
         );
     }
 
@@ -156,634 +134,444 @@ const SalonDetails: React.FC = () => {
     const activeStaff = staff.filter(s => s.isActive && s.status === 'approved');
     const salonImages = salon.images && salon.images.length > 0
         ? salon.images
-        : ['https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800'];
+        : ['https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1200&q=85'];
+
+    const isOpen = isSalonOpen();
+    const ratingValue = formatRating(salon.rating);
 
     return (
-        <Box sx={{ bgcolor: '#f8f9fa', minHeight: '100vh' }}>
-            {/* Image Carousel Section */}
-            <Box sx={{ position: 'relative', height: { xs: '300px', md: '500px' }, overflow: 'hidden' }}>
-                {/* Carousel Images */}
-                <Box
-                    sx={{
-                        position: 'relative',
-                        height: '100%',
-                        width: '100%',
-                    }}
-                >
-                    {salonImages.map((image, index) => (
-                        <Box
-                            key={index}
-                            sx={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: '100%',
-                                opacity: index === currentImageIndex ? 1 : 0,
-                                transition: 'opacity 0.8s ease-in-out',
-                                backgroundImage: `url(${image})`,
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center',
-                                '&::before': {
-                                    content: '""',
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    right: 0,
-                                    bottom: 0,
-                                    background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%)',
-                                },
-                            }}
-                        />
-                    ))}
+        <Box sx={{ bgcolor: '#f8fafc', minHeight: '100vh' }}>
+
+            {/* ── Image Carousel Hero ── */}
+            <Box sx={{ position: 'relative', height: { xs: '52vw', sm: '45vw', md: '56vh' }, maxHeight: 640, overflow: 'hidden' }}>
+                {/* Images */}
+                {salonImages.map((image, index) => (
+                    <Box key={index} sx={{
+                        position: 'absolute', inset: 0,
+                        backgroundImage: `url(${image})`, backgroundSize: 'cover', backgroundPosition: 'center',
+                        opacity: index === currentImageIndex ? 1 : 0,
+                        transition: 'opacity 0.9s ease',
+                    }} />
+                ))}
+
+                {/* Gradient overlays */}
+                <Box sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.38) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.65) 100%)' }} />
+
+                {/* Back button */}
+                <Box sx={{ position: 'absolute', top: { xs: 70, md: 24 }, left: 24, zIndex: 3 }}>
+                    <IconButton
+                        onClick={() => navigate(-1)}
+                        sx={{ bgcolor: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)', color: 'white', border: '1px solid rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' } }}
+                    >
+                        <ArrowBackIcon />
+                    </IconButton>
                 </Box>
 
-                {/* Carousel Controls */}
+                {/* Photo count badge */}
+                {salonImages.length > 1 && (
+                    <Box sx={{ position: 'absolute', top: { xs: 70, md: 24 }, right: 24, zIndex: 3 }}>
+                        <Chip
+                            label={`${currentImageIndex + 1} / ${salonImages.length}`}
+                            sx={{ bgcolor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', color: 'white', fontWeight: 600, fontSize: '0.78rem', border: '1px solid rgba(255,255,255,0.2)' }}
+                        />
+                    </Box>
+                )}
+
+                {/* Carousel controls */}
                 {salonImages.length > 1 && (
                     <>
-                        <IconButton
-                            onClick={handlePrevImage}
-                            sx={{
-                                position: 'absolute',
-                                left: 16,
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                bgcolor: 'rgba(255,255,255,0.9)',
-                                '&:hover': { bgcolor: 'white' },
-                                zIndex: 2,
-                            }}
-                        >
+                        <IconButton onClick={handlePrevImage} sx={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', zIndex: 2, bgcolor: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', color: 'white', border: '1px solid rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.28)' } }}>
                             <ChevronLeft />
                         </IconButton>
-                        <IconButton
-                            onClick={handleNextImage}
-                            sx={{
-                                position: 'absolute',
-                                right: 16,
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                bgcolor: 'rgba(255,255,255,0.9)',
-                                '&:hover': { bgcolor: 'white' },
-                                zIndex: 2,
-                            }}
-                        >
+                        <IconButton onClick={handleNextImage} sx={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', zIndex: 2, bgcolor: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', color: 'white', border: '1px solid rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.28)' } }}>
                             <ChevronRight />
                         </IconButton>
 
-                        {/* Carousel Indicators */}
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                bottom: 20,
-                                left: '50%',
-                                transform: 'translateX(-50%)',
-                                display: 'flex',
-                                gap: 1,
-                                zIndex: 2,
-                            }}
-                        >
-                            {salonImages.map((_, index) => (
-                                <FiberManualRecord
-                                    key={index}
-                                    onClick={() => setCurrentImageIndex(index)}
-                                    sx={{
-                                        fontSize: 12,
-                                        color: index === currentImageIndex ? 'white' : 'rgba(255,255,255,0.5)',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.3s',
-                                    }}
-                                />
+                        {/* Dot indicators */}
+                        <Box sx={{ position: 'absolute', bottom: 18, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 0.75, zIndex: 2 }}>
+                            {salonImages.map((_, i) => (
+                                <Box key={i} onClick={() => setCurrentImageIndex(i)} sx={{
+                                    width: i === currentImageIndex ? 22 : 7, height: 7, borderRadius: '4px',
+                                    bgcolor: i === currentImageIndex ? 'white' : 'rgba(255,255,255,0.45)',
+                                    transition: 'all 0.35s ease', cursor: 'pointer',
+                                }} />
                             ))}
                         </Box>
                     </>
                 )}
 
-                {/* Salon Info Overlay */}
-                <Container
-                    maxWidth="lg"
-                    sx={{
-                        position: 'absolute',
-                        bottom: 40,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        zIndex: 2,
-                        width: '100%',
-                    }}
-                >
+                {/* Salon title overlay */}
+                <Container maxWidth="lg" sx={{ position: 'absolute', bottom: 36, left: '50%', transform: 'translateX(-50%)', zIndex: 2, width: '100%' }}>
                     <Box sx={{ color: 'white' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexWrap: 'wrap' }}>
-                            <Typography
-                                variant={isMobile ? 'h3' : 'h2'}
-                                sx={{
-                                    fontWeight: 800,
-                                    textShadow: '2px 2px 8px rgba(0,0,0,0.3)',
-                                    letterSpacing: '-0.5px'
-                                }}
-                            >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5, flexWrap: 'wrap' }}>
+                            <Typography sx={{
+                                fontFamily: '"Outfit", sans-serif', fontWeight: 800, color: 'white',
+                                fontSize: { xs: '1.6rem', sm: '2rem', md: '2.6rem' }, letterSpacing: '-0.03em',
+                                textShadow: '0 2px 20px rgba(0,0,0,0.4)', lineHeight: 1.1,
+                            }}>
                                 {salon.displayName || salon.name}
                             </Typography>
                             <Chip
-                                icon={<FiberManualRecord sx={{ fontSize: 12, animation: isSalonOpen() ? 'pulse 2s infinite' : 'none' }} />}
-                                label={isSalonOpen() ? 'Open Now' : 'Closed'}
+                                icon={<CircleIcon sx={{ fontSize: '10px !important', color: `${isOpen ? '#fff' : '#fff'} !important`, animation: isOpen ? 'sdPulse 2s infinite' : 'none', '@keyframes sdPulse': { '0%, 100%': { opacity: 1 }, '50%': { opacity: 0.5 } } }} />}
+                                label={isOpen ? 'Open Now' : 'Closed'}
+                                size="small"
                                 sx={{
-                                    bgcolor: isSalonOpen() ? '#10b981' : '#ef4444',
-                                    color: 'white',
-                                    fontWeight: 700,
-                                    px: 2.5,
-                                    py: 3,
-                                    fontSize: '1rem',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                                    '@keyframes pulse': {
-                                        '0%, 100%': { opacity: 1 },
-                                        '50%': { opacity: 0.7 },
-                                    },
+                                    bgcolor: isOpen ? alpha('#10b981', 0.85) : alpha('#ef4444', 0.85),
+                                    backdropFilter: 'blur(8px)', color: 'white', fontWeight: 700, fontSize: '0.8rem',
+                                    border: `1px solid ${isOpen ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)'}`,
                                 }}
                             />
                         </Box>
-
-                        <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
-                            {(() => {
-                                const ratingValue = formatRating(salon.rating);
-                                if (ratingValue && ratingValue !== 'N/A') {
-                                    return (
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <StarIcon sx={{ fontSize: 24, color: '#fbbf24' }} />
-                                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                                                {ratingValue}
-                                            </Typography>
-                                            <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                                                ({salon.totalReviews || 0} reviews)
-                                            </Typography>
-                                        </Box>
-                                    );
-                                }
-                                return null;
-                            })()}
-
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <PersonIcon sx={{ fontSize: 24 }} />
-                                <Typography variant="h6">{activeStaff.length} Stylists</Typography>
+                        <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', alignItems: 'center' }}>
+                            {ratingValue !== 'N/A' && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
+                                    <StarIcon sx={{ fontSize: 18, color: '#fbbf24' }} />
+                                    <Typography sx={{ fontWeight: 700, color: 'white', fontSize: '0.95rem' }}>{ratingValue}</Typography>
+                                    <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.88rem' }}>({salon.totalReviews || 0} reviews)</Typography>
+                                </Box>
+                            )}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
+                                <PersonIcon sx={{ fontSize: 17, color: 'rgba(255,255,255,0.8)' }} />
+                                <Typography sx={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.88rem', fontWeight: 600 }}>{activeStaff.length} Stylists</Typography>
                             </Box>
-
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <CheckIcon sx={{ fontSize: 24 }} />
-                                <Typography variant="h6">{activeServices.length} Services</Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
+                                <CheckIcon sx={{ fontSize: 17, color: 'rgba(255,255,255,0.8)' }} />
+                                <Typography sx={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.88rem', fontWeight: 600 }}>{activeServices.length} Services</Typography>
                             </Box>
+                            {salon.address?.city && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
+                                    <LocationIcon sx={{ fontSize: 17, color: 'rgba(255,255,255,0.8)' }} />
+                                    <Typography sx={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.88rem' }}>{salon.address.city}</Typography>
+                                </Box>
+                            )}
                         </Box>
                     </Box>
                 </Container>
             </Box>
 
-            {/* Main Content */}
-            <Container maxWidth="lg" sx={{ mt: -6, position: 'relative', zIndex: 1, pb: 8 }}>
-                {/* Quick Booking Card */}
-                <Card
-                    sx={{
-                        mb: 4,
-                        boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-                        borderRadius: 3,
-                        overflow: 'hidden',
-                    }}
-                >
-                    <CardContent sx={{ p: 4, background: '#4338ca', color: 'white' }}>
-                        <Grid container spacing={3} alignItems="center">
-                            <Grid item xs={12} md={8}>
-                                <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                                    {salon.description || 'Experience Premium Grooming'}
-                                </Typography>
-                                <Typography variant="body1" sx={{ opacity: 0.95 }}>
-                                    Book your appointment now and transform your look with our expert team
-                                </Typography>
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                <Button
-                                    variant="contained"
-                                    size="large"
-                                    fullWidth
-                                    onClick={() => navigate(`/booking/${salon._id}`)}
-                                    sx={{
-                                        bgcolor: 'white',
-                                        color: 'white',
-                                        py: 2,
-                                        fontSize: '1.1rem',
-                                        fontWeight: 700,
-                                        boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
-                                        '&:hover': {
-                                            bgcolor: '#f5f5f5',
-                                            transform: 'translateY(-2px)',
-                                            boxShadow: '0 12px 24px rgba(0,0,0,0.25)',
-                                        },
-                                        transition: 'all 0.3s',
-                                    }}
-                                >
-                                    Book Appointment
-                                </Button>
-                            </Grid>
-                        </Grid>
-                    </CardContent>
-                </Card>
+            {/* ── Main Content ── */}
+            <Container maxWidth="lg" sx={{ pt: { xs: 3, md: 5 }, pb: 10 }}>
+                <Grid container spacing={4} alignItems="flex-start">
 
-                {/* Services Section */}
-                <Box sx={{ mb: 6 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                        <Box
-                            sx={{
-                                width: 6,
-                                height: 40,
-                                bgcolor: '#667eea',
-                                borderRadius: 3,
-                                mr: 2,
-                            }}
-                        />
-                        <Typography variant="h4" sx={{ fontWeight: 800, color: '#1a1a1a' }}>
-                            Our Services
-                        </Typography>
-                    </Box>
+                    {/* ── Left: Details ── */}
+                    <Grid size={{ xs: 12, md: 8 }}>
 
-                    {activeServices.length === 0 ? (
-                        <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 3 }}>
-                            <Typography color="text.secondary" variant="h6">No services available</Typography>
-                        </Paper>
-                    ) : (
-                        <Grid container spacing={3}>
-                            {activeServices.map((service) => (
-                                <Grid item xs={12} sm={6} md={4} key={service._id}>
-                                    <Card
-                                        sx={{
-                                            height: '100%',
-                                            borderRadius: 3,
-                                            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                                            border: '2px solid transparent',
-                                            '&:hover': {
-                                                transform: 'translateY(-8px)',
-                                                boxShadow: '0 20px 40px rgba(102, 126, 234, 0.25)',
-                                                borderColor: '#667eea',
-                                            },
-                                        }}
-                                    >
-                                        <Box
-                                            sx={{
-                                                background: '#4338ca',
-                                                p: 2.5,
-                                                color: 'white',
-                                                position: 'relative',
-                                                '&::after': {
-                                                    content: '""',
-                                                    position: 'absolute',
-                                                    top: 0,
-                                                    left: 0,
-                                                    right: 0,
-                                                    height: '4px',
-                                                    background: 'linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)',
-                                                },
-                                            }}
-                                        >
-                                            <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
-                                                {service.name}
-                                            </Typography>
-                                            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
-                                                <Typography variant="caption" sx={{ opacity: 0.95, fontSize: '0.85rem' }}>
-                                                    {service.gender}
-                                                </Typography>
-                                                <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.7)' }} />
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                    <AccessTimeIcon sx={{ fontSize: 16, opacity: 0.9 }} />
-                                                    <Typography variant="caption" sx={{ opacity: 0.95, fontSize: '0.85rem' }}>
-                                                        {service.duration} min
+                        {/* Services */}
+                        <MotionBox variants={fadeUp} initial="hidden" animate="show" sx={{ mb: 6 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                                <Box>
+                                    <Typography variant="overline" sx={{ color: '#6366f1', fontWeight: 700, letterSpacing: '0.12em', fontSize: '0.7rem' }}>
+                                        What We Offer
+                                    </Typography>
+                                    <Typography sx={{ fontFamily: '"Outfit", sans-serif', fontWeight: 800, color: '#09090b', fontSize: { xs: '1.4rem', md: '1.8rem' }, letterSpacing: '-0.02em', mt: 0.3 }}>
+                                        Services
+                                    </Typography>
+                                </Box>
+                                {activeServices.length > 0 && (
+                                    <Chip label={`${activeServices.length} available`} size="small" sx={{ bgcolor: alpha('#6366f1', 0.08), color: '#6366f1', fontWeight: 700, fontSize: '0.75rem', borderRadius: '8px' }} />
+                                )}
+                            </Box>
+
+                            {activeServices.length === 0 ? (
+                                <Box sx={{ p: 5, textAlign: 'center', bgcolor: 'white', borderRadius: '20px', border: '1px solid #f1f5f9' }}>
+                                    <Typography sx={{ color: '#64748b' }}>No services listed yet</Typography>
+                                </Box>
+                            ) : (
+                                <Grid container spacing={2}>
+                                    {activeServices.map((service, i) => (
+                                        <Grid size={{ xs: 12, sm: 6 }} key={service._id}>
+                                            <MotionBox
+                                                initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: i * 0.06 }}
+                                                whileHover={{ y: -3 }}
+                                                sx={{
+                                                    p: 2.5, borderRadius: '18px', bgcolor: 'white',
+                                                    border: '1px solid #f1f5f9', height: '100%',
+                                                    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                                                    transition: 'all 0.25s ease',
+                                                    '&:hover': { boxShadow: '0 12px 28px rgba(0,0,0,0.08)', borderColor: alpha('#6366f1', 0.2) },
+                                                    display: 'flex', flexDirection: 'column',
+                                                }}
+                                            >
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                                                    <Typography sx={{ fontWeight: 700, color: '#09090b', fontFamily: '"Outfit", sans-serif', fontSize: '0.98rem', pr: 1 }}>
+                                                        {service.name}
                                                     </Typography>
+                                                    <Chip label={service.gender} size="small" sx={{ bgcolor: alpha('#6366f1', 0.08), color: '#4f46e5', fontWeight: 600, fontSize: '0.68rem', borderRadius: '6px', flexShrink: 0 }} />
                                                 </Box>
-                                            </Box>
-                                        </Box>
-                                        <CardContent sx={{ p: 3 }}>
-                                            {service.description && (
-                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, minHeight: 40 }}>
-                                                    {service.description}
-                                                </Typography>
-                                            )}
-
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                <Typography variant="h4" sx={{ fontWeight: 800, color: '#667eea' }}>
-                                                    ₹{service.price}
-                                                </Typography>
-                                                <Chip
-                                                    label={service.gender}
-                                                    size="small"
-                                                    sx={{ bgcolor: '#f0f0ff', color: '#6366f1', fontWeight: 600, textTransform: 'capitalize' }}
-                                                />
-                                            </Box>
-
-                                            <Button
-                                                variant="contained"
-                                                size="large"
-                                                fullWidth
-                                                onClick={() => navigate(`/booking/${salon._id}?service=${service._id}`)}
-                                                sx={{
-                                                    background: '#4338ca',
-                                                    py: 1.5,
-                                                    fontWeight: 700,
-                                                    fontSize: '1rem',
-                                                    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
-                                                    '&:hover': {
-                                                        background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
-                                                        transform: 'translateY(-2px)',
-                                                        boxShadow: '0 6px 16px rgba(99, 102, 241, 0.5)',
-                                                    },
-                                                    transition: 'all 0.3s',
-                                                }}
-                                            >
-                                                Book This Service
-                                            </Button>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
-                            ))}
-                        </Grid>
-                    )}
-                </Box>
-
-                {/* Meet Our Team */}
-                <Box sx={{ mb: 6 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                        <Box
-                            sx={{
-                                width: 6,
-                                height: 40,
-                                bgcolor: '#667eea',
-                                borderRadius: 3,
-                                mr: 2,
-                            }}
-                        />
-                        <Typography variant="h4" sx={{ fontWeight: 800, color: '#1a1a1a' }}>
-                            Meet Our Expert Team
-                        </Typography>
-                    </Box>
-
-                    {activeStaff.length === 0 ? (
-                        <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 3 }}>
-                            <Typography color="text.secondary" variant="h6">No team information available</Typography>
-                        </Paper>
-                    ) : (
-                        <Grid container spacing={3}>
-                            {activeStaff.map((barber) => (
-                                <Grid item xs={12} sm={6} md={3} key={barber._id}>
-                                    <Card
-                                        sx={{
-                                            height: '100%',
-                                            borderRadius: 3,
-                                            textAlign: 'center',
-                                            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                                            '&:hover': {
-                                                transform: 'translateY(-12px)',
-                                                boxShadow: '0 20px 40px rgba(102, 126, 234, 0.3)',
-                                            },
-                                        }}
-                                    >
-                                        <CardContent sx={{ p: 3 }}>
-                                            <Box sx={{ position: 'relative', width: 'fit-content', mx: 'auto', mb: 2 }}>
-                                                <Avatar
-                                                    sx={{
-                                                        width: 120,
-                                                        height: 120,
-                                                        background: '#4338ca',
-                                                        fontSize: '3rem',
-                                                        boxShadow: '0 8px 24px rgba(99, 102, 241, 0.4)',
-                                                        border: '4px solid white',
-                                                    }}
-                                                >
-                                                    {(barber.userId as any)?.name?.charAt(0) || 'S'}
-                                                </Avatar>
-                                                {/* Availability Indicator */}
-                                                <Box
-                                                    sx={{
-                                                        position: 'absolute',
-                                                        bottom: 5,
-                                                        right: 5,
-                                                        width: 24,
-                                                        height: 24,
-                                                        borderRadius: '50%',
-                                                        bgcolor: '#10b981',
-                                                        border: '3px solid white',
-                                                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                                                    }}
-                                                />
-                                            </Box>
-
-                                            <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
-                                                {(barber.userId as any)?.name || 'Stylist'}
-                                            </Typography>
-
-                                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 2 }}>
-                                                <StarIcon sx={{ fontSize: 18, color: '#fbbf24' }} />
-                                                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                                                    {formatRating(barber.rating)}
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    • {barber.experience} yrs
-                                                </Typography>
-                                            </Box>
-
-                                            {barber.specialties && barber.specialties.length > 0 && (
-                                                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'center', mb: 2 }}>
-                                                    {barber.specialties.slice(0, 3).map((specialty, idx) => (
-                                                        <Chip
-                                                            key={idx}
-                                                            label={specialty}
-                                                            size="small"
-                                                            sx={{
-                                                                fontSize: '0.75rem',
-                                                                bgcolor: '#f0f0ff',
-                                                                color: '#6366f1',
-                                                                fontWeight: 600,
-                                                                borderRadius: 2,
-                                                            }}
-                                                        />
-                                                    ))}
-                                                </Box>
-                                            )}
-
-                                            <Button
-                                                variant="outlined"
-                                                size="small"
-                                                fullWidth
-                                                onClick={() => navigate(`/booking/${salon._id}?staff=${barber._id}`)}
-                                                sx={{
-                                                    borderColor: '#6366f1',
-                                                    color: '#6366f1',
-                                                    fontWeight: 600,
-                                                    py: 1,
-                                                    '&:hover': {
-                                                        borderColor: '#4f46e5',
-                                                        bgcolor: '#f0f0ff',
-                                                    },
-                                                }}
-                                            >
-                                                Book with {(barber.userId as any)?.name?.split(' ')[0] || 'Stylist'}
-                                            </Button>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
-                            ))}
-                        </Grid>
-                    )}
-                </Box>
-
-                {/* Hours & Contact */}
-                <Grid container spacing={4}>
-                    <Grid item xs={12} md={6}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                            <AccessTimeIcon sx={{ fontSize: 32, color: '#667eea', mr: 1.5 }} />
-                            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                                Operating Hours
-                            </Typography>
-                        </Box>
-
-                        <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
-                            <CardContent sx={{ p: 3 }}>
-                                {!salon.operatingHours || salon.operatingHours.length === 0 ? (
-                                    <Typography color="text.secondary">Hours not available</Typography>
-                                ) : (
-                                    <Box>
-                                        {salon.operatingHours.map((hours, index) => (
-                                            <Box
-                                                key={index}
-                                                sx={{
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    py: 2,
-                                                    borderBottom: index < salon.operatingHours.length - 1 ? '1px solid #f0f0f0' : 'none',
-                                                }}
-                                            >
-                                                <Typography variant="body1" sx={{ fontWeight: 700, color: '#1a1a1a' }}>
-                                                    {hours.day}
-                                                </Typography>
-                                                {hours.isOpen && hours.slots && hours.slots.length > 0 ? (
-                                                    <Typography variant="body1" sx={{ color: '#10b981', fontWeight: 600 }}>
-                                                        {hours.slots.map((slot: any, idx: number) => (
-                                                            <span key={idx}>
-                                                                {slot.start} - {slot.end}
-                                                                {idx < hours.slots.length - 1 && <br />}
-                                                            </span>
-                                                        ))}
-                                                    </Typography>
-                                                ) : (
-                                                    <Typography variant="body1" sx={{ color: '#ef4444', fontWeight: 600 }}>
-                                                        Closed
+                                                {service.description && (
+                                                    <Typography sx={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.65, mb: 2, flexGrow: 1 }}>
+                                                        {service.description}
                                                     </Typography>
                                                 )}
-                                            </Box>
-                                        ))}
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
+                                                    <AccessTimeIcon sx={{ fontSize: 14, color: '#94a3b8' }} />
+                                                    <Typography sx={{ color: '#64748b', fontSize: '0.8rem' }}>{service.duration} min</Typography>
+                                                    <Box sx={{ ml: 'auto' }}>
+                                                        <Typography sx={{ fontFamily: '"Outfit", sans-serif', fontWeight: 800, color: '#09090b', fontSize: '1.15rem' }}>
+                                                            {service.price}
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+                                                <Button
+                                                    variant="outlined" size="small" fullWidth
+                                                    onClick={() => navigate(`/booking/${salon._id}?service=${service._id}`)}
+                                                    sx={{
+                                                        borderRadius: '12px', fontWeight: 700, fontSize: '0.82rem',
+                                                        borderColor: '#e2e8f0', color: '#475569', textTransform: 'none',
+                                                        '&:hover': { borderColor: '#6366f1', color: '#6366f1', bgcolor: alpha('#6366f1', 0.04) },
+                                                    }}
+                                                >
+                                                    Book This Service
+                                                </Button>
+                                            </MotionBox>
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                            )}
+                        </MotionBox>
+
+                        {/* Team */}
+                        {activeStaff.length > 0 && (
+                            <MotionBox variants={fadeUp} initial="hidden" animate="show" sx={{ mb: 6 }}>
+                                <Box sx={{ mb: 3 }}>
+                                    <Typography variant="overline" sx={{ color: '#6366f1', fontWeight: 700, letterSpacing: '0.12em', fontSize: '0.7rem' }}>
+                                        Our Professionals
+                                    </Typography>
+                                    <Typography sx={{ fontFamily: '"Outfit", sans-serif', fontWeight: 800, color: '#09090b', fontSize: { xs: '1.4rem', md: '1.8rem' }, letterSpacing: '-0.02em', mt: 0.3 }}>
+                                        Expert Team
+                                    </Typography>
+                                </Box>
+
+                                <Grid container spacing={2}>
+                                    {activeStaff.map((barber, i) => (
+                                        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={barber._id}>
+                                            <MotionBox
+                                                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                                                transition={{ delay: i * 0.07 }}
+                                                whileHover={{ y: -4 }}
+                                                sx={{
+                                                    p: 3, borderRadius: '20px', bgcolor: 'white',
+                                                    border: '1px solid #f1f5f9', textAlign: 'center',
+                                                    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                                                    transition: 'all 0.25s ease',
+                                                    '&:hover': { boxShadow: '0 14px 36px rgba(0,0,0,0.09)', borderColor: alpha('#6366f1', 0.18) },
+                                                }}
+                                            >
+                                                <Box sx={{ position: 'relative', width: 'fit-content', mx: 'auto', mb: 2 }}>
+                                                    <Avatar sx={{
+                                                        width: 72, height: 72,
+                                                        background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
+                                                        fontSize: '1.6rem', fontWeight: 800,
+                                                        boxShadow: '0 6px 20px rgba(99,102,241,0.3)',
+                                                        border: '3px solid white',
+                                                    }}>
+                                                        {(barber.userId as any)?.name?.charAt(0) || 'S'}
+                                                    </Avatar>
+                                                    <Box sx={{ position: 'absolute', bottom: 2, right: 2, width: 16, height: 16, borderRadius: '50%', bgcolor: '#10b981', border: '2.5px solid white' }} />
+                                                </Box>
+
+                                                <Typography sx={{ fontWeight: 700, color: '#09090b', fontFamily: '"Outfit", sans-serif', mb: 0.3, fontSize: '0.95rem' }}>
+                                                    {(barber.userId as any)?.name || 'Stylist'}
+                                                </Typography>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 1.5 }}>
+                                                    <StarIcon sx={{ fontSize: 13, color: '#fbbf24' }} />
+                                                    <Typography sx={{ color: '#64748b', fontSize: '0.78rem', fontWeight: 600 }}>{formatRating(barber.rating)}</Typography>
+                                                    {barber.experience && (
+                                                        <Typography sx={{ color: '#94a3b8', fontSize: '0.78rem' }}>• {barber.experience}y exp</Typography>
+                                                    )}
+                                                </Box>
+
+                                                {barber.specialties && barber.specialties.length > 0 && (
+                                                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'center', mb: 2 }}>
+                                                        {barber.specialties.slice(0, 2).map((s, idx) => (
+                                                            <Chip key={idx} label={s} size="small" sx={{ fontSize: '0.68rem', bgcolor: '#f1f5f9', color: '#475569', fontWeight: 600, borderRadius: '6px' }} />
+                                                        ))}
+                                                    </Box>
+                                                )}
+
+                                                <Button
+                                                    variant="text" size="small" fullWidth
+                                                    onClick={() => navigate(`/booking/${salon._id}?staff=${barber._id}`)}
+                                                    sx={{ borderRadius: '10px', fontWeight: 600, fontSize: '0.8rem', color: '#6366f1', textTransform: 'none', bgcolor: alpha('#6366f1', 0.06), '&:hover': { bgcolor: alpha('#6366f1', 0.12) } }}
+                                                >
+                                                    Book with {(barber.userId as any)?.name?.split(' ')[0] || 'Stylist'}
+                                                </Button>
+                                            </MotionBox>
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                            </MotionBox>
+                        )}
+
+                        {/* Hours + Contact row */}
+                        <Grid container spacing={3}>
+                            {/* Operating Hours */}
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <MotionBox variants={fadeUp} initial="hidden" animate="show"
+                                    sx={{ p: 3, borderRadius: '20px', bgcolor: 'white', border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+                                        <Box sx={{ width: 36, height: 36, borderRadius: '11px', bgcolor: alpha('#6366f1', 0.08), color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <AccessTimeIcon sx={{ fontSize: 17 }} />
+                                        </Box>
+                                        <Typography sx={{ fontWeight: 700, color: '#09090b', fontFamily: '"Outfit", sans-serif' }}>Hours</Typography>
                                     </Box>
-                                )}
-                            </CardContent>
-                        </Card>
+                                    {!salon.operatingHours || salon.operatingHours.length === 0 ? (
+                                        <Typography sx={{ color: '#64748b', fontSize: '0.88rem' }}>Hours not available</Typography>
+                                    ) : (
+                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                                            {salon.operatingHours.map((hours, i) => (
+                                                <Box key={i} sx={{
+                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                    py: 1.25,
+                                                    borderBottom: i < salon.operatingHours.length - 1 ? '1px solid #f8fafc' : 'none',
+                                                }}>
+                                                    <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{hours.day}</Typography>
+                                                    {hours.isOpen && hours.slots?.length > 0 ? (
+                                                        <Typography sx={{ fontSize: '0.82rem', color: '#10b981', fontWeight: 700 }}>
+                                                            {hours.slots[0].start} – {hours.slots[0].end}
+                                                        </Typography>
+                                                    ) : (
+                                                        <Typography sx={{ fontSize: '0.82rem', color: '#ef4444', fontWeight: 600 }}>Closed</Typography>
+                                                    )}
+                                                </Box>
+                                            ))}
+                                        </Box>
+                                    )}
+                                </MotionBox>
+                            </Grid>
+
+                            {/* Contact */}
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <MotionBox variants={fadeUp} initial="hidden" animate="show"
+                                    sx={{ p: 3, borderRadius: '20px', bgcolor: 'white', border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', height: '100%' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+                                        <Box sx={{ width: 36, height: 36, borderRadius: '11px', bgcolor: alpha('#ec4899', 0.08), color: '#ec4899', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <LocationIcon sx={{ fontSize: 17 }} />
+                                        </Box>
+                                        <Typography sx={{ fontWeight: 700, color: '#09090b', fontFamily: '"Outfit", sans-serif' }}>Contact</Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+                                            <LocationIcon sx={{ fontSize: 16, color: '#94a3b8', mt: 0.2, flexShrink: 0 }} />
+                                            <Typography sx={{ fontSize: '0.85rem', color: '#334155', lineHeight: 1.6 }}>
+                                                {salon.address?.street && <>{salon.address.street}<br /></>}
+                                                {[salon.address?.city, salon.address?.state, salon.address?.pincode].filter(Boolean).join(', ')}
+                                            </Typography>
+                                        </Box>
+                                        {salon.phone && (
+                                            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                                                <PhoneIcon sx={{ fontSize: 15, color: '#94a3b8', flexShrink: 0 }} />
+                                                <Typography sx={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>{salon.phone}</Typography>
+                                            </Box>
+                                        )}
+                                        {salon.email && (
+                                            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                                                <EmailIcon sx={{ fontSize: 15, color: '#94a3b8', flexShrink: 0 }} />
+                                                <Typography sx={{ fontSize: '0.85rem', color: '#334155' }}>{salon.email}</Typography>
+                                            </Box>
+                                        )}
+                                    </Box>
+                                </MotionBox>
+                            </Grid>
+                        </Grid>
                     </Grid>
 
-                    <Grid item xs={12} md={6}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                            <LocationIcon sx={{ fontSize: 32, color: '#667eea', mr: 1.5 }} />
-                            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                                Contact & Location
-                            </Typography>
-                        </Box>
-
-                        <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
-                            <CardContent sx={{ p: 3 }}>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                                    <Box>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-                                            <LocationIcon sx={{ color: '#667eea', fontSize: 24 }} />
-                                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#667eea', textTransform: 'uppercase' }}>
-                                                Address
-                                            </Typography>
-                                        </Box>
-                                        <Typography variant="body1" sx={{ pl: 5, color: '#1a1a1a' }}>
-                                            {salon.address?.street}
-                                            <br />
-                                            {salon.address?.city}, {salon.address?.state} - {salon.address?.pincode}
-                                        </Typography>
-                                    </Box>
-
-                                    {salon.phone && (
-                                        <Box>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-                                                <PhoneIcon sx={{ color: '#667eea', fontSize: 24 }} />
-                                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#667eea', textTransform: 'uppercase' }}>
-                                                    Phone
-                                                </Typography>
-                                            </Box>
-                                            <Typography variant="body1" sx={{ pl: 5, color: '#1a1a1a', fontWeight: 600 }}>
-                                                {salon.phone}
-                                            </Typography>
-                                        </Box>
-                                    )}
-
-                                    {salon.email && (
-                                        <Box>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-                                                <EmailIcon sx={{ color: '#667eea', fontSize: 24 }} />
-                                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#667eea', textTransform: 'uppercase' }}>
-                                                    Email
-                                                </Typography>
-                                            </Box>
-                                            <Typography variant="body1" sx={{ pl: 5, color: '#1a1a1a' }}>
-                                                {salon.email}
-                                            </Typography>
-                                        </Box>
-                                    )}
+                    {/* ── Right: Sticky Booking Sidebar ── */}
+                    <Grid size={{ xs: 12, md: 4 }}>
+                        <Box sx={{ position: { md: 'sticky' }, top: { md: 90 } }}>
+                            {/* Booking card */}
+                            <MotionBox
+                                initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.5, delay: 0.15 }}
+                                sx={{
+                                    p: 3.5, borderRadius: '24px', bgcolor: 'white',
+                                    border: '1px solid #f1f5f9', boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+                                    mb: 2.5,
+                                }}
+                            >
+                                {/* Status */}
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+                                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: isOpen ? '#10b981' : '#ef4444', boxShadow: isOpen ? '0 0 8px rgba(16,185,129,0.6)' : 'none' }} />
+                                    <Typography sx={{ fontWeight: 700, color: isOpen ? '#10b981' : '#ef4444', fontSize: '0.88rem' }}>
+                                        {isOpen ? 'Open Now — Ready to Book' : 'Currently Closed'}
+                                    </Typography>
                                 </Box>
-                            </CardContent>
-                        </Card>
+
+                                <Typography sx={{ fontFamily: '"Outfit", sans-serif', fontWeight: 800, color: '#09090b', fontSize: '1.4rem', mb: 0.5, lineHeight: 1.2 }}>
+                                    Book an Appointment
+                                </Typography>
+                                <Typography sx={{ color: '#64748b', fontSize: '0.85rem', mb: 3, lineHeight: 1.6 }}>
+                                    {salon.description || 'Experience a world-class service with our expert team. Choose your preferred time slot.'}
+                                </Typography>
+
+                                {/* Quick stats */}
+                                <Box sx={{ display: 'flex', gap: 2, mb: 3.5 }}>
+                                    {ratingValue !== 'N/A' && (
+                                        <Box sx={{ flex: 1, p: 1.5, borderRadius: '14px', bgcolor: '#f8fafc', textAlign: 'center' }}>
+                                            <Typography sx={{ fontWeight: 800, color: '#09090b', fontFamily: '"Outfit", sans-serif' }}>{ratingValue}</Typography>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.3, mt: 0.2 }}>
+                                                <StarIcon sx={{ fontSize: 11, color: '#fbbf24' }} />
+                                                <Typography sx={{ color: '#64748b', fontSize: '0.7rem' }}>Rating</Typography>
+                                            </Box>
+                                        </Box>
+                                    )}
+                                    <Box sx={{ flex: 1, p: 1.5, borderRadius: '14px', bgcolor: '#f8fafc', textAlign: 'center' }}>
+                                        <Typography sx={{ fontWeight: 800, color: '#09090b', fontFamily: '"Outfit", sans-serif' }}>{activeStaff.length}</Typography>
+                                        <Typography sx={{ color: '#64748b', fontSize: '0.7rem', mt: 0.2 }}>Stylists</Typography>
+                                    </Box>
+                                    <Box sx={{ flex: 1, p: 1.5, borderRadius: '14px', bgcolor: '#f8fafc', textAlign: 'center' }}>
+                                        <Typography sx={{ fontWeight: 800, color: '#09090b', fontFamily: '"Outfit", sans-serif' }}>{activeServices.length}</Typography>
+                                        <Typography sx={{ color: '#64748b', fontSize: '0.7rem', mt: 0.2 }}>Services</Typography>
+                                    </Box>
+                                </Box>
+
+                                <Button
+                                    variant="contained" size="large" fullWidth
+                                    onClick={() => navigate(`/booking/${salon._id}`)}
+                                    endIcon={<ArrowForwardIcon />}
+                                    sx={{
+                                        borderRadius: '16px', py: 1.75, fontWeight: 700, fontSize: '1rem',
+                                        background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)',
+                                        boxShadow: '0 8px 24px rgba(99,102,241,0.35)',
+                                        '&:hover': { background: 'linear-gradient(135deg, #5558e8 0%, #6d28d9 100%)', boxShadow: '0 12px 32px rgba(99,102,241,0.5)', transform: 'translateY(-1px)' },
+                                        transition: 'all 0.25s ease',
+                                    }}
+                                >
+                                    Book Now — Free
+                                </Button>
+
+                                <Typography sx={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.75rem', mt: 1.5 }}>
+                                    No prepayment required · Cancel anytime
+                                </Typography>
+                            </MotionBox>
+
+                            {/* Contact quick card */}
+                            {(salon.address?.city || salon.phone) && (
+                                <MotionBox
+                                    initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+                                    transition={{ duration: 0.5, delay: 0.25 }}
+                                    sx={{ p: 2.5, borderRadius: '20px', bgcolor: 'white', border: '1px solid #f1f5f9' }}
+                                >
+                                    {salon.address?.city && (
+                                        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', mb: salon.phone ? 1.5 : 0 }}>
+                                            <LocationIcon sx={{ fontSize: 16, color: '#6366f1', flexShrink: 0 }} />
+                                            <Typography sx={{ fontSize: '0.85rem', color: '#334155', fontWeight: 500 }}>
+                                                {[salon.address.city, salon.address.state].filter(Boolean).join(', ')}
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                    {salon.phone && (
+                                        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                                            <PhoneIcon sx={{ fontSize: 15, color: '#6366f1', flexShrink: 0 }} />
+                                            <Typography sx={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>{salon.phone}</Typography>
+                                        </Box>
+                                    )}
+                                </MotionBox>
+                            )}
+                        </Box>
                     </Grid>
                 </Grid>
-
-                {/* Final CTA */}
-                <Card
-                    sx={{
-                        mt: 6,
-                        borderRadius: 4,
-                        overflow: 'hidden',
-                        boxShadow: '0 20px 60px rgba(102, 126, 234, 0.3)',
-                    }}
-                >
-                    <Box
-                        sx={{
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                            color: 'white',
-                            p: 6,
-                            textAlign: 'center',
-                        }}
-                    >
-                        <Typography variant="h3" sx={{ fontWeight: 800, mb: 2 }}>
-                            Ready for Your Transformation?
-                        </Typography>
-                        <Typography variant="h6" sx={{ mb: 4, opacity: 0.95, fontWeight: 300 }}>
-                            Join thousands of satisfied customers at {salon.name}
-                        </Typography>
-                        <Button
-                            variant="contained"
-                            size="large"
-                            onClick={() => navigate(`/booking/${salon._id}`)}
-                            sx={{
-                                bgcolor: 'white',
-                                color: '#667eea',
-                                px: 8,
-                                py: 2.5,
-                                fontSize: '1.3rem',
-                                fontWeight: 800,
-                                borderRadius: 3,
-                                boxShadow: '0 12px 24px rgba(0,0,0,0.2)',
-                                '&:hover': {
-                                    bgcolor: '#f5f5f5',
-                                    transform: 'scale(1.05)',
-                                    boxShadow: '0 16px 32px rgba(0,0,0,0.3)',
-                                },
-                                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                            }}
-                        >
-                            Book Your Appointment Now
-                        </Button>
-                    </Box>
-                </Card>
             </Container>
         </Box>
     );

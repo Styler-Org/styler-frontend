@@ -40,7 +40,6 @@ import dayjs from 'dayjs';
 import { appointmentService } from '../../services/appointmentService';
 import { Appointment, AppointmentStatus, PaginatedResponse } from '../../types';
 import { formatCurrency } from '../../utils/helpers';
-import './MyAppointments.css';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -324,20 +323,20 @@ const MyAppointments: React.FC = () => {
                             )}
 
                             <Button
-                                variant="contained"
+                                variant="outlined"
                                 endIcon={<ArrowForwardIcon />}
                                 fullWidth={!isMobile}
-                                onClick={() => navigate(`/appointments/${appointment._id}`)} // Updated route
+                                onClick={() => navigate(`/appointments/${appointment._id}`)}
                                 sx={{
-                                    bgcolor: 'white',
-                                    color: 'white',
+                                    borderColor: '#e2e8f0',
+                                    color: '#475569',
                                     fontWeight: 700,
                                     borderRadius: '12px',
                                     textTransform: 'none',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
                                     '&:hover': {
-                                        bgcolor: '#f1f5f9',
-                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                        borderColor: '#6366f1',
+                                        color: '#6366f1',
+                                        bgcolor: 'rgba(99,102,241,0.04)',
                                     }
                                 }}
                             >
