@@ -382,7 +382,7 @@ const Profile: React.FC = () => {
                                             defaultValue={user?.phone}
                                             fullWidth
                                             disabled={!isEditing}
-                                            placeholder="+1 (555) 000-0000"
+                                            placeholder="+91 98765 43210"
                                             InputProps={{
                                                 startAdornment: <PhoneIcon sx={{ color: '#cbd5e1', mr: 1.5 }} />,
                                                 sx: { borderRadius: '12px', bgcolor: isEditing ? 'white' : '#f8fafc' }
@@ -422,29 +422,29 @@ const Profile: React.FC = () => {
                                             defaultValue={user?.addresses?.[0]?.city || ''}
                                             fullWidth
                                             disabled={!isEditing}
-                                            placeholder="New York"
+                                            placeholder="Mumbai"
                                             InputProps={{ sx: { borderRadius: '12px', bgcolor: isEditing ? 'white' : '#f8fafc' } }}
                                         />
                                     </Grid>
                                     <Grid size={{ xs: 12, md: 6 }}>
-                                        <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, color: '#64748b' }}>State / Province</Typography>
+                                        <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, color: '#64748b' }}>State</Typography>
                                         <TextField
                                             name="state"
                                             defaultValue={user?.addresses?.[0]?.state || ''}
                                             fullWidth
                                             disabled={!isEditing}
-                                            placeholder="NY"
+                                            placeholder="Maharashtra"
                                             InputProps={{ sx: { borderRadius: '12px', bgcolor: isEditing ? 'white' : '#f8fafc' } }}
                                         />
                                     </Grid>
                                     <Grid size={{ xs: 12, md: 6 }}>
-                                        <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, color: '#64748b' }}>Postal Code</Typography>
+                                        <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, color: '#64748b' }}>Pincode</Typography>
                                         <TextField
                                             name="pincode"
                                             defaultValue={user?.addresses?.[0]?.pincode || ''}
                                             fullWidth
                                             disabled={!isEditing}
-                                            placeholder="10001"
+                                            placeholder="400001"
                                             InputProps={{ sx: { borderRadius: '12px', bgcolor: isEditing ? 'white' : '#f8fafc' } }}
                                         />
                                     </Grid>
@@ -455,7 +455,7 @@ const Profile: React.FC = () => {
                                             defaultValue={user?.addresses?.[0]?.country || 'India'}
                                             fullWidth
                                             disabled={!isEditing}
-                                            placeholder="USA"
+                                            placeholder="India"
                                             InputProps={{ sx: { borderRadius: '12px', bgcolor: isEditing ? 'white' : '#f8fafc' } }}
                                         />
                                     </Grid>

@@ -105,7 +105,7 @@ const Settings: React.FC = () => {
                     city: (addr as any).city || '',
                     state: (addr as any).state || '',
                     pincode: (addr as any).pincode || '',
-                    country: (addr as any).country || ''
+                    country: (addr as any).country || 'India'
                 }
             });
         }
@@ -317,7 +317,7 @@ const Settings: React.FC = () => {
                                                 </Grid>
                                                 <Grid size={{ xs: 12, sm: 6 }}>
                                                     <FieldLabel label="Phone Number" icon={<PhoneIcon fontSize="inherit" />}>
-                                                        <TextField fullWidth name="phone" value={profileData.phone} onChange={handleProfileChange} placeholder="+1 (555) 000-0000" sx={textFieldSx} />
+                                                        <TextField fullWidth name="phone" value={profileData.phone} onChange={handleProfileChange} placeholder="+91 98765 43210" sx={textFieldSx} />
                                                     </FieldLabel>
                                                 </Grid>
                                             </Grid>
@@ -335,13 +335,13 @@ const Settings: React.FC = () => {
                                                     <TextField fullWidth label="City" name="address.city" value={profileData.address.city} onChange={handleProfileChange} sx={textFieldSx} />
                                                 </Grid>
                                                 <Grid size={{ xs: 12, sm: 6 }}>
-                                                    <TextField fullWidth label="State" name="address.state" value={profileData.address.state} onChange={handleProfileChange} sx={textFieldSx} />
+                                                    <TextField fullWidth label="State" name="address.state" value={profileData.address.state} onChange={handleProfileChange} placeholder="Maharashtra" sx={textFieldSx} />
                                                 </Grid>
                                                 <Grid size={{ xs: 12, sm: 6 }}>
-                                                    <TextField fullWidth label="Postal Code" name="address.pincode" value={profileData.address.pincode} onChange={handleProfileChange} sx={textFieldSx} />
+                                                    <TextField fullWidth label="Pincode" name="address.pincode" value={profileData.address.pincode} onChange={handleProfileChange} sx={textFieldSx} />
                                                 </Grid>
                                                 <Grid size={{ xs: 12, sm: 6 }}>
-                                                    <TextField fullWidth label="Country" name="address.country" value={profileData.address.country} onChange={handleProfileChange} sx={textFieldSx} />
+                                                    <TextField fullWidth label="Country" name="address.country" value={profileData.address.country || 'India'} onChange={handleProfileChange} sx={textFieldSx} />
                                                 </Grid>
                                             </Grid>
 

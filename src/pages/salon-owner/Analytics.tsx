@@ -123,7 +123,7 @@ const Analytics: React.FC = () => {
                                             )}
                                         </Box>
                                         <Typography variant="h3" fontWeight={700}>
-                                            {stat.isMoney && '$'}
+                                            {stat.isMoney && '₹'}
                                             <CountUp end={stat.value} duration={2} separator="," />
                                         </Typography>
                                         <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mt: 0.5 }}>

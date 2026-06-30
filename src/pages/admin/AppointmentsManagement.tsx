@@ -189,7 +189,7 @@ const AppointmentsManagement: React.FC = () => {
                                         </TableCell>
                                         <TableCell>
                                             <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                                                {appt.pricing?.total != null ? `$${appt.pricing.total}` : '—'}
+                                                {appt.pricing?.total != null ? `₹${appt.pricing.total.toLocaleString('en-IN')}` : '—'}
                                             </Typography>
                                         </TableCell>
                                         <TableCell>
