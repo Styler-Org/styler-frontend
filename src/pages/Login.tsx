@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Box,
     TextField,
     Button,
-    CardContent,
     Typography,
     InputAdornment,
     CircularProgress,
+    alpha,
+    useMediaQuery,
+    useTheme,
 } from '@mui/material';
 import {
     Person as PersonIcon,
@@ -18,43 +20,161 @@ import {
     CalendarMonth as CalendarIcon,
     Store as StoreIcon,
     ArrowForward as ArrowForwardIcon,
+    CheckCircleOutlined as CheckIcon,
+    Star as StarIcon,
 } from '@mui/icons-material';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { authService } from '../services/authService';
 import { useAuthStore } from '../stores/authStore';
 import toast from 'react-hot-toast';
 import { AuthResponse, UserRole } from '../types';
 import Logo from '../components/common/Logo';
-import './Login.css';
 
 const MotionBox = motion(Box);
 
-const staggerContainer = {
-    hidden: { opacity: 0 },
-    show: {
-        opacity: 1,
-        transition: {
-            staggerChildren: 0.1
-        }
-    }
+/* ── Variants ── */
+const slideRight = {
+    hidden: { opacity: 0, x: 24 },
+    show:   { opacity: 1, x: 0,  transition: { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] } },
+    exit:   { opacity: 0, x: -24, transition: { duration: 0.3 } },
 };
 
-const itemVariant = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+const fadeUp = {
+    hidden: { opacity: 0, y: 16 },
+    show:   { opacity: 1, y: 0,  transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } },
 };
+
+const stagger = {
+    hidden: {},
+    show:   { transition: { staggerChildren: 0.08 } },
+};
+
+/* ── Feature Bullet ── */
+const FeatureBullet: React.FC<{ icon: React.ReactNode; title: string; sub: string }> = ({ icon, title, sub }) => (
+    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+        <Box
+            sx={{
+                width: 44,
+                height: 44,
+                borderRadius: '14px',
+                background: 'rgba(255,255,255,0.12)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                color: 'rgba(255,255,255,0.9)',
+                '& svg': { fontSize: '1.2rem' },
+            }}
+        >
+            {icon}
+        </Box>
+        <Box>
+            <Typography sx={{ fontWeight: 700, color: 'white', fontSize: '0.9rem', lineHeight: 1.3 }}>
+                {title}
+            </Typography>
+            <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', mt: 0.3 }}>
+                {sub}
+            </Typography>
+        </Box>
+    </Box>
+);
+
+/* ── OTP Input ── */
+const OtpInput: React.FC<{ value: string; onChange: (v: string) => void; length?: number }> = ({ value, onChange, length = 6 }) => {
+    const inputs = useRef<(HTMLInputElement | null)[]>([]);
+
+    const handleChange = (i: number, e: React.ChangeEvent<HTMLInputElement>) => {
+        const char = e.target.value.replace(/\D/g, '').slice(-1);
+        const arr = value.split('');
+        arr[i] = char;
+        const next = arr.join('').slice(0, length);
+        onChange(next);
+        if (char && i < length - 1) inputs.current[i + 1]?.focus();
+    };
+
+    const handleKeyDown = (i: number, e: React.KeyboardEvent) => {
+        if (e.key === 'Backspace' && !value[i] && i > 0) inputs.current[i - 1]?.focus();
+    };
+
+    const handlePaste = (e: React.ClipboardEvent) => {
+        const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, length);
+        onChange(pasted);
+        const nextIdx = Math.min(pasted.length, length - 1);
+        inputs.current[nextIdx]?.focus();
+        e.preventDefault();
+    };
+
+    return (
+        <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center' }}>
+            {Array.from({ length }).map((_, i) => (
+                <Box
+                    key={i}
+                    component="input"
+                    ref={(el: HTMLInputElement | null) => { inputs.current[i] = el; }}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={value[i] || ''}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(i, e)}
+                    onKeyDown={(e: React.KeyboardEvent) => handleKeyDown(i, e)}
+                    onPaste={i === 0 ? handlePaste : undefined}
+                    sx={{
+                        width: { xs: 44, sm: 52 },
+                        height: { xs: 52, sm: 60 },
+                        border: '2px solid',
+                        borderColor: value[i] ? '#6366f1' : '#e2e8f0',
+                        borderRadius: '14px',
+                        textAlign: 'center',
+                        fontSize: '1.4rem',
+                        fontWeight: 800,
+                        color: '#0f172a',
+                        bgcolor: value[i] ? alpha('#6366f1', 0.05) : '#f8fafc',
+                        fontFamily: '"Outfit", sans-serif',
+                        outline: 'none',
+                        transition: 'all 0.2s ease',
+                        cursor: 'text',
+                        '&:focus': {
+                            borderColor: '#6366f1',
+                            bgcolor: alpha('#6366f1', 0.04),
+                            boxShadow: `0 0 0 3px ${alpha('#6366f1', 0.12)}`,
+                        },
+                    }}
+                />
+            ))}
+        </Box>
+    );
+};
+
+/* ── Step Indicator ── */
+const StepIndicator: React.FC<{ current: number; total: number }> = ({ current, total }) => (
+    <Box sx={{ display: 'flex', gap: 0.75, mb: 3 }}>
+        {Array.from({ length: total }).map((_, i) => (
+            <Box
+                key={i}
+                sx={{
+                    height: 4,
+                    borderRadius: '2px',
+                    flex: i < current ? 1 : 0.3,
+                    bgcolor: i < current ? '#6366f1' : '#e2e8f0',
+                    transition: 'all 0.4s ease',
+                }}
+            />
+        ))}
+    </Box>
+);
 
 type AuthStep = 'PHONE_ENTRY' | 'OTP_VERIFICATION' | 'REGISTRATION_DETAILS';
 
-interface LoginProps {
-    isRegisterMode?: boolean;
-}
+const Login: React.FC<{ isRegisterMode?: boolean }> = ({ isRegisterMode = false }) => {
+    const navigate = useNavigate();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
     const [step, setStep] = useState<AuthStep>('PHONE_ENTRY');
     const [loading, setLoading] = useState(false);
     const [resendTimer, setResendTimer] = useState(0);
-
     const [phone, setPhone] = useState('');
     const [otp, setOtp] = useState('');
     const [name, setName] = useState('');
@@ -62,429 +182,375 @@ const Login: React.FC<LoginProps> = ({ isRegisterMode = false }) => {
     const [dob, setDob] = useState('');
     const [pendingAuth, setPendingAuth] = useState<AuthResponse | null>(null);
 
-    const navigate = useNavigate();
     const setAuth = useAuthStore((state) => state.setAuth);
     const { isAuthenticated, user } = useAuthStore();
-
-    useEffect(() => {
-        if (isAuthenticated && user) {
-            const dashboardPath = getDashboardPath(user.role);
-            navigate(dashboardPath, { replace: true });
-        }
-    }, [isAuthenticated, user, navigate]);
-
-    useEffect(() => {
-        let interval: ReturnType<typeof setInterval>;
-        if (resendTimer > 0 && step === 'OTP_VERIFICATION') {
-            interval = setInterval(() => {
-                setResendTimer((prev) => prev - 1);
-            }, 1000);
-        }
-        return () => clearInterval(interval);
-    }, [resendTimer, step]);
 
     const getDashboardPath = (role: string) => {
         switch (role) {
             case 'barber': return '/barber/dashboard';
             case 'salon_owner': return '/salon-owner/dashboard';
             case 'superadmin': return '/admin/superadmin';
-            case 'customer':
             default: return '/salons';
         }
     };
 
-    const normalizePhone = (value: string) => value.replace(/\D/g, '').slice(-10);
+    const stepIndex = step === 'PHONE_ENTRY' ? 1 : step === 'OTP_VERIFICATION' ? 2 : 3;
+
+    useEffect(() => {
+        if (isAuthenticated && user) navigate(getDashboardPath(user.role), { replace: true });
+    }, [isAuthenticated, user]);
+
+    useEffect(() => {
+        let interval: ReturnType<typeof setInterval>;
+        if (resendTimer > 0 && step === 'OTP_VERIFICATION') {
+            interval = setInterval(() => setResendTimer(prev => prev - 1), 1000);
+        }
+        return () => clearInterval(interval);
+    }, [resendTimer, step]);
 
     const handleSendOtp = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (!phone.trim() || phone.length < 10) {
-            toast.error('Please enter a valid phone number');
-            return;
-        }
-
+        if (!phone.trim() || phone.length < 10) { toast.error('Please enter a valid 10-digit phone number'); return; }
         setLoading(true);
         try {
-            const response = await authService.requestOtp({ phone: phone.trim() });
-            if (response.success) {
-                setOtp('');
-                setStep('OTP_VERIFICATION');
-                setResendTimer(30);
-                toast.success('OTP sent to your phone.');
-            }
+            const res = await authService.requestOtp({ phone: phone.trim() });
+            if (res.success) { setOtp(''); setStep('OTP_VERIFICATION'); setResendTimer(30); toast.success('OTP sent to your phone.'); }
         } catch (err: any) {
-            const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to send OTP';
-            toast.error(errorMessage);
-        } finally {
-            setLoading(false);
-        }
+            toast.error(err.response?.data?.error?.message || err.response?.data?.message || 'Failed to send OTP');
+        } finally { setLoading(false); }
     };
 
-    const handleRequestOtp = async (e?: React.FormEvent) => {
-        e?.preventDefault();
-
-        if (!phone || phone.length < 10) {
-            toast.error('Missing phone number for OTP verification');
-            return;
-        }
-
+    const handleResendOtp = async () => {
+        if (!phone || phone.length < 10 || resendTimer > 0 || loading) return;
         setLoading(true);
         try {
-            const response = await authService.requestOtp({ phone });
-            if (response.success) {
-                toast.success('OTP sent successfully!');
-                setResendTimer(30);
-            }
+            const res = await authService.requestOtp({ phone });
+            if (res.success) { toast.success('OTP resent!'); setResendTimer(30); }
         } catch (err: any) {
-            const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to send OTP';
-            toast.error(errorMessage);
-        } finally {
-            setLoading(false);
-        }
+            toast.error(err.response?.data?.error?.message || 'Failed to resend OTP');
+        } finally { setLoading(false); }
     };
 
     const handleVerifyOtp = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (!otp || otp.length < 6) {
-            toast.error('Please enter a valid 6-digit OTP');
-            return;
-        }
-
+        if (!otp || otp.length < 6) { toast.error('Please enter the complete 6-digit OTP'); return; }
         setLoading(true);
         try {
-            const response = await authService.verifyOtp({
+            const res = await authService.verifyOtp({
                 phone,
                 otp,
-                ...(step === 'REGISTRATION_DETAILS' ? { name, email, dateOfBirth: dob } : {})
+                ...(step === 'REGISTRATION_DETAILS' ? { name, email, dateOfBirth: dob } : {}),
             });
-
-            if (response.success) {
-                const authPayload = response.data || pendingAuth;
-
-                if (!authPayload) {
-                    toast.error('Authentication payload missing after OTP verification');
-                    return;
-                }
-
-                const { user: authUser, tokens } = authPayload;
+            if (res.success) {
+                const payload = res.data || pendingAuth;
+                if (!payload) { toast.error('Authentication payload missing'); return; }
+                const { user: authUser, tokens } = payload;
                 setAuth(authUser, tokens.accessToken, tokens.refreshToken);
-                toast.success('Two-step authentication successful!');
-
-                const dashboardPath = getDashboardPath(authUser.role);
-                setTimeout(() => navigate(dashboardPath), 500);
+                toast.success('Welcome to StylerApp!');
+                setTimeout(() => navigate(getDashboardPath(authUser.role)), 400);
             }
         } catch (err: any) {
-            try {
-                let errorMessage = 'Verification failed';
-                const rawError = err.response?.data?.error?.message || err.response?.data?.message || err.response?.data?.name || err.message;
-
-                if (typeof rawError === 'string') {
-                    errorMessage = rawError;
-                } else if (Array.isArray(rawError) && rawError.length > 0) {
-                    errorMessage = String(rawError[0]);
-                } else if (rawError) {
-                    errorMessage = String(rawError);
-                }
-
-                if (String(errorMessage).toLowerCase().includes('name is required')) {
-                    setStep('REGISTRATION_DETAILS');
-                } else {
-                    toast.error(String(errorMessage));
-                }
-            } catch (innerErr) {
-                console.error('Error parsing backend response:', innerErr);
-                toast.error('Verification failed due to a server error.');
+            const raw = err.response?.data?.error?.message || err.response?.data?.message || err.message || 'Verification failed';
+            if (String(raw).toLowerCase().includes('name is required')) {
+                setStep('REGISTRATION_DETAILS');
+            } else {
+                toast.error(String(raw));
             }
-        } finally {
-            setLoading(false);
-        }
+        } finally { setLoading(false); }
     };
 
-    return (
-        <Box className="login-page">
-            <Box className="login-left">
-                <MotionBox
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, ease: 'easeOut' }}
-                    className="login-branding"
-                >
-                    <Box sx={{ mb: 4 }}>
-                        <Logo variant="light" size="large" clickable={false} />
-                    </Box>
-                    <Typography className="login-tagline">
-                        Experience the art of grooming with StylerApp. Check in to check out the best salons near you.
+    /* ── FORM CONTENT ── */
+    const formContent = (
+        <AnimatePresence mode="wait">
+            {step === 'PHONE_ENTRY' && (
+                <MotionBox key="phone" variants={slideRight} initial="hidden" animate="show" exit="exit">
+                    <StepIndicator current={1} total={3} />
+                    <Typography variant="h4" sx={{ fontFamily: '"Outfit", sans-serif', fontWeight: 800, color: '#0f172a', mb: 0.75, letterSpacing: '-0.02em' }}>
+                        Welcome back
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: '#64748b', mb: 4, lineHeight: 1.6 }}>
+                        Enter your phone number to continue to StylerApp.
                     </Typography>
 
-                    <Box className="login-features">
-                        <Box className="login-feature">
-                            <Box className="login-feature-icon"><ScissorsIcon /></Box>
-                            <Box>
-                                <Typography fontWeight={700}>Expert Stylists</Typography>
-                                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>Top-tier professionals</Typography>
-                            </Box>
+                    <Box component="form" onSubmit={handleSendOtp}>
+                        <TextField
+                            fullWidth
+                            label="Phone Number"
+                            type="tel"
+                            value={phone}
+                            onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                            required
+                            placeholder="Enter your 10-digit phone number"
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, pr: 1, borderRight: '1px solid #e2e8f0' }}>
+                                            <PhoneIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
+                                            <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>+91</Typography>
+                                        </Box>
+                                    </InputAdornment>
+                                ),
+                            }}
+                            sx={{ mb: 3 }}
+                        />
+
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            fullWidth
+                            size="large"
+                            disabled={loading || phone.length < 10}
+                            endIcon={!loading && <ArrowForwardIcon />}
+                            sx={{
+                                height: 52,
+                                borderRadius: '14px',
+                                fontWeight: 700,
+                                fontSize: '0.975rem',
+                            }}
+                        >
+                            {loading ? <CircularProgress size={22} color="inherit" /> : 'Continue'}
+                        </Button>
+
+                        <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', mt: 3, color: '#94a3b8', lineHeight: 1.6 }}>
+                            By continuing, you agree to our{' '}
+                            <Box component="span" sx={{ color: '#6366f1', cursor: 'pointer', fontWeight: 600 }}>Terms</Box>
+                            {' '}and{' '}
+                            <Box component="span" sx={{ color: '#6366f1', cursor: 'pointer', fontWeight: 600 }}>Privacy Policy</Box>.
+                        </Typography>
+                    </Box>
+                </MotionBox>
+            )}
+
+            {step === 'OTP_VERIFICATION' && (
+                <MotionBox key="otp" variants={slideRight} initial="hidden" animate="show" exit="exit">
+                    <StepIndicator current={2} total={3} />
+                    <Typography variant="h4" sx={{ fontFamily: '"Outfit", sans-serif', fontWeight: 800, color: '#0f172a', mb: 0.75, letterSpacing: '-0.02em' }}>
+                        Verify your number
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: '#64748b', mb: 4, lineHeight: 1.6 }}>
+                        We sent a 6-digit code to{' '}
+                        <Box component="span" sx={{ color: '#0f172a', fontWeight: 700 }}>+91 {phone}</Box>
+                    </Typography>
+
+                    <Box component="form" onSubmit={handleVerifyOtp}>
+                        <Box sx={{ mb: 4 }}>
+                            <OtpInput value={otp} onChange={setOtp} />
                         </Box>
-                        <Box className="login-feature">
-                            <Box className="login-feature-icon"><CalendarIcon /></Box>
-                            <Box>
-                                <Typography fontWeight={700}>Easy Booking</Typography>
-                                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>Schedule in seconds</Typography>
-                            </Box>
-                        </Box>
-                        <Box className="login-feature">
-                            <Box className="login-feature-icon"><StoreIcon /></Box>
-                            <Box>
-                                <Typography fontWeight={700}>Premium Salons</Typography>
-                                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>Curated locations</Typography>
-                            </Box>
+
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            fullWidth
+                            size="large"
+                            disabled={loading || otp.length < 6}
+                            endIcon={!loading && <CheckIcon />}
+                            sx={{ height: 52, borderRadius: '14px', fontWeight: 700, fontSize: '0.975rem', mb: 3 }}
+                        >
+                            {loading ? <CircularProgress size={22} color="inherit" /> : 'Verify & Continue'}
+                        </Button>
+
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                            <Button
+                                onClick={handleResendOtp}
+                                disabled={resendTimer > 0 || loading}
+                                variant="text"
+                                size="small"
+                                sx={{
+                                    color: resendTimer > 0 ? '#94a3b8' : '#6366f1',
+                                    fontWeight: 600,
+                                    borderRadius: '8px',
+                                    fontSize: '0.85rem',
+                                    '&:hover': { bgcolor: resendTimer > 0 ? 'transparent' : alpha('#6366f1', 0.06) },
+                                }}
+                            >
+                                {resendTimer > 0 ? `Resend code in ${resendTimer}s` : 'Resend OTP'}
+                            </Button>
+
+                            <Button
+                                onClick={() => { setStep('PHONE_ENTRY'); setResendTimer(0); setOtp(''); }}
+                                variant="text"
+                                size="small"
+                                sx={{ color: '#94a3b8', fontWeight: 600, fontSize: '0.82rem', borderRadius: '8px', '&:hover': { color: '#64748b', bgcolor: '#f8fafc' } }}
+                            >
+                                Change phone number
+                            </Button>
                         </Box>
                     </Box>
                 </MotionBox>
-            </Box>
+            )}
 
-            <Box className="login-right">
-                <MotionBox
-                    initial={{ opacity: 0, x: 50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                    className="login-form-container"
+            {step === 'REGISTRATION_DETAILS' && (
+                <MotionBox key="register" variants={slideRight} initial="hidden" animate="show" exit="exit">
+                    <StepIndicator current={3} total={3} />
+                    <Typography variant="h4" sx={{ fontFamily: '"Outfit", sans-serif', fontWeight: 800, color: '#0f172a', mb: 0.75, letterSpacing: '-0.02em' }}>
+                        Create your account
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: '#64748b', mb: 4, lineHeight: 1.6 }}>
+                        Just a few more details to get you started.
+                    </Typography>
+
+                    <Box component="form" onSubmit={handleVerifyOtp}>
+                        <MotionBox variants={stagger} initial="hidden" animate="show" sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mb: 3.5 }}>
+                            <MotionBox variants={fadeUp}>
+                                <TextField
+                                    fullWidth
+                                    label="Full Name"
+                                    value={name}
+                                    onChange={e => setName(e.target.value)}
+                                    required
+                                    placeholder="Your full name"
+                                    InputProps={{
+                                        startAdornment: <InputAdornment position="start"><PersonIcon sx={{ color: '#94a3b8', fontSize: 20 }} /></InputAdornment>,
+                                    }}
+                                />
+                            </MotionBox>
+
+                            <MotionBox variants={fadeUp}>
+                                <TextField
+                                    fullWidth
+                                    label="Email Address"
+                                    type="email"
+                                    value={email}
+                                    onChange={e => setEmail(e.target.value)}
+                                    required
+                                    placeholder="you@example.com"
+                                    InputProps={{
+                                        startAdornment: <InputAdornment position="start"><EmailIcon sx={{ color: '#94a3b8', fontSize: 20 }} /></InputAdornment>,
+                                    }}
+                                />
+                            </MotionBox>
+
+                            <MotionBox variants={fadeUp}>
+                                <TextField
+                                    fullWidth
+                                    label="Date of Birth"
+                                    type="date"
+                                    value={dob}
+                                    onChange={e => setDob(e.target.value)}
+                                    required
+                                    InputLabelProps={{ shrink: true }}
+                                    InputProps={{
+                                        startAdornment: <InputAdornment position="start"><CalendarIcon sx={{ color: '#94a3b8', fontSize: 20 }} /></InputAdornment>,
+                                    }}
+                                />
+                            </MotionBox>
+                        </MotionBox>
+
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            fullWidth
+                            size="large"
+                            disabled={loading || !name || !email || !dob}
+                            endIcon={!loading && <ArrowForwardIcon />}
+                            sx={{ height: 52, borderRadius: '14px', fontWeight: 700, fontSize: '0.975rem' }}
+                        >
+                            {loading ? <CircularProgress size={22} color="inherit" /> : 'Complete Registration'}
+                        </Button>
+                    </Box>
+                </MotionBox>
+            )}
+        </AnimatePresence>
+    );
+
+    return (
+        <Box sx={{ minHeight: '100vh', display: 'flex', bgcolor: '#f8fafc' }}>
+
+            {/* ── LEFT PANEL ── */}
+            {!isMobile && (
+                <Box
+                    sx={{
+                        width: '44%',
+                        minHeight: '100vh',
+                        position: 'sticky',
+                        top: 0,
+                        background: 'linear-gradient(145deg, #1e1b4b 0%, #2d1b69 40%, #0f172a 100%)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        p: 6,
+                        overflow: 'hidden',
+                    }}
                 >
-                    <Box className="login-form-header">
-                        <Typography variant="h1">
-                            {step === 'PHONE_ENTRY' && 'Welcome'}
-                            {step === 'OTP_VERIFICATION' && 'Verify OTP'}
-                            {step === 'REGISTRATION_DETAILS' && 'Welcome to Styler! 🎉'}
-                        </Typography>
-                        <Typography variant="body1">
-                            {step === 'PHONE_ENTRY' && 'Enter your phone number to continue.'}
-                            {step === 'OTP_VERIFICATION' && `Step 2: Enter the 6-digit OTP sent to ${phone}`}
-                            {step === 'REGISTRATION_DETAILS' && 'It looks like you are new here. Please complete your profile to continue.'}
-                        </Typography>
+                    {/* Background decoration */}
+                    <Box sx={{ position: 'absolute', top: '-15%', right: '-15%', width: '55%', height: '55%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 65%)', pointerEvents: 'none' }} />
+                    <Box sx={{ position: 'absolute', bottom: '5%', left: '-10%', width: '40%', height: '40%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(236,72,153,0.18) 0%, transparent 65%)', pointerEvents: 'none' }} />
+                    <Box sx={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)', backgroundSize: '40px 40px', maskImage: 'radial-gradient(ellipse at 30% 30%, black 20%, transparent 70%)', WebkitMaskImage: 'radial-gradient(ellipse at 30% 30%, black 20%, transparent 70%)' }} />
+
+                    {/* Content */}
+                    <Box sx={{ position: 'relative', zIndex: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <Box sx={{ mb: 'auto' }}>
+                            <Logo variant="light" size="medium" clickable={false} />
+                        </Box>
+
+                        <Box sx={{ my: 'auto' }}>
+                            <Typography
+                                variant="h2"
+                                sx={{ color: 'white', fontFamily: '"Outfit", sans-serif', fontWeight: 800, mb: 2, lineHeight: 1.15, letterSpacing: '-0.025em' }}
+                            >
+                                Your premium
+                                <br />
+                                <Box component="span" sx={{ background: 'linear-gradient(135deg, #a5b4fc 0%, #f9a8d4 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                                    style awaits.
+                                </Box>
+                            </Typography>
+
+                            <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.95rem', lineHeight: 1.75, mb: 6, maxWidth: 360 }}>
+                                Book the city's finest salons, dermatologists, and wellness centres — all in one place.
+                            </Typography>
+
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                                <FeatureBullet icon={<ScissorsIcon />}  title="Expert Stylists"   sub="Certified professionals at top-tier venues" />
+                                <FeatureBullet icon={<CalendarIcon />}  title="Instant Booking"   sub="Reserve your slot in under 30 seconds" />
+                                <FeatureBullet icon={<StoreIcon />}     title="Premium Salons"    sub="Hand-curated, verified locations" />
+                            </Box>
+                        </Box>
+
+                        {/* Testimonial */}
+                        <Box
+                            sx={{
+                                mt: 6,
+                                p: 2.5,
+                                borderRadius: '16px',
+                                background: 'rgba(255,255,255,0.06)',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                backdropFilter: 'blur(8px)',
+                            }}
+                        >
+                            <Box sx={{ display: 'flex', gap: 0.5, mb: 1.5 }}>
+                                {[...Array(5)].map((_, i) => <StarIcon key={i} sx={{ color: '#fbbf24', fontSize: 14 }} />)}
+                            </Box>
+                            <Typography sx={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem', lineHeight: 1.7, fontStyle: 'italic', mb: 1.5 }}>
+                                "StylerApp completely transformed how I book salon appointments. It's so easy and the quality is always exceptional."
+                            </Typography>
+                            <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', fontWeight: 600 }}>
+                                — Priya S., Verified Customer
+                            </Typography>
+                        </Box>
                     </Box>
+                </Box>
+            )}
 
-                    <CardContent sx={{ p: 0, mt: 4 }}>
-                        {step === 'PHONE_ENTRY' && (
-                            <Box component="form" onSubmit={handleSendOtp} className="login-form">
-                                <MotionBox variants={staggerContainer} initial="hidden" animate="show">
-                                    <MotionBox variants={itemVariant}>
-                                        <TextField
-                                            fullWidth
-                                            label="Phone Number"
-                                            type="tel"
-                                            value={phone}
-                                            onChange={(e) => setPhone(e.target.value)}
-                                            required
-                                            InputProps={{
-                                                startAdornment: (
-                                                    <InputAdornment position="start">
-                                                        <PhoneIcon sx={{ color: '#94a3b8' }} />
-                                                    </InputAdornment>
-                                                ),
-                                            }}
-                                            sx={{ mb: 4 }}
-                                        />
-                                    </MotionBox>
+            {/* ── RIGHT PANEL ── */}
+            <Box
+                sx={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    p: { xs: 3, sm: 5 },
+                    minHeight: '100vh',
+                }}
+            >
+                <Box sx={{ width: '100%', maxWidth: 440 }}>
+                    {/* Mobile logo */}
+                    {isMobile && (
+                        <Box sx={{ mb: 4, textAlign: 'center' }}>
+                            <Logo variant="default" size="medium" clickable={false} />
+                        </Box>
+                    )}
 
-                                    <MotionBox variants={itemVariant}>
-                                        <Button
-                                            type="submit"
-                                            variant="contained"
-                                            fullWidth
-                                            size="large"
-                                            disabled={loading || phone.length < 10}
-                                            endIcon={!loading && <ArrowForwardIcon />}
-                                            sx={{
-                                                height: 56,
-                                                borderRadius: '16px',
-                                                background: 'linear-gradient(135deg, #4f46e5 0%, #312e81 100%)',
-                                                boxShadow: '0 8px 20px rgba(79, 70, 229, 0.25)',
-                                                textTransform: 'none',
-                                                fontSize: '1.1rem',
-                                                fontWeight: 600,
-                                                '&:hover': {
-                                                    background: 'linear-gradient(135deg, #4338ca 0%, #2e287c 100%)',
-                                                    boxShadow: '0 12px 25px rgba(79, 70, 229, 0.4)',
-                                                    transform: 'translateY(-2px)'
-                                                },
-                                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                                            }}
-                                        >
-                                            {loading ? <CircularProgress size={24} color="inherit" /> : 'Continue'}
-                                        </Button>
-                                    </MotionBox>
-                                </MotionBox>
-                            </Box>
-                        )}
-
-                        {step === 'OTP_VERIFICATION' && (
-                            <Box component="form" onSubmit={handleVerifyOtp} className="login-form">
-                                <MotionBox variants={staggerContainer} initial="hidden" animate="show">
-                                    <MotionBox variants={itemVariant}>
-                                        <TextField
-                                            fullWidth
-                                            label="Enter OTP"
-                                            type="text"
-                                            value={otp}
-                                            onChange={(e) => setOtp(e.target.value)}
-                                            required
-                                            inputProps={{ maxLength: 6 }}
-                                            InputProps={{
-                                                startAdornment: (
-                                                    <InputAdornment position="start">
-                                                        <VpnKeyIcon sx={{ color: '#94a3b8' }} />
-                                                    </InputAdornment>
-                                                ),
-                                            }}
-                                            sx={{ mb: 4 }}
-                                        />
-                                    </MotionBox>
-
-                                    <MotionBox variants={itemVariant}>
-                                        <Button
-                                            type="submit"
-                                            variant="contained"
-                                            fullWidth
-                                            size="large"
-                                            disabled={loading || otp.length < 6}
-                                            endIcon={!loading && <ArrowForwardIcon />}
-                                            sx={{
-                                                height: 56,
-                                                borderRadius: '16px',
-                                                background: 'linear-gradient(135deg, #4f46e5 0%, #312e81 100%)',
-                                                boxShadow: '0 8px 20px rgba(79, 70, 229, 0.25)',
-                                                textTransform: 'none',
-                                                fontSize: '1.1rem',
-                                                fontWeight: 600,
-                                                '&:hover': {
-                                                    background: 'linear-gradient(135deg, #4338ca 0%, #2e287c 100%)',
-                                                    boxShadow: '0 12px 25px rgba(79, 70, 229, 0.4)',
-                                                    transform: 'translateY(-2px)'
-                                                },
-                                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                                            }}
-                                        >
-                                            {loading ? <CircularProgress size={24} color="inherit" /> : 'Verify OTP'}
-                                        </Button>
-                                    </MotionBox>
-
-                                    <MotionBox variants={itemVariant} sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center' }}>
-                                        <Button
-                                            type="button"
-                                            onClick={() => handleRequestOtp()}
-                                            disabled={resendTimer > 0 || loading}
-                                            sx={{
-                                                color: resendTimer > 0 ? '#94a3b8' : '#4f46e5',
-                                                textTransform: 'none',
-                                                fontWeight: 600,
-                                                '&:hover': {
-                                                    color: resendTimer > 0 ? '#94a3b8' : '#4338ca',
-                                                    background: resendTimer > 0 ? 'transparent' : 'rgba(79, 70, 229, 0.05)',
-                                                    borderRadius: '12px'
-                                                }
-                                            }}
-                                        >
-                                            {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : 'Resend OTP'}
-                                        </Button>
-
-                                        <Button
-                                            type="button"
-                                            onClick={() => {
-                                                setStep('PHONE_ENTRY');
-                                                setResendTimer(0);
-                                                setOtp('');
-                                                setPendingAuth(null);
-                                            }}
-                                            sx={{
-                                                color: '#64748b',
-                                                textTransform: 'none',
-                                                fontWeight: 600,
-                                                '&:hover': {
-                                                    color: '#4f46e5',
-                                                    background: 'rgba(79, 70, 229, 0.05)',
-                                                    borderRadius: '12px'
-                                                }
-                                            }}
-                                        >
-                                            Change Phone Number
-                                        </Button>
-                                    </MotionBox>
-                                </MotionBox>
-                            </Box>
-                        )}
-
-                        {step === 'REGISTRATION_DETAILS' && (
-                            <Box component="form" onSubmit={handleVerifyOtp} className="login-form">
-                                <MotionBox variants={staggerContainer} initial="hidden" animate="show">
-                                    <MotionBox variants={itemVariant} sx={{ display: 'grid', gap: 2.5, mb: 4 }}>
-                                        <TextField
-                                            fullWidth
-                                            label="Full Name"
-                                            value={name}
-                                            onChange={(e) => setName(e.target.value)}
-                                            required
-                                            InputProps={{
-                                                startAdornment: <InputAdornment position="start"><PersonIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
-                                            }}
-                                        />
-
-                                        <TextField
-                                            fullWidth
-                                            label="Email Address"
-                                            type="email"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            required
-                                            InputProps={{
-                                                startAdornment: <InputAdornment position="start"><EmailIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
-                                            }}
-                                        />
-
-                                        <TextField
-                                            fullWidth
-                                            label="Date of Birth"
-                                            type="date"
-                                            value={dob}
-                                            onChange={(e) => setDob(e.target.value)}
-                                            required
-                                            InputLabelProps={{ shrink: true }}
-                                            InputProps={{
-                                                startAdornment: <InputAdornment position="start"><CalendarIcon sx={{ color: '#94a3b8' }} /></InputAdornment>,
-                                            }}
-                                        />
-                                    </MotionBox>
-
-                                    <MotionBox variants={itemVariant}>
-                                        <Button
-                                            type="submit"
-                                            variant="contained"
-                                            fullWidth
-                                            size="large"
-                                            disabled={loading || !name || !email || !dob}
-                                            sx={{
-                                                height: 56,
-                                                borderRadius: '16px',
-                                                background: 'linear-gradient(135deg, #4f46e5 0%, #312e81 100%)',
-                                                boxShadow: '0 8px 20px rgba(79, 70, 229, 0.25)',
-                                                textTransform: 'none',
-                                                fontSize: '1.1rem',
-                                                fontWeight: 600,
-                                                '&:hover': {
-                                                    background: 'linear-gradient(135deg, #4338ca 0%, #2e287c 100%)',
-                                                    boxShadow: '0 12px 25px rgba(79, 70, 229, 0.4)',
-                                                    transform: 'translateY(-2px)'
-                                                },
-                                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                                            }}
-                                        >
-                                            {loading ? <CircularProgress size={24} color="inherit" /> : 'Complete Registration'}
-                                        </Button>
-                                    </MotionBox>
-                                </MotionBox>
-                            </Box>
-                        )}
-                    </CardContent>
-                </MotionBox>
+                    {formContent}
+                </Box>
             </Box>
         </Box>
     );

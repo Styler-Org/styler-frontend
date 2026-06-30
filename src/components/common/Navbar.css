@@ -1,18 +1,1 @@
-/* Modern Navbar Styles */
-
-.navbar {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Nav Item - Pill Style */
-.nav-item {
-  position: relative;
-  overflow: hidden;
-}
-
-@media (max-width: 900px) {
-  .navbar {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-  }
-}
+/* Navbar.css — all navbar styling is handled inline in Navbar.tsx via MUI sx */

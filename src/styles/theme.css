@@ -1,123 +1,28 @@
+/* theme.css — light/dark theme CSS variable overrides
+   Primary tokens are defined in index.css.
+   This file handles theme switching and legacy compatibility.
+*/
+
+/* ── LIGHT THEME (default) ── */
 :root {
-    --bg-primary: #ffffff;
-    --bg-secondary: #f9fafb;
-    --bg-tertiary: #f3f4f6;
-
-    --text-primary: #1f2937;
-    --text-secondary: #4b5563;
-    --text-tertiary: #6b7280;
-
-    --border-color: #e5e7eb;
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-
-    --primary-color: #667eea;
-    --primary-hover: #5568d3;
-    --success-color: #10b981;
-    --error-color: #ef4444;
-    --warning-color: #f59e0b;
+    color-scheme: light;
 }
 
+/* ── DARK THEME ── */
 [data-theme='dark'] {
-    --bg-primary: #1f2937;
-    --bg-secondary: #111827;
-    --bg-tertiary: #374151;
-
-    --text-primary: #f9fafb;
-    --text-secondary: #e5e7eb;
-    --text-tertiary: #d1d5db;
-
-    --border-color: #374151;
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
 }
 
-body {
-    background-color: var(--bg-secondary);
+/* Layout wrapper */
+.app-layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-page);
     color: var(--text-primary);
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.app-layout {
-    min-height: 100vh;
-    background-color: var(--bg-secondary);
-}
-
-/* Card styling for dark mode */
-[data-theme='dark'] .ant-card {
-    background-color: var(--bg-primary);
-    border-color: var(--border-color);
-}
-
-[data-theme='dark'] .ant-card-head {
-    border-color: var(--border-color);
-    color: var(--text-primary);
-}
-
-[data-theme='dark'] .ant-card-body {
-    color: var(--text-secondary);
-}
-
-/* Table styling for dark mode */
-[data-theme='dark'] .ant-table {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-}
-
-[data-theme='dark'] .ant-table-thead>tr>th {
-    background-color: var(--bg-tertiary);
-    border-color: var(--border-color);
-    color: var(--text-primary);
-}
-
-[data-theme='dark'] .ant-table-tbody>tr>td {
-    border-color: var(--border-color);
-    color: var(--text-secondary);
-}
-
-[data-theme='dark'] .ant-table-tbody>tr:hover>td {
-    background-color: var(--bg-tertiary);
-}
-
-/* Input styling for dark mode */
-[data-theme='dark'] .ant-input,
-[data-theme='dark'] .ant-input-number,
-[data-theme='dark'] .ant-select-selector {
-    background-color: var(--bg-tertiary);
-    border-color: var(--border-color);
-    color: var(--text-primary);
-}
-
-[data-theme='dark'] .ant-input::placeholder {
-    color: var(--text-tertiary);
-}
-
-/* Modal styling for dark mode */
-[data-theme='dark'] .ant-modal-content {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-}
-
-[data-theme='dark'] .ant-modal-header {
-    background-color: var(--bg-primary);
-    border-color: var(--border-color);
-}
-
-[data-theme='dark'] .ant-modal-title {
-    color: var(--text-primary);
-}
-
-/* Button styling adjustments */
-[data-theme='dark'] .ant-btn-default {
-    background-color: var(--bg-tertiary);
-    border-color: var(--border-color);
-    color: var(--text-primary);
-}
-
-[data-theme='dark'] .ant-btn-default:hover {
-    background-color: var(--bg-primary);
-    border-color: var(--primary-color);
-    color: var(--primary-color);
+.app-layout main {
+    flex: 1;
 }

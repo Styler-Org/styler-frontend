@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
-    AppBar,
-    Toolbar,
     Box,
     Button,
     IconButton,
@@ -19,7 +17,7 @@ import {
     ListItemText,
     ListItemIcon,
     Divider,
-    Container
+    alpha,
 } from '@mui/material';
 import {
     Settings as SettingsIcon,
@@ -33,19 +31,20 @@ import {
     LocationOn as LocationOnIcon,
     ContentCut as ContentCutIcon,
     CalendarToday as CalendarIcon,
-    ChevronRight as ChevronRightIcon,
-    Favorite,
-    Email,
-    Person as PersonIcon, // Re-added PersonIcon
-    Info as InfoIcon, // Re-added InfoIcon
+    Person as PersonIcon,
+    Info as InfoIcon,
     Spa as SpaIcon,
     Face as FaceIcon,
-    AccountBalanceWallet as WalletIcon
+    AccountBalanceWallet as WalletIcon,
+    ChevronRight as ChevronRightIcon,
+    NotificationsNoneOutlined as BellIcon,
 } from '@mui/icons-material';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
 import Logo from './Logo';
-import './Navbar.css';
+
+const MotionBox = motion(Box);
 
 const Navbar: React.FC = () => {
     const navigate = useNavigate();
@@ -54,118 +53,109 @@ const Navbar: React.FC = () => {
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const { user, isAuthenticated, clearAuth } = useAuthStore();
     const [scrolled, setScrolled] = useState(false);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [mobileOpen, setMobileOpen] = useState(false);
+
+    const darkBgPages = ['/', '/login', '/signup'];
+    const hasDarkBg = darkBgPages.includes(location.pathname);
+    const logoVariant = !scrolled && hasDarkBg ? 'light' : 'default';
 
     useEffect(() => {
-        const handleScroll = () => {
-            setScrolled(window.scrollY > 10);
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+        const onScroll = () => setScrolled(window.scrollY > 16);
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
     }, []);
 
-    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-    const [mobileOpen, setMobileOpen] = React.useState(false);
+    // Close mobile drawer on route change
+    useEffect(() => {
+        setMobileOpen(false);
+    }, [location.pathname]);
 
-    // Pages with dark/purple hero backgrounds that need white logo
-    const darkBackgroundPages = ['/', '/login', '/signup', '/lookbook'];
-    const hasDarkBackground = darkBackgroundPages.includes(location.pathname);
+    const handleMenu = (e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget);
+    const handleClose = () => setAnchorEl(null);
+    const handleLogout = () => { clearAuth(); handleClose(); navigate('/login'); };
+    const handleDrawerToggle = () => setMobileOpen(prev => !prev);
 
-    // Determine logo variant: white on dark backgrounds when not scrolled, otherwise default gradient
-    const logoVariant = (!scrolled && hasDarkBackground) ? 'light' : 'default';
-
-    const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorEl(event.currentTarget);
-    };
-
-    const handleClose = () => {
-        setAnchorEl(null);
-    };
-
-    const handleLogout = () => {
-        clearAuth();
-        handleClose();
-        navigate('/login');
-    };
-
-    const handleDrawerToggle = () => {
-        setMobileOpen(!mobileOpen);
-    };
-
-    // Role-based navigation links
-    const getNavLinksForRole = () => {
+    const getNavLinks = () => {
         if (!isAuthenticated || !user) {
             return [
-                { label: 'Salons', path: '/salons', icon: <LocationOnIcon /> },
-                { label: 'Dermatologists', path: '/dermatologists', icon: <FaceIcon /> },
-                { label: 'Spa', path: '/spas', icon: <SpaIcon /> },
+                { label: 'Salons', path: '/salons', icon: <LocationOnIcon fontSize="small" /> },
+                { label: 'Dermatologists', path: '/dermatologists', icon: <FaceIcon fontSize="small" /> },
+                { label: 'Spa', path: '/spas', icon: <SpaIcon fontSize="small" /> },
             ];
         }
-
         switch (user.role) {
             case 'barber':
                 return [
-                    { label: 'Dashboard', path: '/barber/dashboard', icon: <DashboardIcon /> },
-                    { label: 'Appointments', path: '/barber/appointments', icon: <CalendarIcon /> },
-                    { label: 'Schedule', path: '/barber/schedule', icon: <InfoIcon /> },
-                    { label: 'Profile', path: '/barber/profile', icon: <PersonIcon /> },
+                    { label: 'Dashboard', path: '/barber/dashboard', icon: <DashboardIcon fontSize="small" /> },
+                    { label: 'Appointments', path: '/barber/appointments', icon: <CalendarIcon fontSize="small" /> },
+                    { label: 'Schedule', path: '/barber/schedule', icon: <InfoIcon fontSize="small" /> },
+                    { label: 'Profile', path: '/barber/profile', icon: <PersonIcon fontSize="small" /> },
                 ];
             case 'salon_owner':
                 return [
-                    { label: 'Dashboard', path: '/salon-owner/dashboard', icon: <DashboardIcon /> },
-                    { label: 'My Salons', path: '/salons-owner/my-salons', icon: <StoreIcon /> },
-                    { label: 'Services', path: '/salon-owner/manage-services', icon: <ContentCutIcon /> },
-                    { label: 'Analytics', path: '/salon-owner/analytics', icon: <TrendingUpIcon /> },
-                    { label: 'Staff', path: '/salon-owner/staff-management', icon: <PeopleIcon /> },
+                    { label: 'Dashboard', path: '/salon-owner/dashboard', icon: <DashboardIcon fontSize="small" /> },
+                    { label: 'My Salons', path: '/salons-owner/my-salons', icon: <StoreIcon fontSize="small" /> },
+                    { label: 'Analytics', path: '/salon-owner/analytics', icon: <TrendingUpIcon fontSize="small" /> },
+                    { label: 'Staff', path: '/salon-owner/staff-management', icon: <PeopleIcon fontSize="small" /> },
                 ];
-            case 'customer':
             default:
                 return [
-                    { label: 'Salons', path: '/salons', icon: <LocationOnIcon /> },
-                    { label: 'Dermatologists', path: '/dermatologists', icon: <FaceIcon /> },
-                    { label: 'Spa', path: '/spas', icon: <SpaIcon /> },
-                    { label: 'Appointments', path: '/appointments', icon: <CalendarIcon /> },
+                    { label: 'Salons', path: '/salons', icon: <LocationOnIcon fontSize="small" /> },
+                    { label: 'Dermatologists', path: '/dermatologists', icon: <FaceIcon fontSize="small" /> },
+                    { label: 'Spa', path: '/spas', icon: <SpaIcon fontSize="small" /> },
+                    { label: 'Appointments', path: '/appointments', icon: <CalendarIcon fontSize="small" /> },
                 ];
         }
     };
 
-    const navLinks = getNavLinksForRole();
+    const navLinks = getNavLinks();
 
-    const drawer = (
+    const isActive = (path: string) => location.pathname === path;
+
+    const walletBalance = user?.wallet?.balance ?? 0;
+
+    /* ── MOBILE DRAWER ── */
+    const mobileDrawer = (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
-            <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            {/* Header */}
+            <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid', borderColor: 'divider' }}>
                 <Logo size="small" variant="default" clickable={false} />
-                <IconButton onClick={handleDrawerToggle} size="small" sx={{ bgcolor: 'rgba(0,0,0,0.05)' }}>
-                    <CloseIcon />
+                <IconButton onClick={handleDrawerToggle} size="small" sx={{ bgcolor: 'rgba(0,0,0,0.04)', borderRadius: '10px' }}>
+                    <CloseIcon fontSize="small" />
                 </IconButton>
             </Box>
-            <Divider sx={{ opacity: 0.1 }} />
 
-            <Box sx={{ flex: 1, overflowY: 'auto', py: 2 }}>
-                <List sx={{ px: 2 }}>
+            {/* Nav Items */}
+            <Box sx={{ flex: 1, overflowY: 'auto', py: 2, px: 2 }}>
+                <List disablePadding>
                     {navLinks.map((item) => {
-                        const isActive = location.pathname === item.path && (!('state' in item) || (location.state as any)?.category === (item as any).state?.category);
+                        const active = isActive(item.path);
                         return (
-                            <ListItem key={item.label} disablePadding sx={{ mb: 1.5 }}>
+                            <ListItem key={item.label} disablePadding sx={{ mb: 0.5 }}>
                                 <ListItemButton
                                     component={Link}
                                     to={item.path}
-                                    state={(item as any).state}
                                     onClick={handleDrawerToggle}
                                     sx={{
                                         borderRadius: '12px',
-                                        bgcolor: isActive ? 'primary.main' : 'transparent',
-                                        color: isActive ? 'white' : 'text.primary',
-                                        '&:hover': { bgcolor: isActive ? 'primary.dark' : 'rgba(0,0,0,0.05)' },
+                                        py: 1.2,
+                                        px: 2,
+                                        background: active ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' : 'transparent',
+                                        color: active ? 'white' : 'text.primary',
+                                        '&:hover': {
+                                            background: active ? 'linear-gradient(135deg, #5558e8 0%, #4338ca 100%)' : alpha('#6366f1', 0.06),
+                                        },
                                     }}
                                 >
-                                    <ListItemIcon sx={{ minWidth: 40, color: isActive ? 'white' : 'text.secondary' }}>
-                                        {React.cloneElement(item.icon as React.ReactElement, { fontSize: 'small' })}
+                                    <ListItemIcon sx={{ minWidth: 36, color: active ? 'rgba(255,255,255,0.9)' : 'text.secondary' }}>
+                                        {item.icon}
                                     </ListItemIcon>
                                     <ListItemText
                                         primary={item.label}
-                                        primaryTypographyProps={{ fontWeight: isActive ? 700 : 500 }}
+                                        primaryTypographyProps={{ fontSize: '0.925rem', fontWeight: active ? 700 : 500 }}
                                     />
-                                    {isActive && <ChevronRightIcon sx={{ fontSize: 16, color: 'white' }} />}
+                                    {active && <ChevronRightIcon sx={{ fontSize: 16, color: 'rgba(255,255,255,0.8)' }} />}
                                 </ListItemButton>
                             </ListItem>
                         );
@@ -173,33 +163,41 @@ const Navbar: React.FC = () => {
                 </List>
             </Box>
 
-            <Box sx={{ p: 3, bgcolor: '#f8fafc', borderTop: '1px solid', borderColor: 'divider' }}>
+            {/* Footer */}
+            <Box sx={{ p: 2.5, borderTop: '1px solid', borderColor: 'divider', bgcolor: '#f8fafc' }}>
                 {isAuthenticated && user ? (
                     <Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5, p: 1.5, borderRadius: '14px', bgcolor: 'white', border: '1px solid', borderColor: 'divider' }}>
                             <Avatar
                                 src={user.profilePicture}
-                                alt={user.name}
-                                sx={{ width: 48, height: 48, bgcolor: 'primary.main', fontWeight: 700, boxShadow: 2, border: '2px solid white' }}
+                                sx={{ width: 42, height: 42, bgcolor: '#6366f1', fontWeight: 700, fontSize: '0.9rem' }}
                             >
                                 {user.name?.charAt(0).toUpperCase()}
                             </Avatar>
-                            <Box sx={{ overflow: 'hidden' }}>
-                                <Typography variant="subtitle1" noWrap sx={{ fontWeight: 700, color: '#1e293b' }}>
+                            <Box sx={{ minWidth: 0 }}>
+                                <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700, color: '#0f172a' }}>
                                     {user.name}
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
+                                <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block', fontSize: '0.75rem' }}>
                                     {user.email}
                                 </Typography>
                             </Box>
                         </Box>
+                        {user.role === 'customer' && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, px: 2, py: 1, borderRadius: '10px', bgcolor: alpha('#6366f1', 0.08) }}>
+                                <WalletIcon sx={{ color: '#6366f1', fontSize: 18 }} />
+                                <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: '#6366f1' }}>
+                                    Wallet: ₹{walletBalance}
+                                </Typography>
+                            </Box>
+                        )}
                         <Button
                             fullWidth
                             variant="outlined"
                             color="error"
                             startIcon={<LogoutIcon />}
                             onClick={handleLogout}
-                            sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 600, bgcolor: 'white' }}
+                            sx={{ borderRadius: '10px', fontWeight: 600, bgcolor: 'white', fontSize: '0.875rem' }}
                         >
                             Log Out
                         </Button>
@@ -209,235 +207,326 @@ const Navbar: React.FC = () => {
                         fullWidth
                         variant="contained"
                         size="large"
-                        onClick={() => {
-                            handleDrawerToggle();
-                            useUIStore.getState().openLoginModal();
-                        }}
-                        sx={{
-                            py: 1.5,
-                            fontWeight: 700,
-                            borderRadius: '50px',
-                            boxShadow: '0 8px 20px -4px rgba(99, 102, 241, 0.5)'
-                        }}
+                        onClick={() => { handleDrawerToggle(); useUIStore.getState().openLoginModal(); }}
+                        sx={{ borderRadius: '12px', fontWeight: 700, py: 1.5 }}
                     >
-                        Login / Sign Up
+                        Get Started
                     </Button>
                 )}
             </Box>
         </Box>
     );
 
+    /* ── DESKTOP NAV PILL ── */
+    const navBgScrolled = 'rgba(255,255,255,0.08)';
+    const navBgUnscrolled = 'rgba(255,255,255,0.9)';
+
     return (
         <>
-            <AppBar
-                position="fixed"
-                color="inherit"
-                className={scrolled ? 'navbar scrolled' : 'navbar'}
-                elevation={0}
+            <Box
+                component="header"
                 sx={{
-                    bgcolor: scrolled ? 'rgba(255, 255, 255, 0.8)' : 'transparent',
-                    backdropFilter: scrolled ? 'blur(16px)' : 'none',
-                    borderBottom: '1px solid',
-                    borderColor: scrolled ? 'rgba(0,0,0,0.08)' : 'transparent',
-                    transition: 'all 0.3s ease',
-                    width: '100%',
+                    position: 'fixed',
                     top: 0,
                     left: 0,
-                    right: 0
+                    right: 0,
+                    zIndex: 1100,
+                    transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
             >
-                <Container maxWidth={false}>
-                    <Toolbar disableGutters sx={{ height: scrolled ? 72 : 90, transition: 'all 0.3s ease' }}>
-                        <Logo size={isMobile ? "small" : "medium"} variant={logoVariant} />
+                {/* Glass blur layer */}
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        bgcolor: scrolled ? 'rgba(255,255,255,0.88)' : 'transparent',
+                        backdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'none',
+                        borderBottom: scrolled ? '1px solid rgba(241,245,249,0.8)' : '1px solid transparent',
+                        boxShadow: scrolled ? '0 1px 0 rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04)' : 'none',
+                        transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                        pointerEvents: 'none',
+                    }}
+                />
 
-                        {isMobile ? (
-                            <IconButton
-                                color="inherit"
-                                aria-label="open drawer"
-                                edge="end"
-                                onClick={handleDrawerToggle}
-                                sx={{ ml: 'auto', color: 'text.primary', bgcolor: scrolled ? 'rgba(0,0,0,0.05)' : 'white' }}
-                            >
-                                <MenuIcon />
-                            </IconButton>
-                        ) : (
+                <Box
+                    sx={{
+                        position: 'relative',
+                        maxWidth: '1440px',
+                        mx: 'auto',
+                        px: { xs: 2, sm: 3, md: 4 },
+                        height: scrolled ? 64 : 80,
+                        display: 'flex',
+                        alignItems: 'center',
+                        transition: 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
+                >
+                    {/* Logo */}
+                    <Box sx={{ flexShrink: 0 }}>
+                        <Logo size={isMobile ? 'small' : 'medium'} variant={logoVariant} />
+                    </Box>
+
+                    {/* Desktop Nav Pill */}
+                    {!isMobile && (
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                                p: 0.75,
+                                bgcolor: scrolled ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.92)',
+                                backdropFilter: 'blur(12px)',
+                                borderRadius: '50px',
+                                border: '1px solid',
+                                borderColor: scrolled ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.8)',
+                                boxShadow: scrolled ? 'none' : '0 2px 16px rgba(0,0,0,0.08)',
+                                transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                            }}
+                        >
+                            {navLinks.map((item) => {
+                                const active = isActive(item.path);
+                                return (
+                                    <Button
+                                        key={item.label}
+                                        component={Link}
+                                        to={item.path}
+                                        disableRipple
+                                        startIcon={React.cloneElement(item.icon, { sx: { fontSize: '0.9rem !important' } })}
+                                        sx={{
+                                            color: active ? 'white' : scrolled ? '#475569' : '#334155',
+                                            fontWeight: active ? 700 : 600,
+                                            px: 2,
+                                            py: 0.9,
+                                            borderRadius: '40px',
+                                            fontSize: '0.87rem',
+                                            letterSpacing: '0.01em',
+                                            whiteSpace: 'nowrap',
+                                            background: active ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' : 'transparent',
+                                            boxShadow: active ? '0 3px 10px rgba(99, 102, 241, 0.35)' : 'none',
+                                            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            '&:hover': {
+                                                background: active
+                                                    ? 'linear-gradient(135deg, #5558e8 0%, #4338ca 100%)'
+                                                    : alpha('#6366f1', 0.08),
+                                                color: active ? 'white' : '#6366f1',
+                                                transform: 'none',
+                                            },
+                                            '& .MuiButton-startIcon': {
+                                                marginRight: '5px',
+                                                '& svg': { fontSize: '0.9rem !important' }
+                                            },
+                                        }}
+                                    >
+                                        {item.label}
+                                    </Button>
+                                );
+                            })}
+                        </Box>
+                    )}
+
+                    {/* Right side actions */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, ml: 'auto' }}>
+                        {!isMobile && isAuthenticated && user ? (
                             <>
-                                <Box sx={{
-                                    display: 'flex',
-                                    gap: 0.5,
-                                    position: 'absolute',
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    p: 0.75,
-                                    bgcolor: scrolled ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.9)',
-                                    backdropFilter: 'blur(10px)',
-                                    borderRadius: '50px',
-                                    border: '1px solid',
-                                    borderColor: scrolled ? 'rgba(0,0,0,0.05)' : 'white',
-                                    boxShadow: scrolled ? 'none' : '0 4px 20px rgba(0,0,0,0.05)'
-                                }}>
-                                    {navLinks.map((item) => {
-                                        const isActive = location.pathname === item.path && (!('state' in item) || (location.state as any)?.category === (item as any).state?.category);
-                                        return (
-                                            <Button
-                                                key={item.label}
-                                                component={Link}
-                                                to={item.path}
-                                                state={(item as any).state}
-                                                disableRipple
-                                                startIcon={item.icon}
-                                                sx={{
-                                                    color: isActive ? 'white' : '#64748b',
-                                                    fontWeight: 600,
-                                                    px: 2.5,
-                                                    py: 1,
-                                                    borderRadius: '30px',
-                                                    textTransform: 'none',
-                                                    whiteSpace: 'nowrap',
-                                                    bgcolor: isActive ? 'primary.main' : 'transparent',
-                                                    transition: 'all 0.3s ease',
-                                                    '&:hover': {
-                                                        bgcolor: isActive ? 'primary.dark' : 'rgba(0,0,0,0.04)',
-                                                        color: isActive ? 'white' : '#1e293b'
-                                                    }
-                                                }}
-                                                className={`nav-item ${isActive ? 'active' : ''}`}
+                                {/* Wallet chip */}
+                                {user.role === 'customer' && (
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 0.75,
+                                            px: 1.75,
+                                            py: 0.75,
+                                            borderRadius: '50px',
+                                            bgcolor: scrolled ? alpha('#6366f1', 0.08) : 'rgba(255,255,255,0.9)',
+                                            border: '1px solid',
+                                            borderColor: scrolled ? alpha('#6366f1', 0.15) : 'rgba(255,255,255,0.8)',
+                                            backdropFilter: 'blur(8px)',
+                                            boxShadow: scrolled ? 'none' : '0 1px 8px rgba(0,0,0,0.06)',
+                                        }}
+                                    >
+                                        <WalletIcon sx={{ color: '#6366f1', fontSize: 18 }} />
+                                        <Typography sx={{ fontWeight: 800, color: '#6366f1', fontSize: '0.85rem' }}>
+                                            ₹{walletBalance}
+                                        </Typography>
+                                    </Box>
+                                )}
+
+                                {/* Avatar dropdown */}
+                                <IconButton
+                                    onClick={handleMenu}
+                                    sx={{
+                                        p: 0.4,
+                                        border: '2px solid',
+                                        borderColor: Boolean(anchorEl) ? '#6366f1' : scrolled ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.6)',
+                                        bgcolor: scrolled ? 'transparent' : 'rgba(255,255,255,0.9)',
+                                        transition: 'all 0.2s ease',
+                                        borderRadius: '50%',
+                                        '&:hover': {
+                                            borderColor: '#6366f1',
+                                            transform: 'none',
+                                        },
+                                    }}
+                                >
+                                    <Avatar
+                                        src={user.profilePicture}
+                                        sx={{ width: 34, height: 34, bgcolor: '#6366f1', fontWeight: 700, fontSize: '0.85rem' }}
+                                    >
+                                        {user.name?.charAt(0).toUpperCase()}
+                                    </Avatar>
+                                </IconButton>
+
+                                {/* Dropdown Menu */}
+                                <Menu
+                                    anchorEl={anchorEl}
+                                    open={Boolean(anchorEl)}
+                                    onClose={handleClose}
+                                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                                    PaperProps={{
+                                        elevation: 0,
+                                        sx: {
+                                            mt: 1.5,
+                                            width: 280,
+                                            borderRadius: '20px',
+                                            overflow: 'visible',
+                                            boxShadow: '0 16px 48px -8px rgba(0,0,0,0.16)',
+                                            border: '1px solid #f1f5f9',
+                                            '&::before': {
+                                                content: '""',
+                                                display: 'block',
+                                                position: 'absolute',
+                                                top: -6,
+                                                right: 20,
+                                                width: 12,
+                                                height: 12,
+                                                bgcolor: 'background.paper',
+                                                transform: 'rotate(45deg)',
+                                                borderTop: '1px solid #f1f5f9',
+                                                borderLeft: '1px solid #f1f5f9',
+                                                zIndex: 0,
+                                            },
+                                        },
+                                    }}
+                                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                                >
+                                    {/* User info header */}
+                                    <Box sx={{ px: 2.5, pt: 2.5, pb: 2, bgcolor: '#f8fafc', borderBottom: '1px solid #f1f5f9', borderRadius: '20px 20px 0 0' }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                            <Avatar
+                                                src={user.profilePicture}
+                                                sx={{ width: 44, height: 44, bgcolor: '#6366f1', fontWeight: 800 }}
                                             >
-                                                {item.label}
-                                            </Button>
-                                        );
-                                    })}
-                                </Box>
+                                                {user.name?.charAt(0).toUpperCase()}
+                                            </Avatar>
+                                            <Box sx={{ minWidth: 0 }}>
+                                                <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem' }} noWrap>
+                                                    {user.name}
+                                                </Typography>
+                                                <Typography sx={{ color: '#64748b', fontSize: '0.78rem', mt: 0.2 }} noWrap>
+                                                    {user.email}
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+                                        {user.role === 'customer' && (
+                                            <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 0.75, px: 1.5, py: 0.75, borderRadius: '8px', bgcolor: alpha('#6366f1', 0.08) }}>
+                                                <WalletIcon sx={{ color: '#6366f1', fontSize: 16 }} />
+                                                <Typography sx={{ fontWeight: 800, color: '#6366f1', fontSize: '0.82rem' }}>
+                                                    Wallet Balance: ₹{walletBalance}
+                                                </Typography>
+                                            </Box>
+                                        )}
+                                    </Box>
 
-                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', ml: 'auto' }}>
-                                    {isAuthenticated ? (
-                                        <>
-                                            {user?.role === 'customer' && (
-                                                <Box sx={{
-                                                    display: 'flex', alignItems: 'center', gap: 1, px: 2, py: 0.8,
-                                                    borderRadius: '50px',
-                                                    background: 'linear-gradient(135deg, rgba(244, 114, 182, 0.1) 0%, rgba(79, 70, 229, 0.1) 100%)',
-                                                    border: '1px solid rgba(244, 114, 182, 0.3)',
-                                                    mr: 1
-                                                }}>
-                                                    <WalletIcon sx={{ color: '#f472b6', fontSize: 20 }} />
-                                                    <Typography sx={{ fontWeight: 800, color: '#4f46e5', fontSize: '0.9rem' }}>
-                                                        ₹{user?.wallet?.balance || 0}
-                                                    </Typography>
-                                                </Box>
-                                            )}
-                                            <IconButton
-                                                onClick={handleMenu}
-                                                sx={{
-                                                    p: 0.5,
-                                                    border: '2px solid',
-                                                    borderColor: scrolled ? 'transparent' : 'white',
-                                                    bgcolor: scrolled ? 'transparent' : 'white',
-                                                    boxShadow: scrolled ? 'none' : '0 4px 12px rgba(0,0,0,0.05)',
-                                                    transition: 'all 0.2s',
-                                                    '&:hover': { borderColor: 'primary.main', bgcolor: 'rgba(99, 102, 241, 0.05)' }
-                                                }}
-                                            >
-                                                <Avatar
-                                                    src={user?.profilePicture}
-                                                    alt={user?.name}
-                                                    sx={{ width: 42, height: 42, bgcolor: 'primary.main', fontWeight: 700 }}
-                                                >
-                                                    {user?.name?.charAt(0).toUpperCase()}
-                                                </Avatar>
-                                            </IconButton>
-                                            <Menu
-                                                anchorEl={anchorEl}
-                                                open={Boolean(anchorEl)}
-                                                onClose={handleClose}
-                                                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                                                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                                                PaperProps={{
-                                                    elevation: 0,
-                                                    sx: {
-                                                        mt: 1.5,
-                                                        width: 300,
-                                                        borderRadius: '24px',
-                                                        overflow: 'hidden',
-                                                        boxShadow: '0 20px 60px -10px rgba(0,0,0,0.15)',
-                                                        border: '1px solid',
-                                                        borderColor: 'rgba(0,0,0,0.05)',
-                                                    },
-                                                }}
-                                            >
-                                                <Box sx={{ px: 3, pt: 3, pb: 2, bgcolor: '#f8fafc', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                                                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b', fontSize: '1.1rem' }}>
-                                                        {user?.name || 'User'}
-                                                    </Typography>
-                                                    <Typography variant="body2" sx={{ color: '#64748b', mt: 0.5, fontWeight: 500 }}>
-                                                        {user?.email || 'user@example.com'}
-                                                    </Typography>
-                                                </Box>
+                                    <Box sx={{ p: 1.5 }}>
+                                        {user.role === 'customer' && (
+                                            <MenuItem onClick={() => { navigate('/appointments'); handleClose(); }}>
+                                                <CalendarIcon sx={{ mr: 1.5, color: '#94a3b8', fontSize: 18 }} />
+                                                My Appointments
+                                            </MenuItem>
+                                        )}
+                                        <MenuItem onClick={() => { navigate('/profile'); handleClose(); }}>
+                                            <PersonIcon sx={{ mr: 1.5, color: '#94a3b8', fontSize: 18 }} />
+                                            Profile
+                                        </MenuItem>
+                                        <MenuItem onClick={() => { navigate('/settings'); handleClose(); }}>
+                                            <SettingsIcon sx={{ mr: 1.5, color: '#94a3b8', fontSize: 18 }} />
+                                            Settings
+                                        </MenuItem>
 
-                                                <Box sx={{ p: 1.5, bgcolor: 'white' }}>
-                                                    <MenuItem
-                                                        onClick={() => { navigate('/appointments'); handleClose(); }}
-                                                        sx={{ py: 1.5, px: 2, borderRadius: '12px', mb: 0.5 }}
-                                                    >
-                                                        <CalendarIcon sx={{ mr: 2, color: '#64748b', fontSize: 20 }} />
-                                                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#334155' }}>My Appointments</Typography>
-                                                    </MenuItem>
+                                        <Divider sx={{ my: 1, borderColor: '#f1f5f9' }} />
 
-                                                    <MenuItem
-                                                        onClick={() => { navigate('/profile'); handleClose(); }}
-                                                        sx={{ py: 1.5, px: 2, borderRadius: '12px', mb: 0.5 }}
-                                                    >
-                                                        <PersonIcon sx={{ mr: 2, color: '#64748b', fontSize: 20 }} />
-                                                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#334155' }}>Profile</Typography>
-                                                    </MenuItem>
-
-                                                    <MenuItem
-                                                        onClick={() => { navigate('/settings'); handleClose(); }}
-                                                        sx={{ py: 1.5, px: 2, borderRadius: '12px', mb: 1.5 }}
-                                                    >
-                                                        <SettingsIcon sx={{ mr: 2, color: '#64748b', fontSize: 20 }} />
-                                                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#334155' }}>Settings</Typography>
-                                                    </MenuItem>
-
-                                                    <Divider sx={{ my: 1, opacity: 0.5 }} />
-
-                                                    <MenuItem
-                                                        onClick={handleLogout}
-                                                        sx={{ py: 1.5, px: 2, borderRadius: '12px', '&:hover': { bgcolor: '#fef2f2' } }}
-                                                    >
-                                                        <LogoutIcon sx={{ mr: 2, color: '#ef4444', fontSize: 20 }} />
-                                                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#ef4444' }}>Logout</Typography>
-                                                    </MenuItem>
-                                                </Box>
-                                            </Menu>
-                                        </>
-                                    ) : (
-                                        <Button
-                                            variant="contained"
-                                            onClick={() => useUIStore.getState().openLoginModal()}
-                                            sx={{
-                                                px: 4,
-                                                py: 1.2,
-                                                borderRadius: '50px',
-                                                fontWeight: 700,
-                                                textTransform: 'none',
-                                                boxShadow: '0 8px 20px -4px rgba(99, 102, 241, 0.5)',
-                                                '&:hover': {
-                                                    transform: 'translateY(-2px)',
-                                                    boxShadow: '0 12px 24px -4px rgba(99, 102, 241, 0.6)',
-                                                }
-                                            }}
+                                        <MenuItem
+                                            onClick={handleLogout}
+                                            sx={{ color: '#ef4444', '&:hover': { bgcolor: '#fef2f2', color: '#ef4444' } }}
                                         >
-                                            Get Started
-                                        </Button>
-                                    )}
-                                </Box>
+                                            <LogoutIcon sx={{ mr: 1.5, color: '#ef4444', fontSize: 18 }} />
+                                            Sign Out
+                                        </MenuItem>
+                                    </Box>
+                                </Menu>
                             </>
-                        )}
-                    </Toolbar>
-                </Container>
-            </AppBar >
+                        ) : !isMobile ? (
+                            <Button
+                                variant="contained"
+                                onClick={() => useUIStore.getState().openLoginModal()}
+                                sx={{
+                                    px: 3,
+                                    py: 1.1,
+                                    borderRadius: '50px',
+                                    fontWeight: 700,
+                                    fontSize: '0.875rem',
+                                    background: scrolled
+                                        ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)'
+                                        : 'rgba(255,255,255,0.95)',
+                                    color: scrolled ? 'white' : '#4f46e5',
+                                    boxShadow: scrolled ? 'var(--shadow-primary)' : '0 2px 12px rgba(0,0,0,0.1)',
+                                    border: '1px solid',
+                                    borderColor: scrolled ? 'transparent' : 'rgba(255,255,255,0.8)',
+                                    '&:hover': {
+                                        background: scrolled
+                                            ? 'linear-gradient(135deg, #5558e8 0%, #4338ca 100%)'
+                                            : 'white',
+                                        boxShadow: scrolled ? 'var(--shadow-primary-lg)' : '0 4px 20px rgba(0,0,0,0.15)',
+                                        transform: 'translateY(-1px)',
+                                    },
+                                    transition: 'all 0.25s ease',
+                                }}
+                            >
+                                Get Started
+                            </Button>
+                        ) : null}
 
+                        {/* Mobile hamburger */}
+                        {isMobile && (
+                            <IconButton
+                                onClick={handleDrawerToggle}
+                                sx={{
+                                    p: 1,
+                                    bgcolor: scrolled ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.9)',
+                                    borderRadius: '12px',
+                                    color: scrolled ? 'text.primary' : '#0f172a',
+                                    backdropFilter: 'blur(8px)',
+                                    border: '1px solid',
+                                    borderColor: scrolled ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.6)',
+                                    transition: 'all 0.2s ease',
+                                    '&:hover': {
+                                        bgcolor: scrolled ? 'rgba(0,0,0,0.08)' : 'white',
+                                        transform: 'none',
+                                    },
+                                }}
+                            >
+                                <MenuIcon sx={{ fontSize: 22 }} />
+                            </IconButton>
+                        )}
+                    </Box>
+                </Box>
+            </Box>
+
+            {/* Mobile Drawer */}
             <Drawer
                 variant="temporary"
                 anchor="right"
@@ -446,10 +535,16 @@ const Navbar: React.FC = () => {
                 ModalProps={{ keepMounted: true }}
                 sx={{
                     display: { xs: 'block', md: 'none' },
-                    '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 280, borderTopLeftRadius: 24, borderBottomLeftRadius: 24 },
+                    '& .MuiDrawer-paper': {
+                        width: 300,
+                        borderTopLeftRadius: 20,
+                        borderBottomLeftRadius: 20,
+                        border: 'none',
+                        boxShadow: '0 16px 56px rgba(0,0,0,0.2)',
+                    },
                 }}
             >
-                {drawer}
+                {mobileDrawer}
             </Drawer>
         </>
     );

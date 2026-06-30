@@ -6,6 +6,11 @@
     overflow-x: hidden;
 }
 
+/* Smooth map scrolling */
+.salon-list-page .leaflet-container {
+    border-radius: 0;
+}
+
 /* Hero Section */
 .salon-list-hero {
     background-size: cover;
