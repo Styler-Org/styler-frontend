@@ -34,7 +34,6 @@ import {
 } from '@mui/icons-material';
 import { useAuthStore } from '../stores/authStore';
 import userService from '../services/userService';
-import './Profile.css';
 
 const Profile: React.FC = () => {
     const user = useAuthStore((state) => state.user);
@@ -152,7 +151,7 @@ const Profile: React.FC = () => {
     };
 
     return (
-        <Box className="profile-page-container">
+        <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc', position: 'relative', pb: 8 }}>
             {/* Background Decorative Elements */}
             <Box sx={{
                 position: 'absolute',
@@ -191,7 +190,7 @@ const Profile: React.FC = () => {
                 )}
 
                 {/* Hero / Cover Section */}
-                <Box className="profile-cover-section">
+                <Box sx={{ position: 'relative', height: 280, borderRadius: '24px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
                     <Box sx={{
                         height: '100%',
                         width: '100%',
@@ -237,7 +236,7 @@ const Profile: React.FC = () => {
                     {/* Left Column: Avatar & Quick Info */}
                     <Grid size={{ xs: 12, md: 4 }}>
                         <Box sx={{ position: 'relative', mt: '-75px', mb: 4 }}>
-                            <Box className="profile-avatar-wrapper">
+                            <Box sx={{ position: 'relative', mt: '-75px', ml: 3, zIndex: 2, display: 'inline-block' }}>
                                 <Avatar
                                     src={user?.profilePicture}
                                     sx={{
@@ -262,15 +261,16 @@ const Profile: React.FC = () => {
                                 <IconButton
                                     component="label"
                                     htmlFor="profile-picture-upload"
-                                    className="profile-avatar-upload-btn"
                                     disabled={uploading}
                                     sx={{
                                         position: 'absolute',
-                                        bottom: 10,
-                                        right: 10,
+                                        bottom: 0,
+                                        right: 0,
                                         bgcolor: 'white',
                                         color: '#6366f1',
-                                        '&:hover': { bgcolor: '#f8fafc' },
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                        transition: 'all 0.2s ease',
+                                        '&:hover': { bgcolor: '#f8fafc', transform: 'scale(1.1)' },
                                     }}
                                 >
                                     <PhotoCameraIcon fontSize="small" />

@@ -208,12 +208,13 @@ const StaffManagement: React.FC = () => {
                             size="large"
                             sx={{
                                 bgcolor: 'white',
-                                color: 'white',
+                                color: '#1e293b',
                                 borderRadius: '50px',
                                 textTransform: 'none',
                                 fontWeight: 700,
                                 px: 4,
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' }
+                                boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                                '&:hover': { bgcolor: 'rgba(255,255,255,0.92)', boxShadow: '0 6px 20px rgba(0,0,0,0.2)' }
                             }}
                         >
                             Add New Staff

@@ -123,7 +123,7 @@ const Analytics: React.FC = () => {
                                             )}
                                         </Box>
                                         <Typography variant="h3" fontWeight={700}>
-                                            {stat.isMoney && '₹'}
+                                            {stat.isMoney && '$'}
                                             <CountUp end={stat.value} duration={2} separator="," />
                                         </Typography>
                                         <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mt: 0.5 }}>
@@ -160,7 +160,7 @@ const Analytics: React.FC = () => {
                                 <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: 300, gap: 2 }}>
                                     {revenueData.map((data, index) => (
                                         <Box key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%', justifyContent: 'flex-end' }}>
-                                            <Tooltip title={`₹${data.value}`}>
+                                            <Tooltip title={data.value.toLocaleString()}>
                                                 <motion.div
                                                     initial={{ height: 0 }}
                                                     animate={{ height: `${(data.value / maxRevenue) * 100}%` }}
@@ -183,7 +183,7 @@ const Analytics: React.FC = () => {
                                                         transition: 'opacity 0.2s',
                                                         '&:hover': { opacity: 1 }
                                                     }}>
-                                                        <Typography variant="caption" fontWeight={700}>₹{data.value}</Typography>
+                                                        <Typography variant="caption" fontWeight={700}>{data.value.toLocaleString()}</Typography>
                                                     </Box>
                                                 </motion.div>
                                             </Tooltip>

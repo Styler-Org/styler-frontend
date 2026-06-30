@@ -38,10 +38,10 @@ import PaymentFailed from './pages/payment/PaymentFailed';
 import PayBill from './pages/payment/PayBill';
 
 // Customer Pages
-
 import MyAppointments from './pages/customer/MyAppointments';
 import AppointmentDetails from './pages/customer/AppointmentDetails';
 import Settings from './pages/customer/Settings';
+import CustomerNotifications from './pages/customer/Notifications';
 
 // Barber Pages
 import BarberDashboard from './pages/barber/BarberDashboard';
@@ -67,6 +67,8 @@ import SuperAdminDashboard from './pages/admin/SuperAdminDashboard';
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UsersManagement from './pages/admin/UsersManagement';
+import SalonsManagement from './pages/admin/SalonsManagement';
+import AppointmentsManagement from './pages/admin/AppointmentsManagement';
 
 // Lenis smooth scrolling (GSAP removed)
 
@@ -134,6 +136,14 @@ function AppContent() {
                     element={
                         <ProtectedRoute role={UserRole.CUSTOMER}>
                             <Layout><PayBill /></Layout>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/notifications"
+                    element={
+                        <ProtectedRoute role={UserRole.CUSTOMER}>
+                            <Layout><CustomerNotifications /></Layout>
                         </ProtectedRoute>
                     }
                 />
@@ -324,13 +334,8 @@ function AppContent() {
                 >
                     <Route index element={<AdminDashboard />} />
                     <Route path="users" element={<UsersManagement />} />
-                    <Route path="users" element={<UsersManagement />} />
-                    {/* TODO: Add more admin pages */}
-                    {/* <Route path="salons" element={<SalonsManagement />} /> */}
-                    {/* <Route path="barbers" element={<BarbersManagement />} /> */}
-                    {/* <Route path="appointments" element={<AppointmentsManagement />} /> */}
-                    {/* <Route path="payments" element={<PaymentsManagement />} /> */}
-                    {/* <Route path="reviews" element={<ReviewsManagement />} /> */}
+                    <Route path="salons" element={<SalonsManagement />} />
+                    <Route path="appointments" element={<AppointmentsManagement />} />
                 </Route>
 
                 {/* Legacy admin routes (keep for backwards compatibility) */}

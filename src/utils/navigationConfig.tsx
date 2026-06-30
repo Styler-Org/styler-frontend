@@ -45,9 +45,9 @@ export const getNavLinksForRole = (role?: string): NavLink[] => {
             return [
                 { label: 'Salons', path: '/salons', icon: <LocationOnIcon /> },
                 { label: 'Dermatologists', path: '/dermatologists', icon: <FaceIcon /> },
-                { label: 'Spa', path: '/spa', icon: <SpaIcon /> },
+                { label: 'Spa', path: '/spas', icon: <SpaIcon /> },
                 { label: 'Appointments', path: '/appointments', icon: <CalendarIcon /> },
-                { label: 'Lookbook', path: '/lookbook', icon: <FavoriteIcon /> },
+                { label: 'Notifications', path: '/notifications', icon: <NotificationsIcon /> },
             ];
     }
 };
