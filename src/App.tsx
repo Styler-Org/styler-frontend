@@ -15,13 +15,7 @@ import { UserRole } from './types';
 
 // Marketing Pages
 import Home from './pages/Home';
-import About from './pages/About';
-import HowItWorksPage from './pages/HowItWorksPage';
 import DownloadApp from './pages/DownloadApp';
-import BecomePartner from './pages/BecomePartner';
-import Contact from './pages/Contact';
-import Services from './pages/Services';
-import ServiceDetails from './pages/ServiceDetails';
 import Unauthorized from './pages/Unauthorized';
 
 // Auth
@@ -85,14 +79,14 @@ function AppContent() {
             <AuthModal />
             <Routes>
                 {/* ── Marketing / Public Routes ── */}
-                <Route path="/" element={<Layout><Home /></Layout>} />
-                <Route path="/about" element={<Layout><About /></Layout>} />
-                <Route path="/how-it-works" element={<Layout><HowItWorksPage /></Layout>} />
+                <Route path="/" element={<Layout showNavbar={false}><Home /></Layout>} />
+                <Route path="/about" element={<Navigate to="/" replace />} />
+                <Route path="/how-it-works" element={<Navigate to="/" replace />} />
                 <Route path="/download" element={<Layout><DownloadApp /></Layout>} />
-                <Route path="/become-a-partner" element={<Layout><BecomePartner /></Layout>} />
-                <Route path="/contact" element={<Layout><Contact /></Layout>} />
-                <Route path="/services" element={<Layout><Services /></Layout>} />
-                <Route path="/services/:id" element={<Layout><ServiceDetails /></Layout>} />
+                <Route path="/become-a-partner" element={<Navigate to="/#partner" replace />} />
+                <Route path="/contact" element={<Navigate to="/" replace />} />
+                <Route path="/services" element={<Navigate to="/" replace />} />
+                <Route path="/services/:id" element={<Navigate to="/" replace />} />
 
                 {/* ── Auth ── */}
                 <Route path="/login" element={<Layout showFooter={false} showNavbar={false}><Login /></Layout>} />
