@@ -1,11 +1,13 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Box, Container, Typography, Grid, Button, alpha, Chip } from '@mui/material';
 import {
     PhoneIphone as AppIcon, Star as StarIcon, Shield as ShieldIcon,
     Speed as SpeedIcon, Notifications as NotifyIcon, LocationOn as LocationIcon,
-    CalendarToday as CalendarIcon, CheckCircle as CheckIcon,
+    CalendarToday as CalendarIcon, CheckCircle as CheckIcon, ArrowBack as BackIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import Logo from '../components/common/Logo';
 
 const MotionBox = motion(Box);
 const ease      = [0.25, 0.1, 0.25, 1] as any;
@@ -31,8 +33,17 @@ const screenshots = [
 const DownloadApp: React.FC = () => (
     <Box sx={{ bgcolor: '#09090b', overflowX: 'hidden' }}>
 
+        {/* MINIMAL HEADER */}
+        <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, px: { xs: 2, md: 6 }, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(9,9,11,0.92)', backdropFilter: 'blur(16px)', boxShadow: '0 1px 0 rgba(255,255,255,0.06)' }}>
+            <Logo variant="light" size="small" />
+            <Button component={Link} to="/" startIcon={<BackIcon />} variant="text" size="small"
+                sx={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: '0.82rem', textTransform: 'none', '&:hover': { color: 'white', bgcolor: 'transparent' } }}>
+                Back to Home
+            </Button>
+        </Box>
+
         {/* HERO */}
-        <Box sx={{ pt: 18, pb: 14, position: 'relative', overflow: 'hidden' }}>
+        <Box sx={{ pt: 16, pb: 14, position: 'relative', overflow: 'hidden' }}>
             <Box sx={{ position: 'absolute', top: '5%', right: '-5%', width: '50vw', height: '50vw', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 65%)', pointerEvents: 'none' }} />
             <Box sx={{ position: 'absolute', bottom: '-5%', left: '-5%', width: '35vw', height: '35vw', borderRadius: '50%', background: 'radial-gradient(circle, rgba(236,72,153,0.12) 0%, transparent 65%)', pointerEvents: 'none' }} />
 

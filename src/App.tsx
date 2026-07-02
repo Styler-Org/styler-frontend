@@ -82,7 +82,7 @@ function AppContent() {
                 <Route path="/" element={<Layout showNavbar={false}><Home /></Layout>} />
                 <Route path="/about" element={<Navigate to="/" replace />} />
                 <Route path="/how-it-works" element={<Navigate to="/" replace />} />
-                <Route path="/download" element={<Layout><DownloadApp /></Layout>} />
+                <Route path="/download" element={<Layout showNavbar={false}><DownloadApp /></Layout>} />
                 <Route path="/become-a-partner" element={<Navigate to="/#partner" replace />} />
                 <Route path="/contact" element={<Navigate to="/" replace />} />
                 <Route path="/services" element={<Navigate to="/" replace />} />
