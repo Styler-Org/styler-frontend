@@ -361,14 +361,25 @@ body {
 }
 
 /* ============================================================
-   AUTOCOMPLETE FIX
+   AUTOCOMPLETE FIX — light pages
    ============================================================ */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-    -webkit-box-shadow: 0 0 0 40px #f8fafc inset;
+    -webkit-box-shadow: 0 0 0 1000px #f8fafc inset;
     -webkit-text-fill-color: var(--text-primary);
     caret-color: var(--text-primary);
+    transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Dark-background forms (e.g. BecomePartner, Login dark variants) */
+.dark-autofill input:-webkit-autofill,
+.dark-autofill input:-webkit-autofill:hover,
+.dark-autofill input:-webkit-autofill:focus,
+.dark-autofill input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #09090b inset !important;
+    -webkit-text-fill-color: #ffffff !important;
+    caret-color: #ffffff;
     transition: background-color 9999s ease-in-out 0s;
 }
 

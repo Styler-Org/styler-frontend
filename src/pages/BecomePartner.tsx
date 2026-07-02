@@ -36,19 +36,19 @@ const inputSx = {
         '& fieldset': { borderColor: 'rgba(255,255,255,0.12)' },
         '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.25)' },
         '&.Mui-focused fieldset': { borderColor: '#6366f1' },
-        '& input, & textarea': { color: 'white' },
-        // Prevent browser autofill from overriding background with white
-        '& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus': {
-            WebkitBoxShadow: '0 0 0 1000px #1a1a2e inset',
-            WebkitTextFillColor: 'white',
-            caretColor: 'white',
-            borderRadius: '14px',
-            transition: 'background-color 5000s ease-in-out 0s',
-        },
+        '& input, & textarea': { color: 'white', backgroundColor: 'transparent' },
     },
     '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.45)' },
     '& .MuiInputLabel-root.Mui-focused': { color: '#818cf8' },
     '& .MuiSelect-select': { color: 'white' },
+    // Autofill override — must be at TextField root level, NOT nested inside MuiOutlinedInput-root
+    // Uses box-shadow inset trick because Chrome ignores background-color on :-webkit-autofill
+    '& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus, & input:-webkit-autofill:active': {
+        WebkitBoxShadow: '0 0 0 1000px #09090b inset',
+        WebkitTextFillColor: '#ffffff',
+        caretColor: '#ffffff',
+        transition: 'background-color 9999s ease-in-out 0s',
+    },
 };
 
 const BecomePartner: React.FC = () => {
@@ -57,6 +57,8 @@ const BecomePartner: React.FC = () => {
     const [submitted, setSubmitted] = useState(false);
 
     const handleChange = (e: any) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+        setForm(prev => ({ ...prev, [key]: e.target.value }));
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -128,7 +130,7 @@ const BecomePartner: React.FC = () => {
                         {/* Registration Form */}
                         <Grid size={{ xs: 12, md: 6 }}>
                             <MotionBox variants={fadeUp} initial="hidden" animate="show">
-                                <Box component="form" onSubmit={handleSubmit} sx={{ p: { xs: 3, md: 5 }, borderRadius: '28px', bgcolor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)' }}>
+                                <Box component="form" onSubmit={handleSubmit} autoComplete="off" className="dark-autofill" sx={{ p: { xs: 3, md: 5 }, borderRadius: '28px', bgcolor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)' }}>
                                     {submitted ? (
                                         <Box sx={{ textAlign: 'center', py: 6 }}>
                                             <Box sx={{ width: 72, height: 72, borderRadius: '50%', bgcolor: alpha('#6ee7b7', 0.15), display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
@@ -147,16 +149,21 @@ const BecomePartner: React.FC = () => {
                                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                                                 <Grid container spacing={2}>
                                                     <Grid size={{ xs: 12, sm: 6 }}>
-                                                        <TextField fullWidth label="Your Name *" name="name" value={form.name} onChange={handleChange} sx={inputSx} />
+                                                        <TextField fullWidth label="Your Name *" value={form.name} onChange={set('name')}
+                                                            slotProps={{ htmlInput: { name: 'bp_owner', autoComplete: 'off' } }} sx={inputSx} />
                                                     </Grid>
                                                     <Grid size={{ xs: 12, sm: 6 }}>
-                                                        <TextField fullWidth label="Business Name *" name="business" value={form.business} onChange={handleChange} sx={inputSx} />
+                                                        <TextField fullWidth label="Business Name *" value={form.business} onChange={set('business')}
+                                                            slotProps={{ htmlInput: { name: 'bp_biz', autoComplete: 'off' } }} sx={inputSx} />
                                                     </Grid>
                                                     <Grid size={{ xs: 12, sm: 6 }}>
-                                                        <TextField fullWidth label="Phone Number *" name="phone" value={form.phone} onChange={handleChange} placeholder="+91 98765 43210" sx={inputSx} />
+                                                        <TextField fullWidth label="Phone Number *" value={form.phone} onChange={set('phone')}
+                                                            placeholder="+91 98765 43210"
+                                                            slotProps={{ htmlInput: { name: 'bp_phone', autoComplete: 'off' } }} sx={inputSx} />
                                                     </Grid>
                                                     <Grid size={{ xs: 12, sm: 6 }}>
-                                                        <TextField fullWidth label="Email Address *" name="email" type="email" value={form.email} onChange={handleChange} sx={inputSx} />
+                                                        <TextField fullWidth label="Email Address *" type="email" value={form.email} onChange={set('email')}
+                                                            slotProps={{ htmlInput: { name: 'bp_mail', autoComplete: 'off' } }} sx={inputSx} />
                                                     </Grid>
                                                     <Grid size={{ xs: 12, sm: 6 }}>
                                                         <FormControl fullWidth sx={inputSx}>
@@ -177,7 +184,9 @@ const BecomePartner: React.FC = () => {
                                                         </FormControl>
                                                     </Grid>
                                                     <Grid size={{ xs: 12 }}>
-                                                        <TextField fullWidth label="Number of Locations" name="salons" value={form.salons} onChange={handleChange} placeholder="e.g. 1, 2-5, 5+" sx={inputSx} />
+                                                        <TextField fullWidth label="Number of Locations" value={form.salons} onChange={set('salons')}
+                                                            placeholder="e.g. 1, 2-5, 5+"
+                                                            slotProps={{ htmlInput: { name: 'bp_salons', autoComplete: 'off' } }} sx={inputSx} />
                                                     </Grid>
                                                 </Grid>
 
