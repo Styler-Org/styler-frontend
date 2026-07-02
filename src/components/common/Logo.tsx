@@ -1,6 +1,5 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { ContentCut as ScissorsIcon } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import './Logo.css';
@@ -81,45 +80,44 @@ const Logo: React.FC<LogoProps> = ({ variant = 'default', size = 'medium', click
         <Box
             className={`styler-logo styler-logo-${variant} styler-logo-${size}`}
             aria-label="StylerApp Logo"
-            sx={{ gap: 0, alignItems: 'center' }}
+            sx={{ gap: '10px', alignItems: 'center' }}
         >
-            <Typography component="span" sx={textStyle}>
-                St
-            </Typography>
-
-            <Box className="logo-scissor-wrapper" sx={{
+            {/* S+scissors icon box */}
+            <Box sx={{
+                width: currentSize.iconSize,
+                height: currentSize.iconSize,
+                borderRadius: `${Math.round(currentSize.iconSize * 0.26)}px`,
+                background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 55%, #1e293b 100%)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                mx: size === 'small' ? '0px' : '1px',
-                position: 'relative',
-                top: size === 'large' ? '0.05em' : 0
+                flexShrink: 0,
+                boxShadow: variant === 'default' ? '0 2px 12px rgba(99,102,241,0.35)' : 'none',
             }}>
-                <ScissorsIcon
-                    className="logo-scissor-icon-anim"
-                    sx={{
-                        fontSize: currentSize.iconSize || 'inherit',
-                        color: variant === 'default' ? '#4f46e5' : colorMap[variant].icon,
-                        fill: variant === 'default' ? 'url(#styler-gradient-def)' : undefined,
-                        transform: 'rotate(180deg)',
-                        filter: variant === 'default' ? 'drop-shadow(0px 2px 4px rgba(79, 70, 229, 0.3))' : 'none'
-                    }}
-                />
-
-                {variant === 'default' && (
-                    <svg width={0} height={0} style={{ position: 'absolute', visibility: 'hidden' }}>
-                        <defs>
-                            <linearGradient id="styler-gradient-def" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stopColor="#4f46e5" />
-                                <stop offset="100%" stopColor="#7c3aed" />
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                )}
+                <svg
+                    viewBox="0 0 36 36"
+                    width={Math.round(currentSize.iconSize * 0.72)}
+                    height={Math.round(currentSize.iconSize * 0.72)}
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+                    {/* Upper blade — tip top-left, curves right, to pivot */}
+                    <path d="M 11.33,10.28 C 26.28,10.28 26.28,18.00 18.00,18.00"
+                        stroke="white" strokeWidth="1.83" strokeLinecap="round"/>
+                    {/* Lower blade — from pivot, curves left, tip bottom-right */}
+                    <path d="M 18.00,18.00 C 9.72,18.00 9.72,25.72 24.67,25.72"
+                        stroke="white" strokeWidth="1.83" strokeLinecap="round"/>
+                    {/* Handle ring — top-right */}
+                    <circle cx="24.67" cy="10.28" r="1.54" stroke="white" strokeWidth="1.26"/>
+                    {/* Handle ring — bottom-left */}
+                    <circle cx="11.33" cy="25.72" r="1.54" stroke="white" strokeWidth="1.26"/>
+                    {/* Pivot */}
+                    <circle cx="18.00" cy="18.00" r="1.12" fill="white"/>
+                </svg>
             </Box>
 
             <Typography component="span" sx={textStyle}>
-                lerApp
+                Styler
             </Typography>
         </Box>
     );

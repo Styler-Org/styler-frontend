@@ -37,6 +37,14 @@ const inputSx = {
         '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.25)' },
         '&.Mui-focused fieldset': { borderColor: '#6366f1' },
         '& input, & textarea': { color: 'white' },
+        // Prevent browser autofill from overriding background with white
+        '& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus': {
+            WebkitBoxShadow: '0 0 0 1000px #1a1a2e inset',
+            WebkitTextFillColor: 'white',
+            caretColor: 'white',
+            borderRadius: '14px',
+            transition: 'background-color 5000s ease-in-out 0s',
+        },
     },
     '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.45)' },
     '& .MuiInputLabel-root.Mui-focused': { color: '#818cf8' },

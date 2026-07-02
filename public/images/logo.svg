@@ -1,0 +1,28 @@
+<svg width="220" height="70" viewBox="0 0 220 70" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gb" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#312e81"/>
+    </linearGradient>
+  </defs>
+  <!-- Icon box -->
+  <rect x="0" y="5" width="60" height="60" rx="14" fill="url(#gb)"/>
+
+  <!-- S-scissors mark inside box -->
+  <path d="M 4.07,4.97 C 62.21,4.97 62.21,35.00 30.00,35.00"
+        stroke="white" stroke-width="7.10" stroke-linecap="round" fill="none"/>
+  <path d="M 30.00,35.00 C -2.21,35.00 -2.21,65.03 55.94,65.03"
+        stroke="white" stroke-width="7.10" stroke-linecap="round" fill="none"/>
+  <circle cx="55.94" cy="4.97"
+          r="6.01" stroke="white" stroke-width="4.91" fill="none"/>
+  <circle cx="4.07" cy="65.03"
+          r="6.01" stroke="white" stroke-width="4.91" fill="none"/>
+  <circle cx="30.00" cy="35.00"
+          r="4.37" fill="white"/>
+
+  <!-- Wordmark -->
+  <text x="72" y="38" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+        font-size="28" font-weight="900" fill="#1e1b4b" letter-spacing="-0.5">Styler</text>
+  <text x="73" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+        font-size="11" font-weight="500" fill="#6366f1" letter-spacing="0.5">Salon Booking</text>
+</svg>
