@@ -32,6 +32,7 @@ import { useAuthStore } from '../stores/authStore';
 import CountUp from 'react-countup';
 import toast from 'react-hot-toast';
 import Logo from '../components/common/Logo';
+import { partnerService } from '../services/partnerService';
 
 const MotionBox  = motion(Box);
 const MotionTypo = motion(Typography);
@@ -186,10 +187,24 @@ const Home: React.FC = () => {
             return;
         }
         setFormLoading(true);
-        await new Promise(r => setTimeout(r, 1600));
-        setFormLoading(false);
-        setSubmitted(true);
-        toast.success("Application submitted! We'll reach out within 24 hours.");
+        try {
+            await partnerService.submitApplication({
+                ownerName: form.name,
+                businessName: form.business,
+                phone: form.phone,
+                email: form.email,
+                city: form.city,
+                category: form.category,
+                numberOfLocations: form.salons || undefined,
+            });
+            setSubmitted(true);
+            toast.success("Application submitted! We'll reach out within 24 hours.");
+        } catch (err: any) {
+            const message = err?.response?.data?.error?.message || "Something went wrong. Please try again.";
+            toast.error(message);
+        } finally {
+            setFormLoading(false);
+        }
     };
 
     return (

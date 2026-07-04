@@ -18,8 +18,8 @@ import Home from './pages/Home';
 import DownloadApp from './pages/DownloadApp';
 import Unauthorized from './pages/Unauthorized';
 
-// Auth
-import Login from './pages/Login';
+// Auth & Onboarding
+import Onboard from './pages/Onboard';
 import Profile from './pages/Profile';
 import PartnerSettings from './pages/customer/Settings';
 
@@ -88,8 +88,8 @@ function AppContent() {
                 <Route path="/services" element={<Navigate to="/" replace />} />
                 <Route path="/services/:id" element={<Navigate to="/" replace />} />
 
-                {/* ── Auth ── */}
-                <Route path="/login" element={<Layout showFooter={false} showNavbar={false}><Login /></Layout>} />
+                {/* ── Partner Onboarding (from invite email link) ── */}
+                <Route path="/onboard" element={<Onboard />} />
 
                 {/* ── Barber Portal ── */}
                 <Route path="/barber/dashboard" element={
@@ -129,7 +129,7 @@ function AppContent() {
                         <DashboardLayout><SalonOwnerNotifications /></DashboardLayout>
                     </ProtectedRoute>
                 } />
-                <Route path="/salons-owner/my-salons" element={
+                <Route path="/salon-owner/my-salons" element={
                     <ProtectedRoute role={UserRole.SALON_OWNER}>
                         <DashboardLayout><MySalons /></DashboardLayout>
                     </ProtectedRoute>

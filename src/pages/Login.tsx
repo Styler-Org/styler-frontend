@@ -15,13 +15,13 @@ import {
     Person as PersonIcon,
     Email as EmailIcon,
     Phone as PhoneIcon,
-    VpnKey as VpnKeyIcon,
-    ContentCut as ScissorsIcon,
     CalendarMonth as CalendarIcon,
-    Store as StoreIcon,
     ArrowForward as ArrowForwardIcon,
     CheckCircleOutlined as CheckIcon,
     Star as StarIcon,
+    TrendingUp as TrendingIcon,
+    Groups as PeopleIcon,
+    BarChart as AnalyticsIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authService } from '../services/authService';
@@ -239,7 +239,7 @@ const Login: React.FC<{ isRegisterMode?: boolean }> = ({ isRegisterMode = false 
             const res = await authService.verifyOtp({
                 phone,
                 otp,
-                ...(step === 'REGISTRATION_DETAILS' ? { name, email, dateOfBirth: dob } : {}),
+                ...(step === 'REGISTRATION_DETAILS' ? { name, email, dateOfBirth: dob, role: 'salon_owner' } : {}),
             });
             if (res.success) {
                 const payload = res.data || pendingAuth;
@@ -266,10 +266,10 @@ const Login: React.FC<{ isRegisterMode?: boolean }> = ({ isRegisterMode = false 
                 <MotionBox key="phone" variants={slideRight} initial="hidden" animate="show" exit="exit">
                     <StepIndicator current={1} total={3} />
                     <Typography variant="h4" sx={{ fontFamily: '"Outfit", sans-serif', fontWeight: 800, color: '#0f172a', mb: 0.75, letterSpacing: '-0.02em' }}>
-                        Welcome back
+                        Partner Login
                     </Typography>
                     <Typography variant="body1" sx={{ color: '#64748b', mb: 4, lineHeight: 1.6 }}>
-                        Enter your phone number to continue to StylerApp.
+                        Enter your registered phone number to access your partner dashboard.
                     </Typography>
 
                     <Box component="form" onSubmit={handleSendOtp}>
@@ -383,10 +383,10 @@ const Login: React.FC<{ isRegisterMode?: boolean }> = ({ isRegisterMode = false 
                 <MotionBox key="register" variants={slideRight} initial="hidden" animate="show" exit="exit">
                     <StepIndicator current={3} total={3} />
                     <Typography variant="h4" sx={{ fontFamily: '"Outfit", sans-serif', fontWeight: 800, color: '#0f172a', mb: 0.75, letterSpacing: '-0.02em' }}>
-                        Create your account
+                        Set up your account
                     </Typography>
                     <Typography variant="body1" sx={{ color: '#64748b', mb: 4, lineHeight: 1.6 }}>
-                        Just a few more details to get you started.
+                        A few details to personalise your partner experience.
                     </Typography>
 
                     <Box component="form" onSubmit={handleVerifyOtp}>
@@ -480,39 +480,57 @@ const Login: React.FC<{ isRegisterMode?: boolean }> = ({ isRegisterMode = false 
                     <Box sx={{ position: 'relative', zIndex: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
                         <Box sx={{ mb: 'auto' }}>
                             <Logo variant="light" size="medium" clickable={false} />
+                            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, mt: 1.5, px: 1.5, py: 0.5, borderRadius: '50px', bgcolor: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.35)' }}>
+                                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#6ee7b7', flexShrink: 0 }} />
+                                <Typography sx={{ color: '#a5b4fc', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Partner Dashboard</Typography>
+                            </Box>
                         </Box>
 
                         <Box sx={{ my: 'auto' }}>
                             <Typography
                                 variant="h2"
-                                sx={{ color: 'white', fontFamily: '"Outfit", sans-serif', fontWeight: 800, mb: 2, lineHeight: 1.15, letterSpacing: '-0.025em' }}
+                                sx={{ color: 'white', fontFamily: '"Outfit", sans-serif', fontWeight: 800, mb: 2, lineHeight: 1.12, letterSpacing: '-0.025em' }}
                             >
-                                Your premium
+                                Grow your salon
                                 <br />
-                                <Box component="span" sx={{ background: 'linear-gradient(135deg, #a5b4fc 0%, #f9a8d4 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                                    style awaits.
+                                <Box component="span" sx={{ background: 'linear-gradient(135deg, #6ee7b7 0%, #a5b4fc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                                    with confidence.
                                 </Box>
                             </Typography>
 
-                            <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.95rem', lineHeight: 1.75, mb: 6, maxWidth: 360 }}>
-                                Book the city's finest salons, dermatologists, and wellness centres — all in one place.
+                            <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.95rem', lineHeight: 1.75, mb: 5, maxWidth: 360 }}>
+                                The complete business dashboard for salons, spas & wellness businesses across India.
                             </Typography>
 
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                                <FeatureBullet icon={<ScissorsIcon />}  title="Expert Stylists"   sub="Certified professionals at top-tier venues" />
-                                <FeatureBullet icon={<CalendarIcon />}  title="Instant Booking"   sub="Reserve your slot in under 30 seconds" />
-                                <FeatureBullet icon={<StoreIcon />}     title="Premium Salons"    sub="Hand-curated, verified locations" />
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mb: 5 }}>
+                                <FeatureBullet icon={<AnalyticsIcon />} title="Revenue & Analytics"  sub="Track earnings, appointments & growth in real-time" />
+                                <FeatureBullet icon={<CalendarIcon />}  title="Smart Scheduling"     sub="Manage staff availability & bookings effortlessly" />
+                                <FeatureBullet icon={<PeopleIcon />}    title="Client Growth"         sub="Reach thousands of new customers in your city" />
+                            </Box>
+
+                            {/* Stats row */}
+                            <Box sx={{ display: 'flex', gap: 3, pt: 4, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                                {[
+                                    { value: '10K+', label: 'Business partners' },
+                                    { value: '0%',   label: 'Commission — 3 months' },
+                                    { value: '48h',  label: 'To go live' },
+                                ].map((s) => (
+                                    <Box key={s.label}>
+                                        <Typography sx={{ fontWeight: 900, color: '#a5b4fc', fontSize: '1.3rem', lineHeight: 1 }}>{s.value}</Typography>
+                                        <Typography sx={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.72rem', mt: 0.4, lineHeight: 1.3 }}>{s.label}</Typography>
+                                    </Box>
+                                ))}
                             </Box>
                         </Box>
 
-                        {/* Testimonial */}
+                        {/* Partner Testimonial */}
                         <Box
                             sx={{
-                                mt: 6,
+                                mt: 5,
                                 p: 2.5,
                                 borderRadius: '16px',
-                                background: 'rgba(255,255,255,0.06)',
-                                border: '1px solid rgba(255,255,255,0.1)',
+                                background: 'rgba(255,255,255,0.05)',
+                                border: '1px solid rgba(255,255,255,0.09)',
                                 backdropFilter: 'blur(8px)',
                             }}
                         >
@@ -520,11 +538,17 @@ const Login: React.FC<{ isRegisterMode?: boolean }> = ({ isRegisterMode = false 
                                 {[...Array(5)].map((_, i) => <StarIcon key={i} sx={{ color: '#fbbf24', fontSize: 14 }} />)}
                             </Box>
                             <Typography sx={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem', lineHeight: 1.7, fontStyle: 'italic', mb: 1.5 }}>
-                                "StylerApp completely transformed how I book salon appointments. It's so easy and the quality is always exceptional."
+                                "Styler brought us 200+ new clients in our first month. The booking dashboard is a game-changer for our entire team."
                             </Typography>
-                            <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', fontWeight: 600 }}>
-                                — Priya S., Verified Customer
-                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <Box sx={{ width: 32, height: 32, borderRadius: '50%', bgcolor: alpha('#6ee7b7', 0.2), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Typography sx={{ color: '#6ee7b7', fontWeight: 800, fontSize: '0.75rem' }}>K</Typography>
+                                </Box>
+                                <Box>
+                                    <Typography sx={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.75rem', fontWeight: 700 }}>Kavya R.</Typography>
+                                    <Typography sx={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.68rem' }}>Salon Owner, Bangalore</Typography>
+                                </Box>
+                            </Box>
                         </Box>
                     </Box>
                 </Box>
