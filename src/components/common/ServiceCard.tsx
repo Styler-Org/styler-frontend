@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, Typography } from '@mui/material';
 import { Service } from '../../types';
 import { formatCurrency } from '../../utils/helpers';
+import { useTilt } from '../../hooks/useTilt';
 import './ServiceCard.css';
 
 interface ServiceCardProps {
@@ -10,12 +11,18 @@ interface ServiceCardProps {
 }
 
 const ServiceCard: React.FC<ServiceCardProps> = ({ service, onClick }) => {
+    const tilt = useTilt<HTMLDivElement>(5);
+
     return (
         <Card
+            ref={tilt.ref}
+            onMouseMove={tilt.onMouseMove}
+            onMouseLeave={tilt.onMouseLeave}
             className="service-card"
             onClick={onClick}
             sx={{
                 cursor: onClick ? 'pointer' : 'default',
+                willChange: 'transform',
             }}
         >
             <CardContent>

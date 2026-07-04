@@ -33,6 +33,10 @@ import CountUp from 'react-countup';
 import toast from 'react-hot-toast';
 import Logo from '../components/common/Logo';
 import { partnerService } from '../services/partnerService';
+import { useParallax } from '../hooks/useParallax';
+import { useMagnetic } from '../hooks/useMagnetic';
+import { useSplitReveal } from '../hooks/useSplitReveal';
+import { gsap } from '../lib/gsap';
 
 const MotionBox  = motion(Box);
 const MotionTypo = motion(Typography);
@@ -157,6 +161,12 @@ const Home: React.FC = () => {
     const [submitted, setSubmitted]     = useState(false);
     const [headerScrolled, setHeaderScrolled] = useState(false);
 
+    const heroVideoRef = useParallax<HTMLDivElement>(0.18);
+    const downloadCta = useMagnetic<HTMLButtonElement>(0.25);
+    const partnerCta  = useMagnetic<HTMLButtonElement>(0.25);
+    const servicesTitleRef = useSplitReveal<HTMLSpanElement>({ type: 'words' });
+    const whyStylerTitleRef = useSplitReveal<HTMLSpanElement>({ type: 'words' });
+
     useEffect(() => {
         if (isAuthenticated && authUser) {
             if (authUser.role === 'barber')           navigate('/barber/dashboard',      { replace: true });
@@ -168,6 +178,15 @@ const Home: React.FC = () => {
         const onScroll = () => setHeaderScrolled(window.scrollY > 60);
         window.addEventListener('scroll', onScroll, { passive: true });
         return () => window.removeEventListener('scroll', onScroll);
+    }, []);
+
+    useEffect(() => {
+        if (!heroVideoRef.current) return;
+        const tween = gsap.to(heroVideoRef.current, {
+            scale: 1.08, duration: 9, ease: 'sine.inOut', repeat: -1, yoyo: true,
+        });
+        return () => { tween.kill(); };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const scrollTo = (id: string) => (e: React.MouseEvent) => {
@@ -245,9 +264,9 @@ const Home: React.FC = () => {
                 HERO — Full-screen video background
             ══════════════════════════════════════════════ */}
             <Box sx={{ minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center', overflow: 'hidden', pb: { xs: 8, md: 0 } }}>
-                <Box component="video" autoPlay muted loop playsInline
+                <Box ref={heroVideoRef} component="video" autoPlay muted loop playsInline
                     poster="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1920&q=90"
-                    sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', animation: 'heroZoom 12s ease-in-out infinite alternate', '@keyframes heroZoom': { from: { transform: 'scale(1.0)' }, to: { transform: 'scale(1.06)' } } }}>
+                    sx={{ position: 'absolute', inset: '-10% 0', width: '100%', height: '120%', objectFit: 'cover', objectPosition: 'center 30%' }}>
                     <source src="https://videos.pexels.com/video-files/6953564/6953564-uhd_2560_1440_25fps.mp4" type="video/mp4" />
                     <source src="https://videos.pexels.com/video-files/3552840/3552840-hd_1920_1080_25fps.mp4" type="video/mp4" />
                     <source src="https://videos.pexels.com/video-files/5709661/5709661-hd_1920_1080_25fps.mp4" type="video/mp4" />
@@ -280,14 +299,16 @@ const Home: React.FC = () => {
                         </MotionTypo>
 
                         <MotionBox variants={fadeUp} sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                            <Button component={Link} to="/download" variant="contained" size="large"
+                            <Button ref={downloadCta.ref} onMouseMove={downloadCta.onMouseMove} onMouseLeave={downloadCta.onMouseLeave}
+                                component={Link} to="/download" variant="contained" size="large"
                                 startIcon={<AppIcon />}
-                                sx={{ px: 4, py: 1.75, borderRadius: '50px', fontWeight: 800, fontSize: '1rem', background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', boxShadow: '0 8px 30px rgba(99,102,241,0.5)', '&:hover': { background: 'linear-gradient(135deg,#5558e8 0%,#4338ca 100%)', transform: 'translateY(-2px)', boxShadow: '0 12px 36px rgba(99,102,241,0.6)' }, transition: 'all 0.3s ease' }}>
+                                sx={{ px: 4, py: 1.75, borderRadius: '50px', fontWeight: 800, fontSize: '1rem', background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', boxShadow: '0 8px 30px rgba(99,102,241,0.5)', '&:hover': { background: 'linear-gradient(135deg,#5558e8 0%,#4338ca 100%)', boxShadow: '0 12px 36px rgba(99,102,241,0.6)' }, transition: 'background 0.3s ease, box-shadow 0.3s ease' }}>
                                 Download the App
                             </Button>
-                            <Button onClick={scrollTo('partner')} variant="outlined" size="large"
+                            <Button ref={partnerCta.ref} onMouseMove={partnerCta.onMouseMove} onMouseLeave={partnerCta.onMouseLeave}
+                                onClick={scrollTo('partner')} variant="outlined" size="large"
                                 startIcon={<PartnerIcon />}
-                                sx={{ px: 4, py: 1.75, borderRadius: '50px', fontWeight: 700, fontSize: '1rem', color: 'white', borderColor: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(8px)', bgcolor: 'rgba(255,255,255,0.06)', '&:hover': { bgcolor: 'rgba(255,255,255,0.12)', borderColor: 'white', transform: 'translateY(-2px)' }, transition: 'all 0.3s ease' }}>
+                                sx={{ px: 4, py: 1.75, borderRadius: '50px', fontWeight: 700, fontSize: '1rem', color: 'white', borderColor: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(8px)', bgcolor: 'rgba(255,255,255,0.06)', '&:hover': { bgcolor: 'rgba(255,255,255,0.12)', borderColor: 'white' }, transition: 'background 0.3s ease, border-color 0.3s ease' }}>
                                 Become a Partner
                             </Button>
                         </MotionBox>
@@ -428,8 +449,8 @@ const Home: React.FC = () => {
                     <MotionBox variants={stagger(0.08)} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.15 }}>
                         <MotionBox variants={fadeUp} sx={{ textAlign: 'center', mb: 8 }}>
                             <Typography variant="overline" sx={{ color: '#6366f1', fontWeight: 700, letterSpacing: '0.12em' }}>WHAT WE OFFER</Typography>
-                            <Typography variant="h2" sx={{ fontWeight: 900, letterSpacing: '-0.02em', color: '#0f172a', mb: 2, fontSize: { xs: '2rem', md: '2.8rem' } }}>
-                                Every beauty service,<br />one platform
+                            <Typography ref={servicesTitleRef} variant="h2" component="span" sx={{ display: 'block', fontWeight: 900, letterSpacing: '-0.02em', color: '#0f172a', mb: 2, fontSize: { xs: '2rem', md: '2.8rem' } }}>
+                                Every beauty service, one platform
                             </Typography>
                             <Typography variant="body1" sx={{ color: '#64748b', maxWidth: '520px', mx: 'auto', lineHeight: 1.7 }}>
                                 From a quick haircut to a full bridal transformation — Styler covers every beauty and wellness category.
@@ -534,8 +555,8 @@ const Home: React.FC = () => {
                     <MotionBox variants={stagger(0.08)} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.15 }}>
                         <MotionBox variants={fadeUp} sx={{ textAlign: 'center', mb: 8 }}>
                             <Typography variant="overline" sx={{ color: '#6366f1', fontWeight: 700, letterSpacing: '0.12em' }}>WHY STYLER</Typography>
-                            <Typography variant="h2" sx={{ fontWeight: 900, letterSpacing: '-0.02em', color: '#0f172a', mb: 2, fontSize: { xs: '2rem', md: '2.8rem' } }}>
-                                India's Most Trusted<br />Beauty Platform
+                            <Typography ref={whyStylerTitleRef} variant="h2" component="span" sx={{ display: 'block', fontWeight: 900, letterSpacing: '-0.02em', color: '#0f172a', mb: 2, fontSize: { xs: '2rem', md: '2.8rem' } }}>
+                                India's Most Trusted Beauty Platform
                             </Typography>
                             <Typography variant="body1" sx={{ color: '#64748b', maxWidth: '520px', mx: 'auto', lineHeight: 1.7 }}>
                                 We've built the most complete, reliable, and beautiful booking experience for Indian customers.
