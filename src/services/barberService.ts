@@ -4,8 +4,10 @@ import { ApiResponse, Barber, BarberStatus } from '../types';
 // ==================== Request Types ====================
 
 export interface RegisterBarberRequest {
+    salonId: string;
+    displayName: string;
     experience: number;
-    specialties: string[];
+    specializations: string[];
     bio?: string;
     certifications?: string[];
 }
@@ -13,15 +15,17 @@ export interface RegisterBarberRequest {
 export interface UpdateAvailabilityRequest {
     availability: Array<{
         day: string;
-        slots: Array<{
-            startTime: string;
-            endTime: string;
+        isAvailable: boolean;
+        timeSlots: Array<{
+            start: string;
+            end: string;
         }>;
     }>;
 }
 
 export interface UploadDocumentsRequest {
-    documents: string[]; // URLs or file IDs
+    file: File;
+    type: string;
 }
 
 // ==================== Barber Service ====================
@@ -52,10 +56,15 @@ class BarberService {
     }
 
     /**
-     * Upload verification documents
+     * Upload a verification document (backend expects multipart: a single file + a `type` field)
      */
     async uploadDocuments(id: string, data: UploadDocumentsRequest): Promise<ApiResponse<Barber>> {
-        const response = await api.post<ApiResponse<Barber>>(`/barbers/${id}/documents`, data);
+        const formData = new FormData();
+        formData.append('document', data.file);
+        formData.append('type', data.type);
+        const response = await api.post<ApiResponse<Barber>>(`/barbers/${id}/documents`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
         return response.data;
     }
 

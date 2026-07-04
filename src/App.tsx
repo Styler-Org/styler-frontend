@@ -17,6 +17,7 @@ import { UserRole } from './types';
 import Home from './pages/Home';
 import DownloadApp from './pages/DownloadApp';
 import Unauthorized from './pages/Unauthorized';
+import BecomePartner from './pages/BecomePartner';
 
 // Auth & Onboarding
 import Onboard from './pages/Onboard';
@@ -32,6 +33,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import UsersManagement from './pages/admin/UsersManagement';
 import SalonsManagement from './pages/admin/SalonsManagement';
 import AppointmentsManagement from './pages/admin/AppointmentsManagement';
+import PartnerApplications from './pages/admin/PartnerApplications';
 
 // Barber Pages
 import BarberDashboard from './pages/barber/BarberDashboard';
@@ -83,7 +85,7 @@ function AppContent() {
                 <Route path="/about" element={<Navigate to="/" replace />} />
                 <Route path="/how-it-works" element={<Navigate to="/" replace />} />
                 <Route path="/download" element={<Layout showNavbar={false}><DownloadApp /></Layout>} />
-                <Route path="/become-a-partner" element={<Navigate to="/#partner" replace />} />
+                <Route path="/become-a-partner" element={<Layout showNavbar={false}><BecomePartner /></Layout>} />
                 <Route path="/contact" element={<Navigate to="/" replace />} />
                 <Route path="/services" element={<Navigate to="/" replace />} />
                 <Route path="/services/:id" element={<Navigate to="/" replace />} />
@@ -193,6 +195,7 @@ function AppContent() {
                     <Route path="users" element={<UsersManagement />} />
                     <Route path="salons" element={<SalonsManagement />} />
                     <Route path="appointments" element={<AppointmentsManagement />} />
+                    <Route path="partner-applications" element={<PartnerApplications />} />
                 </Route>
                 <Route path="/admin/superadmin" element={
                     <ProtectedRoute role={UserRole.SUPER_ADMIN} redirectTo="/admin/login">

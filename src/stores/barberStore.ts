@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Barber, BarberStatus } from '../types';
-import barberService from '../services/barberService';
+import barberService, { RegisterBarberRequest, UpdateAvailabilityRequest, UploadDocumentsRequest } from '../services/barberService';
 
 interface BarberStats {
     todaysAppointments: number;
@@ -20,11 +20,11 @@ interface BarberState {
     // Actions
     fetchSalonBarbers: (salonId: string) => Promise<void>;
     fetchPendingBarbers: (salonId: string) => Promise<void>;
-    registerBarber: (data: any) => Promise<Barber>;
+    registerBarber: (data: RegisterBarberRequest) => Promise<Barber>;
     getBarberById: (id: string) => Promise<void>;
-    updateBarberProfile: (id: string, data: any) => Promise<void>;
-    uploadDocuments: (id: string, data: { documents: string[] }) => Promise<void>;
-    updateAvailability: (barberId: string, data: any) => Promise<void>;
+    updateBarberProfile: (id: string, data: Partial<RegisterBarberRequest>) => Promise<void>;
+    uploadDocuments: (id: string, data: UploadDocumentsRequest) => Promise<void>;
+    updateAvailability: (barberId: string, data: UpdateAvailabilityRequest) => Promise<void>;
     approveBarber: (id: string) => Promise<void>;
     rejectBarber: (id: string, reason: string) => Promise<void>;
     clearCurrentBarber: () => void;

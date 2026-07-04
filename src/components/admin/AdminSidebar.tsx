@@ -14,6 +14,7 @@ import {
     RateReview as ReviewIcon,
     Settings as SettingsIcon,
     AutoAwesome as LogoIcon,
+    Handshake as PartnerIcon,
 } from '@mui/icons-material';
 
 const DRAWER_WIDTH = 260;
@@ -24,6 +25,7 @@ const navItems: NavItem[] = [
     { title: 'Dashboard',     path: '/admin',              icon: <DashboardIcon />, exact: true },
     { title: 'Users',         path: '/admin/users',        icon: <PeopleIcon /> },
     { title: 'Salons',        path: '/admin/salons',       icon: <StoreIcon /> },
+    { title: 'Partner Applications', path: '/admin/partner-applications', icon: <PartnerIcon /> },
     { title: 'Barbers',       path: '/admin/barbers',      icon: <ContentCutIcon /> },
     { title: 'Appointments',  path: '/admin/appointments', icon: <EventIcon /> },
     { title: 'Payments',      path: '/admin/payments',     icon: <PaymentIcon /> },

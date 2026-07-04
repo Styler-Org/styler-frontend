@@ -55,6 +55,37 @@ export interface ReviewFilters extends AdminFilters {
     rating?: number;
 }
 
+export type PartnerApplicationStatus = 'pending' | 'contacted' | 'approved' | 'rejected';
+
+export interface PartnerApplication {
+    _id: string;
+    ownerName: string;
+    businessName: string;
+    phone: string;
+    email: string;
+    city: string;
+    category: string;
+    numberOfLocations?: string;
+    status: PartnerApplicationStatus;
+    adminNotes?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface PartnerApplicationFilters {
+    status?: PartnerApplicationStatus;
+    page?: number;
+    limit?: number;
+}
+
+export interface PartnerApplicationList {
+    applications: PartnerApplication[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+}
+
 // ==================== Admin Service ====================
 
 class AdminService {
@@ -261,6 +292,41 @@ class AdminService {
      */
     async deleteReview(id: string): Promise<ApiResponse<void>> {
         const response = await api.delete<ApiResponse<void>>(`/admin/reviews/${id}`);
+        return response.data;
+    }
+
+    // ==================== Partner Applications ====================
+
+    /**
+     * List partner (business) applications
+     */
+    async getPartnerApplications(filters: PartnerApplicationFilters = {}): Promise<ApiResponse<PartnerApplicationList>> {
+        const params = new URLSearchParams();
+        if (filters.status) params.append('status', filters.status);
+        if (filters.page) params.append('page', filters.page.toString());
+        if (filters.limit) params.append('limit', filters.limit.toString());
+
+        const response = await api.get<ApiResponse<PartnerApplicationList>>(`/partners/applications?${params.toString()}`);
+        return response.data;
+    }
+
+    /**
+     * Approve a partner application — promotes the applicant to salon_owner and emails an onboarding link
+     */
+    async approvePartnerApplication(id: string, adminNotes?: string): Promise<ApiResponse<{ application: PartnerApplication; onboardUrl: string }>> {
+        const response = await api.post<ApiResponse<{ application: PartnerApplication; onboardUrl: string }>>(
+            `/partners/applications/${id}/approve`, { adminNotes }
+        );
+        return response.data;
+    }
+
+    /**
+     * Update a partner application's status (contacted/rejected — not for approving, use approvePartnerApplication)
+     */
+    async updatePartnerApplicationStatus(id: string, status: 'pending' | 'contacted' | 'rejected', adminNotes?: string): Promise<ApiResponse<PartnerApplication>> {
+        const response = await api.put<ApiResponse<PartnerApplication>>(
+            `/partners/applications/${id}/status`, { status, adminNotes }
+        );
         return response.data;
     }
 }

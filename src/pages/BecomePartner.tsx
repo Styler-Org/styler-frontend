@@ -10,6 +10,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { partnerService } from '../services/partnerService';
 
 const MotionBox = motion(Box);
 const ease      = [0.25, 0.1, 0.25, 1] as any;
@@ -67,10 +68,23 @@ const BecomePartner: React.FC = () => {
             return;
         }
         setLoading(true);
-        await new Promise(r => setTimeout(r, 1600));
-        setLoading(false);
-        setSubmitted(true);
-        toast.success('Application submitted! We\'ll reach out within 24 hours.');
+        try {
+            await partnerService.submitApplication({
+                ownerName: form.name,
+                businessName: form.business,
+                phone: form.phone,
+                email: form.email,
+                city: form.city,
+                category: form.category,
+                numberOfLocations: form.salons || undefined,
+            });
+            setSubmitted(true);
+            toast.success('Application submitted! We\'ll reach out within 24 hours.');
+        } catch (err: any) {
+            toast.error(err?.response?.data?.error?.message || 'Failed to submit application. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
