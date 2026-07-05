@@ -34,6 +34,9 @@ import SalonsManagement from './pages/admin/SalonsManagement';
 import AppointmentsManagement from './pages/admin/AppointmentsManagement';
 import PartnerApplications from './pages/admin/PartnerApplications';
 import AuditLogs from './pages/admin/AuditLogs';
+import BarbersManagement from './pages/admin/BarbersManagement';
+import PaymentsManagement from './pages/admin/PaymentsManagement';
+import ReviewsManagement from './pages/admin/ReviewsManagement';
 
 // Barber Pages
 import BarberDashboard from './pages/barber/BarberDashboard';
@@ -195,6 +198,9 @@ function AppContent() {
                     <Route path="users" element={<UsersManagement />} />
                     <Route path="salons" element={<SalonsManagement />} />
                     <Route path="appointments" element={<AppointmentsManagement />} />
+                    <Route path="barbers" element={<BarbersManagement />} />
+                    <Route path="payments" element={<PaymentsManagement />} />
+                    <Route path="reviews" element={<ReviewsManagement />} />
                     <Route path="partner-applications" element={<PartnerApplications />} />
                     <Route path="audit-logs" element={<AuditLogs />} />
                 </Route>
