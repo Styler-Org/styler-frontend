@@ -29,6 +29,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../stores/authStore';
+import { useUIStore } from '../stores/uiStore';
 import CountUp from 'react-countup';
 import toast from 'react-hot-toast';
 import Logo from '../components/common/Logo';
@@ -244,7 +245,7 @@ const Home: React.FC = () => {
                 <Logo variant="light" size="small" />
                 <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
                     <Button
-                        component={Link} to="/login"
+                        onClick={() => useUIStore.getState().openLoginModal()}
                         variant="text" size="small"
                         sx={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '0.82rem', textTransform: 'none', '&:hover': { color: 'white', bgcolor: 'transparent' } }}
                     >
