@@ -38,8 +38,8 @@ const ReviewsManagement: React.FC = () => {
                 limit: rowsPerPage,
             });
             if (res.success && res.data) {
-                setReviews(res.data.data);
-                setTotal(res.data.pagination.total);
+                setReviews(res.data);
+                setTotal(res.pagination?.total ?? 0);
             }
         } catch {
             toast.error('Failed to load reviews');

@@ -63,8 +63,8 @@ const SalonsManagement: React.FC = () => {
                 limit: rowsPerPage,
             });
             if (res.success && res.data) {
-                setSalons(res.data.data);
-                setTotal(res.data.pagination.total);
+                setSalons(res.data);
+                setTotal(res.pagination?.total ?? 0);
             }
         } catch {
             toast.error('Failed to fetch salons');

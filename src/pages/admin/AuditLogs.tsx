@@ -49,8 +49,8 @@ const AuditLogs: React.FC = () => {
                 limit: rowsPerPage,
             });
             if (res.success && res.data) {
-                setLogs(res.data.data);
-                setTotal(res.data.pagination.total);
+                setLogs(res.data);
+                setTotal(res.pagination?.total ?? 0);
             }
         } catch {
             toast.error('Failed to load audit logs');

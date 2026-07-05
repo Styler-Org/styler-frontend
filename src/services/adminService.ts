@@ -3,6 +3,16 @@ import { ApiResponse, PaginatedResponse } from '../types';
 
 // ==================== Request/Response Types ====================
 
+/**
+ * Every /admin/* list endpoint (admin.controller.ts on the backend) replies
+ * with `pagination` as a sibling of `data`, not nested inside it — i.e.
+ * `{success, data: T[], pagination: {...}}`, NOT `ApiResponse<PaginatedResponse<T>>`
+ * (which would imply `data: {data: T[], pagination: {...}}`). Use this type
+ * for admin list responses so callers access `res.data` (the array) and
+ * `res.pagination.total`, not `res.data.data`/`res.data.pagination.total`.
+ */
+export type AdminListResponse<T> = ApiResponse<T[]> & { pagination?: PaginatedResponse<T>['pagination'] };
+
 export interface DashboardStats {
     overview: {
         totalUsers: number;
@@ -129,7 +139,7 @@ class AdminService {
     /**
      * Get all users
      */
-    async getAllUsers(filters: UserFilters = {}): Promise<ApiResponse<PaginatedResponse<any>>> {
+    async getAllUsers(filters: UserFilters = {}): Promise<AdminListResponse<any>> {
         const params = new URLSearchParams();
         if (filters.role) params.append('role', filters.role);
         if (filters.isActive !== undefined) params.append('isActive', filters.isActive.toString());
@@ -137,7 +147,7 @@ class AdminService {
         if (filters.page) params.append('page', filters.page.toString());
         if (filters.limit) params.append('limit', filters.limit.toString());
 
-        const response = await api.get<ApiResponse<PaginatedResponse<any>>>(`/admin/users?${params.toString()}`);
+        const response = await api.get<AdminListResponse<any>>(`/admin/users?${params.toString()}`);
         return response.data;
     }
 
@@ -178,7 +188,7 @@ class AdminService {
     /**
      * Get all salons
      */
-    async getAllSalons(filters: SalonFilters = {}): Promise<ApiResponse<PaginatedResponse<any>>> {
+    async getAllSalons(filters: SalonFilters = {}): Promise<AdminListResponse<any>> {
         const params = new URLSearchParams();
         if (filters.isActive !== undefined) params.append('isActive', filters.isActive.toString());
         if (filters.city) params.append('city', filters.city);
@@ -186,7 +196,7 @@ class AdminService {
         if (filters.page) params.append('page', filters.page.toString());
         if (filters.limit) params.append('limit', filters.limit.toString());
 
-        const response = await api.get<ApiResponse<PaginatedResponse<any>>>(`/admin/salons?${params.toString()}`);
+        const response = await api.get<AdminListResponse<any>>(`/admin/salons?${params.toString()}`);
         return response.data;
     }
 
@@ -219,7 +229,7 @@ class AdminService {
     /**
      * Get all barbers
      */
-    async getAllBarbers(filters: BarberFilters = {}): Promise<ApiResponse<PaginatedResponse<any>>> {
+    async getAllBarbers(filters: BarberFilters = {}): Promise<AdminListResponse<any>> {
         const params = new URLSearchParams();
         if (filters.status) params.append('status', filters.status);
         if (filters.salonId) params.append('salonId', filters.salonId);
@@ -227,7 +237,7 @@ class AdminService {
         if (filters.page) params.append('page', filters.page.toString());
         if (filters.limit) params.append('limit', filters.limit.toString());
 
-        const response = await api.get<ApiResponse<PaginatedResponse<any>>>(`/admin/barbers?${params.toString()}`);
+        const response = await api.get<AdminListResponse<any>>(`/admin/barbers?${params.toString()}`);
         return response.data;
     }
 
@@ -252,7 +262,7 @@ class AdminService {
     /**
      * Get all appointments
      */
-    async getAllAppointments(filters: AppointmentFilters = {}): Promise<ApiResponse<PaginatedResponse<any>>> {
+    async getAllAppointments(filters: AppointmentFilters = {}): Promise<AdminListResponse<any>> {
         const params = new URLSearchParams();
         if (filters.status) params.append('status', filters.status);
         if (filters.salonId) params.append('salonId', filters.salonId);
@@ -261,7 +271,7 @@ class AdminService {
         if (filters.page) params.append('page', filters.page.toString());
         if (filters.limit) params.append('limit', filters.limit.toString());
 
-        const response = await api.get<ApiResponse<PaginatedResponse<any>>>(`/admin/appointments?${params.toString()}`);
+        const response = await api.get<AdminListResponse<any>>(`/admin/appointments?${params.toString()}`);
         return response.data;
     }
 
@@ -278,7 +288,7 @@ class AdminService {
     /**
      * Get all payments
      */
-    async getAllPayments(filters: PaymentFilters = {}): Promise<ApiResponse<PaginatedResponse<any>>> {
+    async getAllPayments(filters: PaymentFilters = {}): Promise<AdminListResponse<any>> {
         const params = new URLSearchParams();
         if (filters.status) params.append('status', filters.status);
         if (filters.startDate) params.append('startDate', filters.startDate);
@@ -286,7 +296,7 @@ class AdminService {
         if (filters.page) params.append('page', filters.page.toString());
         if (filters.limit) params.append('limit', filters.limit.toString());
 
-        const response = await api.get<ApiResponse<PaginatedResponse<any>>>(`/admin/payments?${params.toString()}`);
+        const response = await api.get<AdminListResponse<any>>(`/admin/payments?${params.toString()}`);
         return response.data;
     }
 
@@ -295,14 +305,14 @@ class AdminService {
     /**
      * Get all reviews
      */
-    async getAllReviews(filters: ReviewFilters = {}): Promise<ApiResponse<PaginatedResponse<any>>> {
+    async getAllReviews(filters: ReviewFilters = {}): Promise<AdminListResponse<any>> {
         const params = new URLSearchParams();
         if (filters.targetType) params.append('targetType', filters.targetType);
         if (filters.rating) params.append('rating', filters.rating.toString());
         if (filters.page) params.append('page', filters.page.toString());
         if (filters.limit) params.append('limit', filters.limit.toString());
 
-        const response = await api.get<ApiResponse<PaginatedResponse<any>>>(`/admin/reviews?${params.toString()}`);
+        const response = await api.get<AdminListResponse<any>>(`/admin/reviews?${params.toString()}`);
         return response.data;
     }
 
@@ -319,7 +329,7 @@ class AdminService {
     /**
      * Get paginated audit logs of admin actions
      */
-    async getAuditLogs(filters: AuditLogFilters = {}): Promise<ApiResponse<PaginatedResponse<AuditLogEntry>>> {
+    async getAuditLogs(filters: AuditLogFilters = {}): Promise<AdminListResponse<AuditLogEntry>> {
         const params = new URLSearchParams();
         if (filters.action) params.append('action', filters.action);
         if (filters.targetType) params.append('targetType', filters.targetType);
@@ -327,7 +337,7 @@ class AdminService {
         if (filters.page) params.append('page', filters.page.toString());
         if (filters.limit) params.append('limit', filters.limit.toString());
 
-        const response = await api.get<ApiResponse<PaginatedResponse<AuditLogEntry>>>(`/admin/audit-logs?${params.toString()}`);
+        const response = await api.get<AdminListResponse<AuditLogEntry>>(`/admin/audit-logs?${params.toString()}`);
         return response.data;
     }
 

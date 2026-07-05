@@ -97,8 +97,8 @@ export const useAdminStore = create<AdminState>((set) => ({
             const response = await adminService.getAllUsers(filters);
             if (response.success && response.data) {
                 set({
-                    users: response.data.data,
-                    usersTotal: response.data.pagination.total,
+                    users: response.data,
+                    usersTotal: response.pagination?.total ?? 0,
                     loading: false
                 });
             }
@@ -114,8 +114,8 @@ export const useAdminStore = create<AdminState>((set) => ({
             const response = await adminService.getAllSalons(filters);
             if (response.success && response.data) {
                 set({
-                    salons: response.data.data,
-                    salonsTotal: response.data.pagination.total,
+                    salons: response.data,
+                    salonsTotal: response.pagination?.total ?? 0,
                     loading: false
                 });
             }
@@ -131,8 +131,8 @@ export const useAdminStore = create<AdminState>((set) => ({
             const response = await adminService.getAllBarbers(filters);
             if (response.success && response.data) {
                 set({
-                    barbers: response.data.data,
-                    barbersTotal: response.data.pagination.total,
+                    barbers: response.data,
+                    barbersTotal: response.pagination?.total ?? 0,
                     loading: false
                 });
             }
@@ -148,8 +148,8 @@ export const useAdminStore = create<AdminState>((set) => ({
             const response = await adminService.getAllAppointments(filters);
             if (response.success && response.data) {
                 set({
-                    appointments: response.data.data,
-                    appointmentsTotal: response.data.pagination.total,
+                    appointments: response.data,
+                    appointmentsTotal: response.pagination?.total ?? 0,
                     loading: false
                 });
             }
@@ -165,8 +165,8 @@ export const useAdminStore = create<AdminState>((set) => ({
             const response = await adminService.getAllPayments(filters);
             if (response.success && response.data) {
                 set({
-                    payments: response.data.data,
-                    paymentsTotal: response.data.pagination.total,
+                    payments: response.data,
+                    paymentsTotal: response.pagination?.total ?? 0,
                     loading: false
                 });
             }
@@ -182,8 +182,8 @@ export const useAdminStore = create<AdminState>((set) => ({
             const response = await adminService.getAllReviews(filters);
             if (response.success && response.data) {
                 set({
-                    reviews: response.data.data,
-                    reviewsTotal: response.data.pagination.total,
+                    reviews: response.data,
+                    reviewsTotal: response.pagination?.total ?? 0,
                     loading: false
                 });
             }
