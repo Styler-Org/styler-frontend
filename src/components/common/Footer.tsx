@@ -62,7 +62,7 @@ const Footer: React.FC = () => {
                         {/* Brand Column */}
                         <Grid size={{ xs: 12, md: 4 }}>
                             <Box sx={{ mb: 3 }}>
-                                <Logo variant="light" size="medium" clickable={false} />
+                                <Logo variant="light" size="medium" clickable={false} animateDelay={0.2} />
                             </Box>
                             <Typography
                                 variant="body1"

@@ -78,7 +78,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, variant }) => {
                     borderBottom: '1px solid #f8fafc',
                 }}
             >
-                <Logo size="medium" variant="default" />
+                <Logo size="medium" variant="default" animateDelay={0.35} />
             </Box>
 
             {/* User Profile Card */}

@@ -311,7 +311,7 @@ const AuthModal: React.FC = () => {
 
                         <MotionBox initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} sx={{ position: 'relative', zIndex: 1 }}>
                             <Box sx={{ mb: 5 }}>
-                                <Logo variant="light" size="large" clickable={false} />
+                                <Logo variant="light" size="large" clickable={false} animateDelay={0.15} />
                             </Box>
 
                             <Typography sx={{
@@ -360,7 +360,7 @@ const AuthModal: React.FC = () => {
                     <Box sx={{ width: '100%', maxWidth: 440 }}>
                         {isMobile && (
                             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
-                                <Logo variant="default" size="medium" clickable={false} />
+                                <Logo variant="default" size="medium" clickable={false} animateDelay={0.1} />
                             </Box>
                         )}
 
