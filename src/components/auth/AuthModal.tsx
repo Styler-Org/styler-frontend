@@ -241,7 +241,7 @@ const AuthModal: React.FC = () => {
                 switch (user.role) {
                     case UserRole.BARBER: navigate('/barber/dashboard', { replace: true }); break;
                     case UserRole.SALON_OWNER: navigate('/salon-owner/dashboard', { replace: true }); break;
-                    case UserRole.SUPER_ADMIN: navigate('/admin/superadmin', { replace: true }); break;
+                    case UserRole.SUPER_ADMIN: navigate('/admin', { replace: true }); break;
                     default: navigate('/customer/dashboard', { replace: true });
                 }
             }

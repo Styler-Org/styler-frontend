@@ -57,7 +57,7 @@ const Logo: React.FC<LogoProps> = ({ variant = 'default', size = 'medium', click
         switch (user.role) {
             case 'barber': return '/barber/dashboard';
             case 'salon_owner': return '/salon-owner/dashboard';
-            case 'superadmin': return '/admin/superadmin';
+            case 'superadmin': return '/admin';
             case 'customer': return '/customer/dashboard';
             default: return '/';
         }

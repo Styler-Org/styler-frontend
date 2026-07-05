@@ -55,6 +55,25 @@ export interface ReviewFilters extends AdminFilters {
     rating?: number;
 }
 
+export interface AuditLogEntry {
+    _id: string;
+    adminId: string;
+    adminName: string;
+    adminEmail: string;
+    action: string;
+    targetType: string;
+    targetId: string;
+    metadata?: Record<string, unknown>;
+    ipAddress?: string;
+    createdAt: string;
+}
+
+export interface AuditLogFilters extends AdminFilters {
+    action?: string;
+    targetType?: string;
+    adminId?: string;
+}
+
 export type PartnerApplicationStatus = 'pending' | 'contacted' | 'approved' | 'rejected';
 
 export interface PartnerApplication {
@@ -292,6 +311,23 @@ class AdminService {
      */
     async deleteReview(id: string): Promise<ApiResponse<void>> {
         const response = await api.delete<ApiResponse<void>>(`/admin/reviews/${id}`);
+        return response.data;
+    }
+
+    // ==================== Audit Log ====================
+
+    /**
+     * Get paginated audit logs of admin actions
+     */
+    async getAuditLogs(filters: AuditLogFilters = {}): Promise<ApiResponse<PaginatedResponse<AuditLogEntry>>> {
+        const params = new URLSearchParams();
+        if (filters.action) params.append('action', filters.action);
+        if (filters.targetType) params.append('targetType', filters.targetType);
+        if (filters.adminId) params.append('adminId', filters.adminId);
+        if (filters.page) params.append('page', filters.page.toString());
+        if (filters.limit) params.append('limit', filters.limit.toString());
+
+        const response = await api.get<ApiResponse<PaginatedResponse<AuditLogEntry>>>(`/admin/audit-logs?${params.toString()}`);
         return response.data;
     }
 

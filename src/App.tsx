@@ -27,14 +27,13 @@ import PartnerSettings from './pages/customer/Settings';
 
 // Admin Pages
 import AdminLogin from './pages/admin/AdminLogin';
-import Dashboard from './pages/admin/Dashboard';
-import SuperAdminDashboard from './pages/admin/SuperAdminDashboard';
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UsersManagement from './pages/admin/UsersManagement';
 import SalonsManagement from './pages/admin/SalonsManagement';
 import AppointmentsManagement from './pages/admin/AppointmentsManagement';
 import PartnerApplications from './pages/admin/PartnerApplications';
+import AuditLogs from './pages/admin/AuditLogs';
 
 // Barber Pages
 import BarberDashboard from './pages/barber/BarberDashboard';
@@ -197,17 +196,11 @@ function AppContent() {
                     <Route path="salons" element={<SalonsManagement />} />
                     <Route path="appointments" element={<AppointmentsManagement />} />
                     <Route path="partner-applications" element={<PartnerApplications />} />
+                    <Route path="audit-logs" element={<AuditLogs />} />
                 </Route>
-                <Route path="/admin/superadmin" element={
-                    <ProtectedRoute role={UserRole.SUPER_ADMIN} redirectTo="/admin/login">
-                        <Layout showFooter={false}><SuperAdminDashboard /></Layout>
-                    </ProtectedRoute>
-                } />
-                <Route path="/admin/dashboard" element={
-                    <ProtectedRoute role={[UserRole.SUPER_ADMIN, UserRole.SALON_OWNER]} redirectTo="/admin/login">
-                        <Layout showFooter={false}><Dashboard /></Layout>
-                    </ProtectedRoute>
-                } />
+                {/* Legacy destinations — both consolidated into the real dashboard at /admin */}
+                <Route path="/admin/superadmin" element={<Navigate to="/admin" replace />} />
+                <Route path="/admin/dashboard" element={<Navigate to="/admin" replace />} />
 
                 <Route path="/unauthorized" element={<Unauthorized />} />
                 <Route path="*" element={<Navigate to="/" replace />} />

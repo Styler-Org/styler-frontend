@@ -92,8 +92,7 @@ export const ROUTES = {
     SALON_OWNER_ANALYTICS: '/salon-owner/analytics',
 
     // Admin
-    ADMIN_DASHBOARD: '/admin/dashboard',
-    ADMIN_SUPERADMIN: '/admin/superadmin',
+    ADMIN_DASHBOARD: '/admin',
 
     // Payment
     PAYMENT_SUCCESS: '/payment/success',

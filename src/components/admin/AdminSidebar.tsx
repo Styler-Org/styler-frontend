@@ -15,6 +15,7 @@ import {
     Settings as SettingsIcon,
     AutoAwesome as LogoIcon,
     Handshake as PartnerIcon,
+    History as HistoryIcon,
 } from '@mui/icons-material';
 
 const DRAWER_WIDTH = 260;
@@ -30,6 +31,7 @@ const navItems: NavItem[] = [
     { title: 'Appointments',  path: '/admin/appointments', icon: <EventIcon /> },
     { title: 'Payments',      path: '/admin/payments',     icon: <PaymentIcon /> },
     { title: 'Reviews',       path: '/admin/reviews',      icon: <ReviewIcon /> },
+    { title: 'Audit Log',     path: '/admin/audit-logs',   icon: <HistoryIcon /> },
 ];
 
 interface AdminSidebarProps { mobileOpen?: boolean; onMobileClose?: () => void }
