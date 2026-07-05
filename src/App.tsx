@@ -5,6 +5,7 @@ import { ToastProvider } from './context/ToastContext';
 import { RBACProvider } from './context/RBACContext';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
+import IntroGate from './components/common/IntroGate';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AuthModal from './components/auth/AuthModal';
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -221,7 +222,9 @@ function App() {
             <AuthProvider>
                 <RBACProvider>
                     <ToastProvider>
-                        <AppContent />
+                        <IntroGate>
+                            <AppContent />
+                        </IntroGate>
                     </ToastProvider>
                 </RBACProvider>
             </AuthProvider>

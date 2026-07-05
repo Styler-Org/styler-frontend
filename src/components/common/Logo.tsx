@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Box, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
+import SplitLetterCut, { SplitLetterCutHandle } from './SplitLetterCut';
 import './Logo.css';
 
 interface LogoProps {
@@ -49,6 +50,7 @@ const Logo: React.FC<LogoProps> = ({ variant = 'default', size = 'medium', click
     const currentSize = sizeMap[size];
     const user = useAuthStore((state) => state.user);
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+    const sRef = useRef<SplitLetterCutHandle>(null);
 
     const getHomeLink = () => {
         if (!isAuthenticated || !user) return '/';
@@ -80,6 +82,8 @@ const Logo: React.FC<LogoProps> = ({ variant = 'default', size = 'medium', click
         <Box
             className={`styler-logo styler-logo-${variant} styler-logo-${size}`}
             aria-label="StylerApp Logo"
+            onMouseEnter={() => sRef.current?.open(false)}
+            onMouseLeave={() => sRef.current?.close()}
             sx={{ gap: '10px', alignItems: 'center' }}
         >
             {/* S+scissors icon box */}
@@ -116,9 +120,20 @@ const Logo: React.FC<LogoProps> = ({ variant = 'default', size = 'medium', click
                 </svg>
             </Box>
 
-            <Typography component="span" sx={textStyle}>
-                Styler
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <SplitLetterCut
+                    ref={sRef}
+                    char="S"
+                    fontSize={currentSize.fontSize}
+                    fontWeight={700}
+                    fontFamily='"Outfit", "Inter", -apple-system, sans-serif'
+                    background={variant === 'default' ? colorMap.default.bg : undefined}
+                    color={variant === 'default' ? undefined : colorMap[variant].text}
+                />
+                <Typography component="span" sx={textStyle}>
+                    tyler
+                </Typography>
+            </Box>
         </Box>
     );
 
