@@ -1,10 +1,11 @@
 import { create } from 'zustand';
-import adminService, { DashboardStats } from '../services/adminService';
+import adminService, { DashboardStats, GrowthTrendPoint } from '../services/adminService';
 
 interface AdminState {
     // Dashboard
     stats: DashboardStats | null;
     recentActivity: any[];
+    growthTrend: GrowthTrendPoint[];
 
     // Users
     users: any[];
@@ -37,6 +38,7 @@ interface AdminState {
     // Actions
     fetchDashboardStats: () => Promise<void>;
     fetchRecentActivity: (limit?: number) => Promise<void>;
+    fetchGrowthTrend: (days?: number) => Promise<void>;
     fetchUsers: (filters?: any) => Promise<void>;
     fetchSalons: (filters?: any) => Promise<void>;
     fetchBarbers: (filters?: any) => Promise<void>;
@@ -50,6 +52,7 @@ export const useAdminStore = create<AdminState>((set) => ({
     // Initial state
     stats: null,
     recentActivity: [],
+    growthTrend: [],
     users: [],
     usersTotal: 0,
     salons: [],
@@ -87,6 +90,17 @@ export const useAdminStore = create<AdminState>((set) => ({
             }
         } catch (error: any) {
             set({ error: error.message || 'Failed to fetch recent activity', loading: false });
+        }
+    },
+
+    fetchGrowthTrend: async (days = 14) => {
+        try {
+            const response = await adminService.getGrowthTrend(days);
+            if (response.success && response.data) {
+                set({ growthTrend: response.data });
+            }
+        } catch (error: any) {
+            set({ error: error.message || 'Failed to fetch growth trend' });
         }
     },
 

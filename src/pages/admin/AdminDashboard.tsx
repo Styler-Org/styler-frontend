@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import {
-    Box, Grid, Typography, CircularProgress, Alert, alpha, Chip,
+    Box, Grid, Typography, CircularProgress, Alert, alpha, Chip, Avatar,
 } from '@mui/material';
 import {
     People as PeopleIcon,
@@ -9,17 +9,29 @@ import {
     Event as EventIcon,
     TrendingUp as TrendingUpIcon,
     AttachMoney as MoneyIcon,
+    PersonAdd as PersonAddIcon,
+    CalendarMonth as CalendarMonthIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import {
+    ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+    BarChart, Bar, Cell, LabelList,
+} from 'recharts';
 import { useAdminStore } from '../../stores/adminStore';
 import StatCard from '../../components/common/StatCard';
 
+dayjs.extend(relativeTime);
+
 const MotionBox = motion(Box);
 
+// Categorical — fixed order, validated (node scripts/validate_palette.js): all PASS.
 const roleColors: Record<string, string> = {
-    customer: '#6366f1', barber: '#10b981', salon_owner: '#f59e0b', super_admin: '#ef4444',
+    customer: '#6366f1', barber: '#10b981', salon_owner: '#f59e0b', superadmin: '#ef4444',
 };
 
+// Status — reserved scale, always paired with a label (never color alone).
 const statusColors: Record<string, { color: string; bg: string }> = {
     pending:   { color: '#b45309', bg: '#fef3c7' },
     confirmed: { color: '#059669', bg: '#dcfce7' },
@@ -28,10 +40,22 @@ const statusColors: Record<string, { color: string; bg: string }> = {
     no_show:   { color: '#64748b', bg: '#f1f5f9' },
 };
 
-const AdminDashboard: React.FC = () => {
-    const { stats, loading, error, fetchDashboardStats, clearError } = useAdminStore();
+const roleLabel = (r: string) => r.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
-    useEffect(() => { fetchDashboardStats(); }, [fetchDashboardStats]);
+const CHART_TEXT = '#64748b';
+const CHART_GRID = '#f1f5f9';
+
+const AdminDashboard: React.FC = () => {
+    const {
+        stats, growthTrend, recentActivity, loading, error,
+        fetchDashboardStats, fetchGrowthTrend, fetchRecentActivity, clearError,
+    } = useAdminStore();
+
+    useEffect(() => {
+        fetchDashboardStats();
+        fetchGrowthTrend(14);
+        fetchRecentActivity(8);
+    }, [fetchDashboardStats, fetchGrowthTrend, fetchRecentActivity]);
 
     if (loading && !stats) {
         return (
@@ -53,6 +77,16 @@ const AdminDashboard: React.FC = () => {
         },
     ];
 
+    const roleData = Object.entries(stats?.usersByRole || {}).map(([role, count]) => ({
+        role: roleLabel(role), count: count as number, fill: roleColors[role] || '#94a3b8',
+    }));
+
+    const statusData = Object.entries(stats?.appointmentsByStatus || {}).map(([status, count]) => ({
+        status: roleLabel(status), count: count as number, fill: statusColors[status]?.color || '#94a3b8',
+    }));
+
+    const trendDateFmt = (d: string) => dayjs(d).format('MMM D');
+
     return (
         <Box>
             {/* ── Header ── */}
@@ -72,105 +106,148 @@ const AdminDashboard: React.FC = () => {
             )}
 
             {/* ── Stat Cards ── */}
-            <Grid container spacing={3} sx={{ mb: 5 }}>
+            <Grid container spacing={3} sx={{ mb: 4 }}>
                 {statCards.map((card, i) => (
                     <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
-                        <MotionBox initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }} sx={{ height: '100%' }}>
+                        <MotionBox initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }} sx={{ height: '100%' }}>
                             <StatCard {...card} />
                         </MotionBox>
                     </Grid>
                 ))}
             </Grid>
 
-            <Grid container spacing={3}>
+            {/* ── Growth Trend (two single-series charts — never one dual-axis chart) ── */}
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <MotionBox initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+                        sx={{ p: 3.5, borderRadius: '20px', bgcolor: 'white', border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                        <Typography sx={{ fontWeight: 700, color: '#0f172a', mb: 0.5 }}>New Signups</Typography>
+                        <Typography variant="body2" sx={{ color: '#64748b', mb: 2, fontSize: '0.82rem' }}>Last 14 days</Typography>
+                        <ResponsiveContainer width="100%" height={220}>
+                            <LineChart data={growthTrend} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
+                                <XAxis dataKey="date" tickFormatter={trendDateFmt} tick={{ fontSize: 11, fill: CHART_TEXT }} axisLine={{ stroke: CHART_GRID }} tickLine={false} />
+                                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: CHART_TEXT }} axisLine={false} tickLine={false} width={28} />
+                                <Tooltip
+                                    labelFormatter={(d) => dayjs(d as string).format('MMM D, YYYY')}
+                                    formatter={(v: number) => [v, 'New users']}
+                                    contentStyle={{ borderRadius: 12, border: '1px solid #f1f5f9', fontSize: 13 }}
+                                />
+                                <Line type="monotone" dataKey="newUsers" stroke="#6366f1" strokeWidth={2} dot={false} activeDot={{ r: 5 }} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </MotionBox>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <MotionBox initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+                        sx={{ p: 3.5, borderRadius: '20px', bgcolor: 'white', border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                        <Typography sx={{ fontWeight: 700, color: '#0f172a', mb: 0.5 }}>Revenue</Typography>
+                        <Typography variant="body2" sx={{ color: '#64748b', mb: 2, fontSize: '0.82rem' }}>Last 14 days</Typography>
+                        <ResponsiveContainer width="100%" height={220}>
+                            <LineChart data={growthTrend} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
+                                <XAxis dataKey="date" tickFormatter={trendDateFmt} tick={{ fontSize: 11, fill: CHART_TEXT }} axisLine={{ stroke: CHART_GRID }} tickLine={false} />
+                                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: CHART_TEXT }} axisLine={false} tickLine={false} width={36} tickFormatter={(v) => `₹${v}`} />
+                                <Tooltip
+                                    labelFormatter={(d) => dayjs(d as string).format('MMM D, YYYY')}
+                                    formatter={(v: number) => [`₹${v.toLocaleString('en-IN')}`, 'Revenue']}
+                                    contentStyle={{ borderRadius: 12, border: '1px solid #f1f5f9', fontSize: 13 }}
+                                />
+                                <Line type="monotone" dataKey="revenue" stroke="#ec4899" strokeWidth={2} dot={false} activeDot={{ r: 5 }} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </MotionBox>
+                </Grid>
+            </Grid>
+
+            <Grid container spacing={3} sx={{ mb: 4 }}>
                 {/* ── Users by Role ── */}
-                {stats?.usersByRole && (
+                {roleData.length > 0 && (
                     <Grid size={{ xs: 12, md: 6 }}>
                         <MotionBox
-                            initial={{ opacity: 0, y: 16 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.45 }}
+                            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
                             sx={{ p: 3.5, borderRadius: '20px', bgcolor: 'white', border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
                         >
                             <Typography sx={{ fontWeight: 700, color: '#0f172a', mb: 0.5 }}>Users by Role</Typography>
-                            <Typography variant="body2" sx={{ color: '#64748b', mb: 3, fontSize: '0.82rem' }}>Breakdown of registered accounts</Typography>
-
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                {Object.entries(stats.usersByRole).map(([role, count]) => {
-                                    const color = roleColors[role] || '#94a3b8';
-                                    const total = Object.values(stats.usersByRole).reduce((a, b) => a + (b as number), 0);
-                                    const pct = total ? Math.round(((count as number) / total) * 100) : 0;
-                                    return (
-                                        <Box key={role}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                                                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: color }} />
-                                                    <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', textTransform: 'capitalize' }}>
-                                                        {role.replace('_', ' ')}
-                                                    </Typography>
-                                                </Box>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                                    <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>
-                                                        {count as number}
-                                                    </Typography>
-                                                    <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8', width: 32, textAlign: 'right' }}>
-                                                        {pct}%
-                                                    </Typography>
-                                                </Box>
-                                            </Box>
-                                            <Box sx={{ height: 6, borderRadius: 3, bgcolor: '#f1f5f9', overflow: 'hidden' }}>
-                                                <MotionBox
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${pct}%` }}
-                                                    transition={{ duration: 0.8, delay: 0.5 }}
-                                                    sx={{ height: '100%', borderRadius: 3, bgcolor: color }}
-                                                />
-                                            </Box>
-                                        </Box>
-                                    );
-                                })}
-                            </Box>
+                            <Typography variant="body2" sx={{ color: '#64748b', mb: 2, fontSize: '0.82rem' }}>Breakdown of registered accounts</Typography>
+                            <ResponsiveContainer width="100%" height={Math.max(120, roleData.length * 52)}>
+                                <BarChart data={roleData} layout="vertical" margin={{ top: 0, right: 36, left: 0, bottom: 0 }}>
+                                    <XAxis type="number" hide allowDecimals={false} />
+                                    <YAxis type="category" dataKey="role" width={90} tick={{ fontSize: 12.5, fill: '#334155', fontWeight: 600 }} axisLine={false} tickLine={false} />
+                                    <Tooltip cursor={{ fill: 'rgba(99,102,241,0.04)' }} contentStyle={{ borderRadius: 12, border: '1px solid #f1f5f9', fontSize: 13 }} />
+                                    <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={22}>
+                                        {roleData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                                        <LabelList dataKey="count" position="right" style={{ fontSize: 12.5, fontWeight: 700, fill: '#0f172a' }} />
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
                         </MotionBox>
                     </Grid>
                 )}
 
                 {/* ── Appointments by Status ── */}
-                {stats?.appointmentsByStatus && (
+                {statusData.length > 0 && (
                     <Grid size={{ xs: 12, md: 6 }}>
                         <MotionBox
-                            initial={{ opacity: 0, y: 16 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.5 }}
+                            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
                             sx={{ p: 3.5, borderRadius: '20px', bgcolor: 'white', border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
                         >
                             <Typography sx={{ fontWeight: 700, color: '#0f172a', mb: 0.5 }}>Appointments by Status</Typography>
-                            <Typography variant="body2" sx={{ color: '#64748b', mb: 3, fontSize: '0.82rem' }}>Current booking pipeline overview</Typography>
-
-                            <Grid container spacing={1.5}>
-                                {Object.entries(stats.appointmentsByStatus).map(([status, count]) => {
-                                    const sc = statusColors[status] || { color: '#64748b', bg: '#f1f5f9' };
-                                    return (
-                                        <Grid size={{ xs: 6 }} key={status}>
-                                            <Box sx={{
-                                                p: 2, borderRadius: '14px', bgcolor: sc.bg,
-                                                border: `1px solid ${alpha(sc.color, 0.15)}`,
-                                                textAlign: 'center',
-                                            }}>
-                                                <Typography sx={{ fontSize: '1.5rem', fontWeight: 800, color: sc.color, fontFamily: '"Outfit", sans-serif', lineHeight: 1 }}>
-                                                    {count as number}
-                                                </Typography>
-                                                <Typography sx={{ fontSize: '0.72rem', fontWeight: 600, color: sc.color, mt: 0.5, textTransform: 'capitalize' }}>
-                                                    {status.replace('_', ' ')}
-                                                </Typography>
-                                            </Box>
-                                        </Grid>
-                                    );
-                                })}
-                            </Grid>
+                            <Typography variant="body2" sx={{ color: '#64748b', mb: 2, fontSize: '0.82rem' }}>Current booking pipeline overview</Typography>
+                            <ResponsiveContainer width="100%" height={Math.max(120, statusData.length * 44)}>
+                                <BarChart data={statusData} layout="vertical" margin={{ top: 0, right: 36, left: 0, bottom: 0 }}>
+                                    <XAxis type="number" hide allowDecimals={false} />
+                                    <YAxis type="category" dataKey="status" width={90} tick={{ fontSize: 12.5, fill: '#334155', fontWeight: 600 }} axisLine={false} tickLine={false} />
+                                    <Tooltip cursor={{ fill: 'rgba(99,102,241,0.04)' }} contentStyle={{ borderRadius: 12, border: '1px solid #f1f5f9', fontSize: 13 }} />
+                                    <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={20}>
+                                        {statusData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                                        <LabelList dataKey="count" position="right" style={{ fontSize: 12.5, fontWeight: 700, fill: '#0f172a' }} />
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
                         </MotionBox>
                     </Grid>
                 )}
             </Grid>
+
+            {/* ── Recent Activity ── */}
+            <MotionBox
+                initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}
+                sx={{ p: 3.5, borderRadius: '20px', bgcolor: 'white', border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
+            >
+                <Typography sx={{ fontWeight: 700, color: '#0f172a', mb: 0.5 }}>Recent Activity</Typography>
+                <Typography variant="body2" sx={{ color: '#64748b', mb: 2.5, fontSize: '0.82rem' }}>Latest signups and bookings across the platform</Typography>
+
+                {recentActivity.length === 0 ? (
+                    <Typography sx={{ color: '#94a3b8', fontSize: '0.85rem', py: 2, textAlign: 'center' }}>No recent activity yet</Typography>
+                ) : (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                        {recentActivity.map((item: any, i: number) => {
+                            const isUser = item.type === 'user';
+                            const color = isUser ? '#6366f1' : '#10b981';
+                            const label = isUser
+                                ? `${item.data?.name || 'Someone'} registered as ${roleLabel(item.data?.role || 'customer')}`
+                                : `New appointment #${(item.data?._id || '').slice(-6).toUpperCase()} created`;
+                            return (
+                                <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.75, py: 1.25, borderBottom: i < recentActivity.length - 1 ? '1px solid #f8fafc' : 'none' }}>
+                                    <Avatar sx={{ width: 34, height: 34, bgcolor: alpha(color, 0.12), color }}>
+                                        {isUser ? <PersonAddIcon sx={{ fontSize: 17 }} /> : <CalendarMonthIcon sx={{ fontSize: 17 }} />}
+                                    </Avatar>
+                                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                                        <Typography sx={{ fontSize: '0.85rem', color: '#1e293b', fontWeight: 600 }} noWrap>{label}</Typography>
+                                    </Box>
+                                    <Chip
+                                        label={dayjs(item.timestamp).fromNow()}
+                                        size="small"
+                                        sx={{ bgcolor: '#f8fafc', color: '#94a3b8', fontSize: '0.68rem', fontWeight: 600, height: 22, flexShrink: 0 }}
+                                    />
+                                </Box>
+                            );
+                        })}
+                    </Box>
+                )}
+            </MotionBox>
         </Box>
     );
 };

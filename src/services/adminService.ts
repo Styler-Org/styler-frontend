@@ -26,6 +26,12 @@ export interface DashboardStats {
     appointmentsByStatus: Record<string, number>;
 }
 
+export interface GrowthTrendPoint {
+    date: string;
+    newUsers: number;
+    revenue: number;
+}
+
 export interface AdminFilters {
     page?: number;
     limit?: number;
@@ -131,6 +137,15 @@ class AdminService {
      */
     async getRecentActivity(limit: number = 10): Promise<ApiResponse<any[]>> {
         const response = await api.get<ApiResponse<any[]>>(`/admin/dashboard/activity?limit=${limit}`);
+        return response.data;
+    }
+
+    /**
+     * Daily new-user + revenue trend for the dashboard growth chart.
+     * Two measures of different scale — render as two separate line charts, never one dual-axis chart.
+     */
+    async getGrowthTrend(days: number = 14): Promise<ApiResponse<GrowthTrendPoint[]>> {
+        const response = await api.get<ApiResponse<GrowthTrendPoint[]>>(`/admin/dashboard/growth?days=${days}`);
         return response.data;
     }
 
