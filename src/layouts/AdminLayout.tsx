@@ -20,6 +20,7 @@ import {
 import { useAuthStore } from '../stores/authStore';
 import { useNavigate } from 'react-router-dom';
 import AdminSidebar from '../components/admin/AdminSidebar';
+import NotificationBell from '../components/common/NotificationBell';
 
 const DRAWER_WIDTH = 260;
 
@@ -89,6 +90,7 @@ const AdminLayout: React.FC = () => {
 
                     {/* User Menu */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <NotificationBell />
                         <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
                             {user?.name}
                         </Typography>

@@ -19,8 +19,12 @@ export const useSocket = (): Socket | null => {
             return;
         }
 
-        // Connect to socket server
-        const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:9169', {
+        // Socket.IO lives on the backend monolith itself (not routed through
+        // local-gateway's REST proxy), so this needs the backend's own origin,
+        // not VITE_API_BASE_URL (which includes the /api/v1 path and, in dev,
+        // points at the gateway rather than the backend directly).
+        const socketUrl = (import.meta as any).env.VITE_SOCKET_URL || 'http://localhost:9168';
+        const socket = io(socketUrl, {
             transports: ['websocket', 'polling'],
             withCredentials: true,
             reconnection: true,

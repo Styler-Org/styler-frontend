@@ -79,6 +79,7 @@ const RoleBasedLayoutWrapper: React.FC<{ children: ReactNode }> = ({ children })
 };
 
 function AppContent() {
+    useNotificationSocket();
     return (
         <Router>
             <AuthModal />
